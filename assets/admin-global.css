@@ -1,0 +1,37 @@
+/* Kashiwazaki SEO Type Builder - Global Admin Styles */
+
+/* 全カスタム投稿タイプメニューを強制表示 */
+#adminmenu li[class*="menu-icon-"][class*="menu-top"] {
+    display: block !important;
+    visibility: visible !important;
+}
+
+#adminmenu li[class*="menu-icon-"][class*="menu-top"].wp-hidden {
+    display: block !important;
+}
+
+#adminmenu li[class*="menu-icon-"][class*="menu-top"] a {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* カスタム投稿タイプメニューのサブメニューも表示 */
+#adminmenu li[class*="menu-icon-"][class*="menu-top"] .wp-submenu {
+    display: block !important;
+}
+
+#adminmenu li[class*="menu-icon-"][class*="menu-top"].opensub .wp-submenu {
+    display: block !important;
+}
+
+/* カスタム投稿タイプメニューが選択されている時のスタイル */
+#adminmenu li[class*="menu-icon-"][class*="menu-top"].current a {
+    color: #fff;
+    background: #0073aa;
+}
+
+/* KSTB作成のカスタム投稿タイプ専用クラス */
+#adminmenu li.kstb-custom-post-type {
+    display: block !important;
+    visibility: visible !important;
+}

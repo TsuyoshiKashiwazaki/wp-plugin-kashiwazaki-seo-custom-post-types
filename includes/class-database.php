@@ -1,0 +1,330 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+
+class KSTB_Database {
+    private static $table_name = 'kstb_post_types';
+
+    public static function get_table_name() {
+        global $wpdb;
+        return $wpdb->prefix . self::$table_name;
+    }
+
+    public static function create_tables() {
+        global $wpdb;
+
+        $table_name = self::get_table_name();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            slug varchar(20) NOT NULL,
+            label varchar(100) NOT NULL,
+            labels text NOT NULL,
+            public tinyint(1) DEFAULT 1,
+            publicly_queryable tinyint(1) DEFAULT 1,
+            show_ui tinyint(1) DEFAULT 1,
+            show_in_menu tinyint(1) DEFAULT 1,
+            query_var tinyint(1) DEFAULT 1,
+            rewrite text DEFAULT NULL,
+            capability_type varchar(50) DEFAULT 'post',
+            has_archive tinyint(1) DEFAULT 0,
+            archive_display_type varchar(20) DEFAULT 'post_list',
+            archive_page_id int(11) DEFAULT NULL,
+            parent_directory varchar(100) DEFAULT NULL,
+            hierarchical tinyint(1) DEFAULT 0,
+            menu_position int(11) DEFAULT NULL,
+            menu_icon varchar(100) DEFAULT NULL,
+            supports text NOT NULL,
+            show_in_rest tinyint(1) DEFAULT 1,
+            rest_base varchar(100) DEFAULT NULL,
+            taxonomies text DEFAULT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY slug (slug)
+        ) $charset_collate;";
+
+        try {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            $result = dbDelta($sql);
+        } catch (Exception $e) {
+            throw $e;
+        }
+        
+        // アーカイブ設定カラムが存在しない場合は追加
+        self::add_archive_columns_if_not_exists();
+    }
+
+    /**
+     * アーカイブ設定のカラムが存在しない場合は追加
+     */
+    public static function add_archive_columns_if_not_exists() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        // archive_display_type カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'archive_display_type'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD archive_display_type varchar(20) DEFAULT 'post_list' AFTER has_archive");
+        }
+
+        // archive_page_id カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'archive_page_id'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD archive_page_id int(11) DEFAULT NULL AFTER archive_display_type");
+        }
+
+        // parent_directory カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'parent_directory'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD parent_directory varchar(100) DEFAULT NULL AFTER archive_page_id");
+        }
+
+    }
+
+    /**
+     * データベースを最新バージョンに更新
+     */
+    public static function update_database() {
+        self::add_archive_columns_if_not_exists();
+    }
+
+    public static function get_all_post_types() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        
+        try {
+            $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY label ASC");
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+        // ラベルが空の場合はスラッグから生成
+        foreach ($results as $post_type) {
+            if (empty($post_type->label)) {
+                $post_type->label = ucfirst($post_type->slug);
+            }
+        }
+
+        return $results;
+    }
+
+    public static function get_post_type($id) {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        
+        try {
+            $result = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $id));
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+        // ラベルが空の場合はスラッグから生成
+        if ($result && empty($result->label)) {
+            $result->label = ucfirst($result->slug);
+        }
+
+        return $result;
+    }
+
+    public static function get_post_type_by_slug($slug) {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        
+        try {
+            $result = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE slug = %s", $slug));
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+        // ラベルが空の場合はスラッグから生成
+        if ($result && empty($result->label)) {
+            $result->label = ucfirst($result->slug);
+        }
+
+        return $result;
+    }
+
+    public static function insert_post_type($data) {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        $defaults = array(
+            'public' => 1,
+            'publicly_queryable' => 1,
+            'show_ui' => 1,
+            'show_in_menu' => 1,
+            'query_var' => 1,
+            'capability_type' => 'post',
+            'has_archive' => 0,
+            'archive_display_type' => 'post_list',
+            'archive_page_id' => null,
+            'parent_directory' => null,
+            'hierarchical' => 0,
+            'show_in_rest' => 1
+        );
+
+        $data = wp_parse_args($data, $defaults);
+
+        $result = $wpdb->insert(
+            $table_name,
+            array(
+                'slug' => sanitize_key($data['slug']),
+                'label' => sanitize_text_field($data['label']),
+                'labels' => json_encode($data['labels']),
+                'public' => (int) $data['public'],
+                'publicly_queryable' => (int) $data['publicly_queryable'],
+                'show_ui' => (int) $data['show_ui'],
+                'show_in_menu' => (int) $data['show_in_menu'],
+                'query_var' => (int) $data['query_var'],
+                'rewrite' => !empty($data['rewrite']) ? json_encode($data['rewrite']) : json_encode(array('slug' => $data['slug'], 'with_front' => false)),
+                'capability_type' => sanitize_key($data['capability_type']),
+                'has_archive' => (int) $data['has_archive'],
+                'archive_display_type' => !empty($data['archive_display_type']) ? sanitize_text_field($data['archive_display_type']) : 'post_list',
+                'archive_page_id' => !empty($data['archive_page_id']) ? (int) $data['archive_page_id'] : null,
+                'parent_directory' => isset($data['parent_directory']) && $data['parent_directory'] !== '' ? sanitize_text_field($data['parent_directory']) : null,
+                'hierarchical' => (int) $data['hierarchical'],
+                'menu_position' => !empty($data['menu_position']) ? (int) $data['menu_position'] : 25,
+                'menu_icon' => !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null,
+                'supports' => json_encode($data['supports']),
+                'show_in_rest' => (int) $data['show_in_rest'],
+                'rest_base' => !empty($data['rest_base']) ? sanitize_key($data['rest_base']) : null,
+                'taxonomies' => !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null
+            )
+        );
+
+        if ($result) {
+            flush_rewrite_rules();
+        }
+
+        return $result;
+    }
+
+    public static function update_post_type($id, $data) {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        $update_data = array();
+
+        if (isset($data['slug'])) {
+            $update_data['slug'] = sanitize_key($data['slug']);
+        }
+        if (isset($data['label'])) {
+            $update_data['label'] = sanitize_text_field($data['label']);
+        }
+        if (isset($data['labels'])) {
+            $update_data['labels'] = json_encode($data['labels']);
+        }
+        if (isset($data['public'])) {
+            $update_data['public'] = (int) $data['public'];
+        }
+        if (isset($data['publicly_queryable'])) {
+            $update_data['publicly_queryable'] = (int) $data['publicly_queryable'];
+        }
+        if (isset($data['show_ui'])) {
+            $update_data['show_ui'] = (int) $data['show_ui'];
+        }
+        if (isset($data['show_in_menu'])) {
+            $update_data['show_in_menu'] = (int) $data['show_in_menu'];
+        }
+        if (isset($data['query_var'])) {
+            $update_data['query_var'] = (int) $data['query_var'];
+        }
+        if (isset($data['rewrite'])) {
+            $update_data['rewrite'] = !empty($data['rewrite']) ? json_encode($data['rewrite']) : null;
+        }
+        if (isset($data['capability_type'])) {
+            $update_data['capability_type'] = sanitize_key($data['capability_type']);
+        }
+        if (isset($data['has_archive'])) {
+            $update_data['has_archive'] = (int) $data['has_archive'];
+        }
+        if (isset($data['archive_display_type'])) {
+            $update_data['archive_display_type'] = sanitize_text_field($data['archive_display_type']);
+        }
+        if (isset($data['archive_page_id'])) {
+            $update_data['archive_page_id'] = !empty($data['archive_page_id']) ? (int) $data['archive_page_id'] : null;
+        }
+        if (isset($data['parent_directory'])) {
+            $update_data['parent_directory'] = $data['parent_directory'] !== '' ? sanitize_text_field($data['parent_directory']) : null;
+        }
+        if (isset($data['hierarchical'])) {
+            $update_data['hierarchical'] = (int) $data['hierarchical'];
+        }
+        if (isset($data['menu_position'])) {
+            $update_data['menu_position'] = !empty($data['menu_position']) ? (int) $data['menu_position'] : null;
+        }
+        if (isset($data['menu_icon'])) {
+            $update_data['menu_icon'] = !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null;
+        }
+        if (isset($data['supports'])) {
+            $update_data['supports'] = json_encode($data['supports']);
+        }
+        if (isset($data['show_in_rest'])) {
+            $update_data['show_in_rest'] = (int) $data['show_in_rest'];
+        }
+        if (isset($data['rest_base'])) {
+            $update_data['rest_base'] = !empty($data['rest_base']) ? sanitize_key($data['rest_base']) : null;
+        }
+        if (isset($data['taxonomies'])) {
+            $update_data['taxonomies'] = !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null;
+        }
+
+        $result = $wpdb->update(
+            $table_name,
+            $update_data,
+            array('id' => $id)
+        );
+
+        if ($result !== false) {
+            // has_archiveが変更された場合は確実にパーマリンクをフラッシュ
+            if (isset($update_data['has_archive'])) {
+                delete_option('rewrite_rules');
+            }
+            flush_rewrite_rules();
+        }
+
+        return $result;
+    }
+
+    public static function delete_post_type($id) {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        $result = $wpdb->delete(
+            $table_name,
+            array('id' => $id),
+            array('%d')
+        );
+
+        if ($result !== false && $result > 0) {
+            flush_rewrite_rules();
+        }
+
+        return $result;
+    }
+
+    public static function table_exists() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        return $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
+    }
+
+    public static function diagnose() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+        $diagnosis = array();
+
+        $diagnosis['table_exists'] = self::table_exists();
+
+        if ($diagnosis['table_exists']) {
+            $diagnosis['row_count'] = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+            $diagnosis['last_error'] = $wpdb->last_error;
+        }
+
+        return $diagnosis;
+    }
+}

@@ -1,0 +1,25 @@
+# Development tools
+gh_*/
+*.tar.gz
+*.zip
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# WordPress
+*.sql
+*.sql.gz
+
+# Claude specific
+.claude/

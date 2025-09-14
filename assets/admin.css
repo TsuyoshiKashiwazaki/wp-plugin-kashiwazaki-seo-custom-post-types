@@ -1,0 +1,322 @@
+.kstb-admin-wrap {
+    max-width: 1200px;
+    margin: 20px 20px 20px 0;
+}
+
+.kstb-container {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.kstb-list-area {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.kstb-form-area {
+    flex: 1;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.kstb-list-area h2,
+.kstb-form-area h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.column-label {
+    width: 30%;
+}
+
+.column-slug {
+    width: 25%;
+}
+
+.column-public,
+.column-rest {
+    width: 10%;
+    text-align: center;
+}
+
+.column-actions {
+    width: 25%;
+}
+
+.column-public .dashicons,
+.column-rest .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.dashicons-yes {
+    color: #46b450;
+}
+
+.dashicons-no-alt {
+    color: #dc3232;
+}
+
+.kstb-tabs {
+    margin-top: 20px;
+}
+
+.kstb-tab-buttons {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.kstb-tab-buttons li {
+    margin: 0;
+}
+
+.kstb-tab-buttons a {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #23282d;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    background: #f1f1f1;
+    margin-right: 5px;
+}
+
+.kstb-tab-buttons a.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    position: relative;
+    top: 1px;
+}
+
+.kstb-tab-content {
+    display: none;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+    background: #fff;
+}
+
+.kstb-tab-content.active {
+    display: block;
+}
+
+.kstb-icon-select {
+    width: 200px;
+}
+
+.kstb-icon-preview {
+    margin-left: 10px;
+    font-size: 20px;
+    vertical-align: middle;
+}
+
+.kstb-rewrite-options,
+.kstb-rest-options {
+    margin-left: 20px;
+    padding: 10px;
+    background: #f9f9f9;
+    border-left: 3px solid #ccd0d4;
+}
+
+.required {
+    color: #dc3232;
+}
+
+#kstb-notice-area {
+    margin-top: 20px;
+}
+
+.kstb-notice {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-left: 4px solid;
+    background: #fff;
+    box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.kstb-notice-success {
+    border-left-color: #46b450;
+}
+
+.kstb-notice-error {
+    border-left-color: #dc3232;
+}
+
+.kstb-delete-button {
+    color: #a00;
+}
+
+/* スラッグリンクのスタイル */
+.column-slug a {
+    color: #0073aa;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.column-slug a:hover {
+    color: #005177;
+    text-decoration: underline;
+}
+
+.column-slug a .dashicons-external {
+    color: #72777c;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.column-slug a:hover .dashicons-external {
+    opacity: 1;
+}
+
+.kstb-delete-button:hover {
+    color: #dc3232;
+    border-color: #dc3232;
+}
+
+@media screen and (max-width: 1200px) {
+    .kstb-container {
+        flex-direction: column;
+    }
+
+    .kstb-list-area,
+    .kstb-form-area {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .kstb-tab-buttons {
+        flex-direction: column;
+    }
+
+    .kstb-tab-buttons a {
+        margin-right: 0;
+        margin-bottom: -1px;
+        border-bottom: 1px solid #ccd0d4;
+    }
+
+    .kstb-tab-buttons a.active {
+        border-bottom-color: #fff;
+    }
+
+    .column-public,
+    .column-rest {
+        display: none;
+    }
+}
+
+/* 必須項目の表示 */
+.required {
+    color: #dc3232;
+    font-weight: bold;
+}
+
+.optional {
+    color: #0073aa;
+    font-weight: normal;
+    font-size: 90%;
+}
+
+/* 説明文の改善 */
+.form-table .description {
+    margin-top: 5px;
+    line-height: 1.5;
+}
+
+/* ラベルプレビューフィールド */
+.kstb-preview-field {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    border-radius: 3px;
+    color: #333;
+    font-weight: 500;
+    min-height: 18px;
+    display: inline-block;
+    min-width: 200px;
+}
+
+.form-table .description strong {
+    color: #23282d;
+}
+
+/* フォームフィールドのホバー効果 */
+.form-table input[type="text"]:focus,
+.form-table input[type="number"]:focus,
+.form-table select:focus,
+.form-table textarea:focus {
+    border-color: #5b9dd9;
+    box-shadow: 0 0 2px rgba(30, 140, 190, 0.8);
+}
+
+/* デバッグ情報のスタイル */
+#kstb-copy-debug-info {
+    margin-left: 10px;
+}
+
+/* ツールチップスタイル */
+.kstb-tooltip {
+    position: relative;
+    display: inline-block;
+    margin-left: 5px;
+    color: #666;
+    cursor: help;
+}
+
+.kstb-tooltip:hover .kstb-tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.kstb-tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 3px;
+    padding: 8px 10px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+.kstb-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+
+
+/* 自動入力されたフィールドのスタイル */
+.auto-filled {
+    background-color: #f0f8ff !important;
+    border-left: 3px solid #0073aa !important;
+}
+
+.auto-filled:focus {
+    background-color: #fff !important;
+    border-left: 3px solid #0073aa !important;
+}
