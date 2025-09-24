@@ -5,6 +5,16 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-09-24
+
+### Fixed
+- カスタム投稿タイプのスラッグ以下に設置された固定ページが404になる問題を修正
+- カスタム投稿タイプの個別記事と固定ページの両方が正しく表示されるように改善
+
+### Improved
+- アーカイブコントローラーのURL判定ロジックを改善
+- スラッグトップページとサブディレクトリページの処理を明確に分離
+
 ## [1.0.0] - 2025-09-14
 
 ### Added

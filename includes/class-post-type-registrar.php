@@ -165,7 +165,7 @@ class KSTB_Post_Type_Registrar {
         register_post_type($post_type->slug, $args);
 
         // タクソノミーの登録
-        $taxonomies = json_decode($post_type->taxonomies, true);
+        $taxonomies = !empty($post_type->taxonomies) ? json_decode($post_type->taxonomies, true) : array();
         if (!empty($taxonomies) && is_array($taxonomies)) {
             foreach ($taxonomies as $taxonomy) {
                 if (taxonomy_exists($taxonomy)) {

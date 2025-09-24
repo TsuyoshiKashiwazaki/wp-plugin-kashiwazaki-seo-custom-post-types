@@ -91,23 +91,51 @@ class KSTB_Archive_Controller {
 
         foreach ($post_types as $post_type) {
             $matches = false;
+            $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type->parent_directory)) {
                 $parent = trim($post_type->parent_directory, '/');
                 if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type->slug) {
                     if (count($segments) === 2) {
+                        // スラッグトップページ
                         $matches = true;
+                    } elseif (count($segments) > 2) {
+                        // スラッグ以下のサブディレクトリ
+                        $is_subdir = true;
                     }
                 }
             }
             // 単純URLの場合
-            elseif (count($segments) === 1 && $segments[0] === $post_type->slug) {
-                $matches = true;
+            elseif ($segments[0] === $post_type->slug) {
+                if (count($segments) === 1) {
+                    // スラッグトップページ
+                    $matches = true;
+                } elseif (count($segments) > 1) {
+                    // スラッグ以下のサブディレクトリ
+                    $is_subdir = true;
+                }
             }
 
+            // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type->has_archive) {
                 // 同じパスに固定ページが存在するかチェック
+                $page = get_page_by_path($uri);
+
+                if ($page && $page->post_status === 'publish') {
+                    // 固定ページとして処理するクエリ変数を返す
+                    return array(
+                        'pagename' => $uri,
+                        'page' => '',
+                        'post_type' => 'page'
+                    );
+                }
+            }
+
+            // スラッグ以下のサブディレクトリの場合
+            if ($is_subdir) {
+                // カスタム投稿タイプの個別記事として処理されそうな場合、
+                // 固定ページが存在するかチェック
                 $page = get_page_by_path($uri);
 
                 if ($page && $page->post_status === 'publish') {
@@ -209,21 +237,33 @@ class KSTB_Archive_Controller {
 
         foreach ($post_types as $post_type) {
             $matches = false;
+            $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type->parent_directory)) {
                 $parent = trim($post_type->parent_directory, '/');
                 if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type->slug) {
                     if (count($segments) === 2) {
+                        // スラッグトップページ
                         $matches = true;
+                    } elseif (count($segments) > 2) {
+                        // スラッグ以下のサブディレクトリ
+                        $is_subdir = true;
                     }
                 }
             }
             // 単純URLの場合
-            elseif (count($segments) === 1 && $segments[0] === $post_type->slug) {
-                $matches = true;
+            elseif ($segments[0] === $post_type->slug) {
+                if (count($segments) === 1) {
+                    // スラッグトップページ
+                    $matches = true;
+                } elseif (count($segments) > 1) {
+                    // スラッグ以下のサブディレクトリ
+                    $is_subdir = true;
+                }
             }
 
+            // スラッグトップページの処理
             if ($matches) {
                 if (!$post_type->has_archive) {
                     // 同じパスに固定ページが存在するかチェック
@@ -258,6 +298,39 @@ class KSTB_Archive_Controller {
                     return;
                 }
             }
+
+            // スラッグ以下のサブディレクトリの処理
+            if ($is_subdir) {
+                // まずカスタム投稿タイプの個別記事として存在するかチェック
+                $post_slug = $segments[count($segments) - 1];
+                $args = array(
+                    'name' => $post_slug,
+                    'post_type' => $post_type->slug,
+                    'post_status' => 'publish',
+                    'posts_per_page' => 1
+                );
+                $posts = get_posts($args);
+
+                if (empty($posts)) {
+                    // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
+                    $page = get_page_by_path($request);
+
+                    if ($page && $page->post_status === 'publish') {
+                        // 固定ページとして処理
+                        $wp->query_vars = array(
+                            'pagename' => $request,
+                            'page' => '',
+                            'name' => '',
+                            'post_type' => 'page'
+                        );
+                        // カスタム投稿タイプ関連のクエリ変数を削除
+                        unset($wp->query_vars[$post_type->slug]);
+                        unset($wp->query_vars['post_type']);
+                        $this->processed = true;
+                        return;
+                    }
+                }
+            }
         }
     }
 
@@ -283,21 +356,33 @@ class KSTB_Archive_Controller {
 
         foreach ($post_types as $post_type_data) {
             $matches = false;
+            $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type_data->parent_directory)) {
                 $parent = trim($post_type_data->parent_directory, '/');
                 if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type_data->slug) {
                     if (count($segments) === 2) {
+                        // スラッグトップページ
                         $matches = true;
+                    } elseif (count($segments) > 2) {
+                        // スラッグ以下のサブディレクトリ
+                        $is_subdir = true;
                     }
                 }
             }
             // 単純URLの場合
-            elseif (count($segments) === 1 && $segments[0] === $post_type_data->slug) {
-                $matches = true;
+            elseif ($segments[0] === $post_type_data->slug) {
+                if (count($segments) === 1) {
+                    // スラッグトップページ
+                    $matches = true;
+                } elseif (count($segments) > 1) {
+                    // スラッグ以下のサブディレクトリ
+                    $is_subdir = true;
+                }
             }
 
+            // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type_data->has_archive) {
 
                 // 同じパスに固定ページが存在するかチェック
@@ -350,6 +435,53 @@ class KSTB_Archive_Controller {
                 $query->set('post__in', array(0));
                 return;
             }
+
+            // スラッグ以下のサブディレクトリで、404になりそうな場合
+            if ($is_subdir && $query->is_404()) {
+                // 固定ページが存在するかチェック
+                $page = get_page_by_path($uri);
+
+                if ($page && $page->post_status === 'publish') {
+                    // すべてのクエリ変数をクリア
+                    $query->query_vars = array();
+                    $query->query = array();
+
+                    // 固定ページとしてクエリを設定
+                    $query->set('page_id', $page->ID);
+                    $query->set('post_type', 'page');
+                    $query->set('posts_per_page', 1);
+                    $query->set('paged', 1);
+
+                    // 条件タグをリセット
+                    $query->is_page = true;
+                    $query->is_singular = true;
+                    $query->is_single = false;
+                    $query->is_404 = false;
+                    $query->is_home = false;
+                    $query->is_archive = false;
+                    $query->is_post_type_archive = false;
+                    $query->is_tax = false;
+                    $query->is_category = false;
+                    $query->is_tag = false;
+                    $query->is_author = false;
+                    $query->is_date = false;
+                    $query->is_year = false;
+                    $query->is_month = false;
+                    $query->is_day = false;
+                    $query->is_time = false;
+                    $query->is_search = false;
+                    $query->is_feed = false;
+                    $query->is_comment_feed = false;
+                    $query->is_trackback = false;
+                    $query->is_embed = false;
+                    $query->is_paged = false;
+                    $query->is_admin = false;
+                    $query->is_attachment = false;
+                    $query->is_posts_page = false;
+
+                    return;
+                }
+            }
         }
 
     }
@@ -367,26 +499,42 @@ class KSTB_Archive_Controller {
         $uri = parse_url($uri, PHP_URL_PATH);
         $uri = trim($uri, '/');
 
+        if (empty($uri)) {
+            return;
+        }
+
         $segments = explode('/', $uri);
         $post_types = KSTB_Database::get_all_post_types();
 
         foreach ($post_types as $post_type_data) {
             $matches = false;
+            $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type_data->parent_directory)) {
                 $parent = trim($post_type_data->parent_directory, '/');
                 if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type_data->slug) {
                     if (count($segments) === 2) {
+                        // スラッグトップページ
                         $matches = true;
+                    } elseif (count($segments) > 2) {
+                        // スラッグ以下のサブディレクトリ
+                        $is_subdir = true;
                     }
                 }
             }
             // 単純URLの場合
-            elseif (count($segments) === 1 && $segments[0] === $post_type_data->slug) {
-                $matches = true;
+            elseif ($segments[0] === $post_type_data->slug) {
+                if (count($segments) === 1) {
+                    // スラッグトップページ
+                    $matches = true;
+                } elseif (count($segments) > 1) {
+                    // スラッグ以下のサブディレクトリ
+                    $is_subdir = true;
+                }
             }
 
+            // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type_data->has_archive) {
                 // 同じパスに固定ページが存在するかチェック
                 $page = get_page_by_path($uri);
@@ -399,6 +547,29 @@ class KSTB_Archive_Controller {
                 // 固定ページが存在しない場合は404
                 $this->display_404();
                 exit;
+            }
+
+            // スラッグ以下のサブディレクトリで404になりそうな場合
+            if ($is_subdir && is_404()) {
+                // まずカスタム投稿タイプの記事が存在するか確認
+                $post_slug = $segments[count($segments) - 1];
+                $args = array(
+                    'name' => $post_slug,
+                    'post_type' => $post_type_data->slug,
+                    'post_status' => 'publish',
+                    'posts_per_page' => 1
+                );
+                $posts = get_posts($args);
+
+                if (empty($posts)) {
+                    // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
+                    $page = get_page_by_path($uri);
+
+                    if ($page && $page->post_status === 'publish') {
+                        $this->display_page($page);
+                        exit;
+                    }
+                }
             }
         }
 

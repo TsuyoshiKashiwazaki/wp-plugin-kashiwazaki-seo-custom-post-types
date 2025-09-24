@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.1-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,11 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.1 - 2025-09-24
+- **修正**: カスタム投稿タイプのスラッグ以下に設置された固定ページが404になる問題を修正
+- **改善**: アーカイブコントローラーのURL判定ロジックを改善
+- **改善**: スラッグトップページとサブディレクトリページの処理を明確に分離
 
 ### Version 1.0.0 - 2025-09-14
 - 初回リリース
