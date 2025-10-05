@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,10 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.2 =
+* Changed: 管理画面UIのシンプル化（不要な設定項目を削除）
+* Improved: 操作性向上とWordPress現代標準への準拠
+
 = 1.0.1 =
 * Fixed: カスタム投稿タイプのスラッグ以下に設置された固定ページが404になる問題を修正
 * Improved: アーカイブコントローラーのURL判定ロジックを改善
@@ -81,6 +85,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+管理画面がよりシンプルで使いやすくなりました
 
 = 1.0.1 =
 カスタム投稿タイプのスラッグ以下の固定ページが正しく表示されるようになりました

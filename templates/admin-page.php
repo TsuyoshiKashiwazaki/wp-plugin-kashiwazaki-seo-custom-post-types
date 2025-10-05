@@ -459,59 +459,6 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                     </p>
                                 </td>
                             </tr>
-                            <tr>
-                                <th scope="row">リライト設定</th>
-                                <td>
-                                    <label><input type="checkbox" id="kstb-rewrite-enabled" name="rewrite[enabled]" value="1" checked> URLリライトを有効化</label>
-                                    <p class="description">
-                                        <strong>きれいなURL（パーマリンク）を使用する</strong><br>
-                                        通常はチェックしたままにしてください
-                                    </p>
-                                    <div class="kstb-rewrite-options" style="margin-top: 10px;">
-                                        <label for="kstb-rewrite-slug">スラッグ：</label>
-                                        <input type="text" id="kstb-rewrite-slug" name="rewrite[slug]" class="regular-text" placeholder="投稿タイプのスラッグを使用">
-                                        <p class="description">
-                                            <strong>URLで使用される名前</strong><br>
-                                            空欄の場合は投稿タイプのスラッグを使用<br>
-                                            例: {投稿タイプ}の場合 → /{投稿タイプ}/{投稿名}/
-                                        </p>
-                                        <label><input type="checkbox" name="rewrite[with_front]" value="1" checked> フロントベースを付ける</label>
-                                        <p class="description" style="margin-left: 24px;">
-                                            パーマリンク設定の共通設定を適用する
-                                        </p>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">権限タイプ</th>
-                                <td>
-                                    <input type="text" name="capability_type" value="post" class="regular-text">
-                                    <p class="description">
-                                        <strong>ユーザー権限の管理に使用</strong><br>
-                                        通常は「post」のままで問題ありません<br>
-                                        カスタム権限を作成する場合のみ変更してください
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">REST API</th>
-                                <td>
-                                    <label><input type="checkbox" name="show_in_rest" value="1" checked> REST APIで利用可能（ブロックエディター使用時は必須）</label>
-                                    <p class="description">
-                                        <strong>WordPress 5.0以降のブロックエディター（Gutenberg）を使用する場合は必須</strong><br>
-                                        REST API経由でのデータ取得も可能になります
-                                    </p>
-                                    <div class="kstb-rest-options" style="margin-top: 10px;">
-                                        <label for="kstb-rest-base">RESTベース：</label>
-                                        <input type="text" id="kstb-rest-base" name="rest_base" class="regular-text">
-                                        <p class="description">
-                                            <strong>REST APIのエンドポイント名</strong><br>
-                                            空欄の場合は投稿タイプのスラッグを使用<br>
-                                            例: /wp-json/wp/v2/{REST API名}/
-                                        </p>
-                                    </div>
-                                </td>
-                            </tr>
                         </table>
                     </div>
 

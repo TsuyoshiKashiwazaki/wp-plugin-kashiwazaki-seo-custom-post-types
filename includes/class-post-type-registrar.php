@@ -114,13 +114,23 @@ class KSTB_Post_Type_Registrar {
 
         // rewrite設定の準備
         $rewrite = json_decode($post_type->rewrite, true);
-        if (empty($rewrite) || empty($rewrite['slug'])) {
+        if (empty($rewrite)) {
             $rewrite = array(
                 'slug' => $post_type->slug,
                 'with_front' => false,
                 'feeds' => true,
                 'pages' => true
             );
+        } else {
+            // slug は常に投稿タイプのslugを使用
+            $rewrite['slug'] = $post_type->slug;
+            // feeds と pages が未設定なら追加
+            if (!isset($rewrite['feeds'])) {
+                $rewrite['feeds'] = true;
+            }
+            if (!isset($rewrite['pages'])) {
+                $rewrite['pages'] = true;
+            }
         }
 
         // 親ディレクトリの設定を適用

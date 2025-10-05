@@ -17,9 +17,6 @@
 
             $('.kstb-tab-buttons a').on('click', this.switchTab);
 
-            $('#kstb-rewrite-enabled').on('change', this.toggleRewriteOptions);
-            $('input[name="show_in_rest"]').on('change', this.toggleRestOptions);
-
             $(document).on('input', '#kstb-label', this.updateLabelPreview);
         },
 
@@ -130,19 +127,8 @@
             } else {
                 $('select[name="parent_directory"]').val('');
             }
-            
-            $('input[name="hierarchical"]').prop('checked', data.hierarchical == 1);
-            $('input[name="show_in_rest"]').prop('checked', data.show_in_rest == 1);
-            $('input[name="capability_type"]').val(data.capability_type);
-            $('input[name="rest_base"]').val(data.rest_base);
 
-            $('input[name="rewrite[enabled]"]').prop('checked', data.rewrite !== false);
-            if (data.rewrite) {
-                $('input[name="rewrite[slug]"]').val(data.rewrite.slug);
-                $('input[name="rewrite[with_front]"]').prop('checked', data.rewrite.with_front);
-            }
-            $('#kstb-rewrite-enabled').trigger('change');
-            $('input[name="show_in_rest"]').trigger('change');
+            $('input[name="hierarchical"]').prop('checked', data.hierarchical == 1);
 
             $('input[name="supports[]"]').prop('checked', false);
             if (data.supports) {
@@ -243,22 +229,6 @@
 
             $('.kstb-tab-content').removeClass('active');
             $(target).addClass('active');
-        },
-
-        toggleRewriteOptions: function () {
-            if ($(this).is(':checked')) {
-                $('.kstb-rewrite-options').slideDown();
-            } else {
-                $('.kstb-rewrite-options').slideUp();
-            }
-        },
-
-        toggleRestOptions: function () {
-            if ($(this).is(':checked')) {
-                $('.kstb-rest-options').slideDown();
-            } else {
-                $('.kstb-rest-options').slideUp();
-            }
         },
 
         updateLabelPreview: function () {

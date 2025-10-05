@@ -5,6 +5,20 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-10-05
+
+### Changed
+- 管理画面UIのシンプル化：不要な設定項目を削除
+- リライトスラッグ設定を削除（常に投稿タイプIDを使用）
+- RESTベース設定を削除（常に投稿タイプIDを使用）
+- REST API設定を削除（常に有効）
+- 権限タイプ設定を削除（常に'post'を使用）
+- リライト設定を削除（常にきれいなURL、フロントベース無効）
+
+### Improved
+- 管理画面の操作性向上
+- WordPress現代標準に準拠した設定
+
 ## [1.0.1] - 2025-09-24
 
 ### Fixed

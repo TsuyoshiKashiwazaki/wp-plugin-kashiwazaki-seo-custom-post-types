@@ -79,7 +79,7 @@ class KSTB_Archive_Controller {
         }
 
         $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -161,7 +161,7 @@ class KSTB_Archive_Controller {
         }
 
         $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -344,7 +344,7 @@ class KSTB_Archive_Controller {
 
         // 現在のURLを取得
         $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -496,7 +496,7 @@ class KSTB_Archive_Controller {
 
         // 現在のURLを取得
         $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -621,7 +621,7 @@ class KSTB_Archive_Controller {
     private function handle_no_archive($slug) {
         // まず現在のURLパスを取得
         $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
 
         // 階層URLの場合はフルパスで検索

@@ -945,7 +945,8 @@ class KSTB_Parent_Selector {
         if ($status === 301) {
             // 現在のリクエストURLをチェック
             $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-            $current_path = trim(parse_url($request_uri, PHP_URL_PATH), '/');
+            $current_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+            $current_path = trim($current_path, '/');
             $path_parts = explode('/', $current_path);
 
             // /{parent_slug}/{post_type_slug}/{post_slug}/ のようなカスタム階層URLの場合
@@ -1269,7 +1270,8 @@ class KSTB_Parent_Selector {
         
         // 現在のURLパスを取得
         $current_url = $_SERVER['REQUEST_URI'];
-        $current_path = trim(parse_url($current_url, PHP_URL_PATH), '/');
+        $current_path = parse_url($current_url, PHP_URL_PATH) ?? '';
+        $current_path = trim($current_path, '/');
         $path_parts = explode('/', $current_path);
         
         // カスタム投稿タイプのシングルまたはアーカイブページの場合
@@ -1421,7 +1423,8 @@ class KSTB_Parent_Selector {
      */
     public function handle_hierarchy_request($query_vars) {
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        $path_parts = explode('/', trim(parse_url($request_uri, PHP_URL_PATH), '/'));
+        $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+        $path_parts = explode('/', trim($request_path, '/'));
 
         // 階層URL構造をチェック: /{parent_slug}/{post_type_slug}/{post_slug}/
         if (count($path_parts) >= 3) {
@@ -1458,7 +1461,8 @@ class KSTB_Parent_Selector {
      * 階層URLかどうかを判定
      */
     private function is_hierarchy_url($url) {
-        $path = trim(parse_url($url, PHP_URL_PATH), '/');
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+        $path = trim($path, '/');
         $path_parts = explode('/', $path);
 
         // 階層URL構造をチェック: /{parent_slug}/{post_type_slug}/{post_slug}/ または /{parent_slug}/{post_type_slug}/
@@ -1535,7 +1539,8 @@ class KSTB_Parent_Selector {
         echo "<!-- 階層URL判定: " . ($is_hierarchy ? 'YES' : 'NO') . " -->\n";
 
         if ($is_hierarchy) {
-            $path_parts = explode('/', trim(parse_url($request_uri, PHP_URL_PATH), '/'));
+            $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+            $path_parts = explode('/', trim($request_path, '/'));
             if (count($path_parts) >= 3) {
                 $parent_slug = $path_parts[0];
                 $post_type_slug = $path_parts[1];
@@ -1651,7 +1656,8 @@ class KSTB_Parent_Selector {
      */
     public function intercept_wordpress_parsing($do_parse, $wp, $extra_query_vars) {
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        $request_path = trim(parse_url($request_uri, PHP_URL_PATH), '/');
+        $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+        $request_path = trim($request_path, '/');
 
         // デバッグログは無効化
         // error_log("KSTB ALWAYS: intercept_wordpress_parsing called - URI: {$request_uri}");
@@ -1906,7 +1912,8 @@ class KSTB_Parent_Selector {
         }
 
         // /{POST_TYPE_SLUG}/{POST_SLUG}/ から /{PREFIX}/{POST_TYPE_SLUG}/{POST_SLUG}/ へのリダイレクトもブロック
-        $path_parts = explode('/', trim(parse_url($request_uri, PHP_URL_PATH), '/'));
+        $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+        $path_parts = explode('/', trim($request_path, '/'));
         if (count($path_parts) >= 3) {
             $parent_slug = $path_parts[0];
             $post_type_slug = $path_parts[1];
@@ -2003,7 +2010,8 @@ class KSTB_Parent_Selector {
 
             // 階層URLの場合は常にクエリを修正
             global $wp_query, $post;
-            $path_parts = explode('/', trim(parse_url($request_uri, PHP_URL_PATH), '/'));
+            $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+            $path_parts = explode('/', trim($request_path, '/'));
             if (count($path_parts) >= 2) {
                 $parent_slug = $path_parts[0];
                 $post_type_slug = $path_parts[1];
@@ -2331,7 +2339,8 @@ class KSTB_Parent_Selector {
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
 
         if ($this->is_hierarchy_url($request_uri)) {
-            $request_path = trim(parse_url($request_uri, PHP_URL_PATH), '/');
+            $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
+            $request_path = trim($request_path, '/');
             $path_parts = explode('/', $request_path);
 
             if (count($path_parts) >= 3) {

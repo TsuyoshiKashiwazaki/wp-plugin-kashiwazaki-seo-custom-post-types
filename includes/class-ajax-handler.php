@@ -107,13 +107,10 @@ class KSTB_Ajax_Handler {
 
         $supports = isset($_POST['supports']) && is_array($_POST['supports']) ? array_map('sanitize_key', $_POST['supports']) : array('title', 'editor');
 
-        $rewrite = false;
-        if (isset($_POST['rewrite']['enabled']) && $_POST['rewrite']['enabled']) {
-            $rewrite = array(
-                'slug' => isset($_POST['rewrite']['slug']) ? sanitize_key($_POST['rewrite']['slug']) : $slug,
-                'with_front' => isset($_POST['rewrite']['with_front']) ? (bool) $_POST['rewrite']['with_front'] : true
-            );
-        }
+        $rewrite = array(
+            'slug' => $slug,
+            'with_front' => false
+        );
 
         $taxonomies = isset($_POST['taxonomies']) && is_array($_POST['taxonomies']) ? array_map('sanitize_key', $_POST['taxonomies']) : array();
 
@@ -142,7 +139,7 @@ class KSTB_Ajax_Handler {
             'show_in_menu' => isset($_POST['show_in_menu']) ? (bool) $_POST['show_in_menu'] : true,
             'query_var' => isset($_POST['query_var']) ? (bool) $_POST['query_var'] : true,
             'rewrite' => $rewrite,
-            'capability_type' => isset($_POST['capability_type']) ? sanitize_key($_POST['capability_type']) : 'post',
+            'capability_type' => 'post',
             'has_archive' => $has_archive,
             'archive_display_type' => $archive_display_type,
             'archive_page_id' => $archive_page_id,
@@ -151,8 +148,8 @@ class KSTB_Ajax_Handler {
             'menu_position' => isset($_POST['menu_position']) && $_POST['menu_position'] !== '' ? intval($_POST['menu_position']) : null,
             'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field($_POST['menu_icon']) : null,
             'supports' => $supports,
-            'show_in_rest' => isset($_POST['show_in_rest']) ? (bool) $_POST['show_in_rest'] : true,
-            'rest_base' => isset($_POST['rest_base']) ? sanitize_key($_POST['rest_base']) : null,
+            'show_in_rest' => true,
+            'rest_base' => $slug,
             'taxonomies' => $taxonomies
         );
 
@@ -292,11 +289,14 @@ class KSTB_Ajax_Handler {
         
         // rewrite設定の準備
         $rewrite = json_decode($post_type->rewrite, true);
-        if (empty($rewrite) || empty($rewrite['slug'])) {
+        if (empty($rewrite)) {
             $rewrite = array(
                 'slug' => $post_type->slug,
                 'with_front' => false
             );
+        } else {
+            // slug は常に投稿タイプのslugを使用
+            $rewrite['slug'] = $post_type->slug;
         }
         
         // 親ディレクトリの設定を適用
@@ -314,14 +314,14 @@ class KSTB_Ajax_Handler {
             'show_in_menu' => (bool) $post_type->show_in_menu,
             'query_var' => (bool) $post_type->query_var,
             'rewrite' => $rewrite,
-            'capability_type' => $post_type->capability_type ?: 'post',
+            'capability_type' => 'post',
             'has_archive' => (bool) $post_type->has_archive,
             'hierarchical' => (bool) $post_type->hierarchical,
             'menu_position' => (int) $post_type->menu_position ?: 25,
             'menu_icon' => $post_type->menu_icon,
             'supports' => $supports,
-            'show_in_rest' => (bool) $post_type->show_in_rest,
-            'rest_base' => $post_type->rest_base ?: $post_type->slug
+            'show_in_rest' => true,
+            'rest_base' => $post_type->slug
         );
         
         // 投稿タイプを登録

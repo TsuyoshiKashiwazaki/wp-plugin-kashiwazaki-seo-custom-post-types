@@ -180,7 +180,7 @@ class KSTB_Database {
                 'show_ui' => (int) $data['show_ui'],
                 'show_in_menu' => (int) $data['show_in_menu'],
                 'query_var' => (int) $data['query_var'],
-                'rewrite' => !empty($data['rewrite']) ? json_encode($data['rewrite']) : json_encode(array('slug' => $data['slug'], 'with_front' => false)),
+                'rewrite' => json_encode(array('slug' => $data['slug'], 'with_front' => false)),
                 'capability_type' => sanitize_key($data['capability_type']),
                 'has_archive' => (int) $data['has_archive'],
                 'archive_display_type' => !empty($data['archive_display_type']) ? sanitize_text_field($data['archive_display_type']) : 'post_list',
@@ -191,7 +191,7 @@ class KSTB_Database {
                 'menu_icon' => !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null,
                 'supports' => json_encode($data['supports']),
                 'show_in_rest' => (int) $data['show_in_rest'],
-                'rest_base' => !empty($data['rest_base']) ? sanitize_key($data['rest_base']) : null,
+                'rest_base' => $data['slug'],
                 'taxonomies' => !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null
             )
         );
@@ -267,7 +267,7 @@ class KSTB_Database {
             $update_data['show_in_rest'] = (int) $data['show_in_rest'];
         }
         if (isset($data['rest_base'])) {
-            $update_data['rest_base'] = !empty($data['rest_base']) ? sanitize_key($data['rest_base']) : null;
+            $update_data['rest_base'] = $data['slug'];
         }
         if (isset($data['taxonomies'])) {
             $update_data['taxonomies'] = !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null;
