@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,11 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.3 =
+* Added: 親ページ選択メタボックスにスラッグ編集フィールドを追加
+* Improved: 階層構造のカスタム投稿タイプで親を選択してもスラッグが編集可能に
+* Improved: スラッグ入力時にリアルタイムで既存パネルと同期
+
 = 1.0.2 =
 * Changed: 管理画面UIのシンプル化（不要な設定項目を削除）
 * Improved: 操作性向上とWordPress現代標準への準拠
@@ -85,6 +90,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.3 =
+親ページを選択した状態でもスラッグを自由に編集できるようになりました
 
 = 1.0.2 =
 管理画面がよりシンプルで使いやすくなりました

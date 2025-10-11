@@ -102,11 +102,15 @@ class KSTB_Parent_Selector {
             if (post_type_exists($post_type->slug)) {
                 add_meta_box(
                     'kstb_parent_selector',
-                    '親ページ選択',
+                    '親ページ選択 & スラッグ編集',
                     array($this, 'render_parent_selector_metabox'),
                     $post_type->slug,
                     'side',
-                    'high'
+                    'high',
+                    array(
+                        '__block_editor_compatible_meta_box' => true,
+                        '__back_compat_meta_box' => false,
+                    )
                 );
             }
         }
@@ -116,6 +120,9 @@ class KSTB_Parent_Selector {
      * 親ページ選択メタボックスのHTMLを出力
      */
     public function render_parent_selector_metabox($post) {
+        // デバッグ用（開発時のみ表示、後で削除可能）
+        error_log('KSTB: render_parent_selector_metabox called for post ID ' . $post->ID);
+
         // ナンス追加
         wp_nonce_field('kstb_parent_selector_nonce', 'kstb_parent_selector_nonce');
 
@@ -130,8 +137,56 @@ class KSTB_Parent_Selector {
         // 選択可能な親ページを取得
         $available_parents = $this->get_available_parent_pages($post->ID);
 
+        // 現在のスラッグを取得
+        $current_slug = $post->post_name;
+
+        // 新規投稿の場合は空
+        if (empty($current_slug) && $post->post_status === 'auto-draft') {
+            $current_slug = '';
+        }
+
         ?>
+        <!-- KSTB DEBUG: Metabox is rendering -->
         <div class="kstb-parent-selector">
+            <!-- スラッグ編集フィールド -->
+            <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #ddd;">
+                <p style="margin-top: 0;">
+                    <label for="kstb_post_slug"><strong>スラッグ（URL）:</strong></label>
+                </p>
+                <input type="text" name="kstb_post_slug" id="kstb_post_slug" value="<?php echo esc_attr($current_slug); ?>" style="width: 100%; padding: 6px 8px;" placeholder="スラッグを入力" data-original-slug="<?php echo esc_attr($current_slug); ?>" oninput="kstbUpdateSlug(this.value)" />
+                <p class="description" style="margin-top: 5px; margin-bottom: 0;">
+                    URLに使用されるスラッグです。半角英数字とハイフンのみ使用できます。
+                </p>
+                <script>
+                function kstbUpdateSlug(newSlug) {
+                    // 既存パネルのスラッグテキストを更新
+                    document.querySelectorAll('.editor-post-link__link-post-name').forEach(function(el) {
+                        el.textContent = newSlug;
+                    });
+
+                    // 既存パネルのリンクURLを更新
+                    document.querySelectorAll('.editor-post-link__link').forEach(function(link) {
+                        if (link.href) {
+                            var parts = link.href.split('/');
+                            for (var i = parts.length - 1; i >= 0; i--) {
+                                if (parts[i] && parts[i] !== '') {
+                                    parts[i] = newSlug;
+                                    break;
+                                }
+                            }
+                            link.href = parts.join('/');
+                        }
+                    });
+
+                    // ブロックエディタのストアも更新
+                    if (typeof wp !== 'undefined' && wp.data) {
+                        wp.data.dispatch('core/editor').editPost({ slug: newSlug });
+                    }
+                }
+                </script>
+            </div>
+
+            <!-- 親ページ選択 -->
             <p>
                 <label for="kstb_parent_page_select">親ページを選択:</label>
             </p>
@@ -296,6 +351,22 @@ class KSTB_Parent_Selector {
         if (!$this->is_our_custom_post_type($post_type)) {
             unset($processing[$post_id]);
             return;
+        }
+
+        // スラッグを保存
+        if (isset($_POST['kstb_post_slug']) && !empty($_POST['kstb_post_slug'])) {
+            $new_slug = sanitize_title($_POST['kstb_post_slug']);
+            if (!empty($new_slug)) {
+                global $wpdb;
+                $wpdb->update(
+                    $wpdb->posts,
+                    array('post_name' => $new_slug),
+                    array('ID' => $post_id),
+                    array('%s'),
+                    array('%d')
+                );
+                clean_post_cache($post_id);
+            }
         }
 
         // 親ページIDを保存
@@ -478,7 +549,7 @@ class KSTB_Parent_Selector {
             return;
         }
 
-        // スタイルを直接出力（小さなCSSなので）
+        // スタイルとスクリプトを直接出力
         add_action('admin_head', function() {
             ?>
             <style>
@@ -495,6 +566,238 @@ class KSTB_Parent_Selector {
             }
             </style>
             <?php
+        });
+
+        // JavaScriptを安全に追加
+        add_action('admin_footer', function() {
+            ?>
+            <script>
+            (function() {
+                'use strict';
+
+                // クラシックエディタ用：スラッグ編集ボタンを強制的に表示
+                function forceShowSlugEditButton() {
+                    var editSlugButtons = document.getElementById('edit-slug-buttons');
+                    if (editSlugButtons) {
+                        editSlugButtons.style.display = 'inline';
+                        editSlugButtons.style.visibility = 'visible';
+                    }
+                }
+
+                // DOM読み込み完了後に実行（クラシックエディタ用）
+                document.addEventListener('DOMContentLoaded', function() {
+                    forceShowSlugEditButton();
+
+                    var parentSelector = document.getElementById('parent_id');
+                    if (parentSelector) {
+                        parentSelector.addEventListener('change', function() {
+                            setTimeout(forceShowSlugEditButton, 10);
+                        });
+                    }
+
+                    var editSlugButtons = document.getElementById('edit-slug-buttons');
+                    if (editSlugButtons) {
+                        var observer = new MutationObserver(function(mutations) {
+                            mutations.forEach(function(mutation) {
+                                if (mutation.type === 'attributes' &&
+                                    (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                                    forceShowSlugEditButton();
+                                }
+                            });
+                        });
+
+                        observer.observe(editSlugButtons, {
+                            attributes: true,
+                            attributeFilter: ['style', 'class']
+                        });
+
+                        setInterval(forceShowSlugEditButton, 500);
+                    }
+                });
+            })();
+            </script>
+            <?php
+        });
+
+        // ブロックエディタ用スクリプトを登録
+        add_action('enqueue_block_editor_assets', function() {
+            // より強力なCSSで強制表示
+            wp_add_inline_style('wp-edit-post', '
+                /* スラッグパネル全体を強制表示 */
+                .components-panel__body.is-opened .editor-post-link,
+                .editor-post-link,
+                .editor-post-link__link,
+                .editor-post-link__link-post-name,
+                .edit-post-post-link__link-post-name,
+                .components-external-link,
+                .editor-post-link .components-button,
+                button.components-button[aria-label*="変更"],
+                button.components-button[aria-label*="編集"] {
+                    display: inline-flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    pointer-events: auto !important;
+                }
+
+                /* スラッグ編集フォーム */
+                .editor-post-slug,
+                .editor-post-slug__input,
+                .editor-post-slug input[type="text"] {
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                }
+
+                /* パネル内のスラッグ行全体 */
+                .components-panel__row:has(.editor-post-link),
+                .edit-post-post-link {
+                    display: flex !important;
+                    visibility: visible !important;
+                }
+            ');
+
+            // より強力なJavaScript制御
+            $script = "
+(function(wp) {
+    if (!wp || !wp.data) return;
+
+    var editorStore = 'core/editor';
+    var editPostStore = 'core/edit-post';
+
+    // スラッグフィールドを強制表示する関数（より広範囲）
+    function forceShowSlugFields() {
+        // すべての可能性のあるセレクタをチェック
+        var selectors = [
+            '.editor-post-link',
+            '.editor-post-link__link',
+            '.editor-post-link__link-post-name',
+            '.edit-post-post-link__link-post-name',
+            'button[aria-label*=\"変更\"]',
+            'button[aria-label*=\"編集\"]',
+            '.editor-post-slug',
+            '.editor-post-slug__input'
+        ];
+
+        selectors.forEach(function(selector) {
+            var elements = document.querySelectorAll(selector);
+            elements.forEach(function(el) {
+                if (el) {
+                    el.style.display = el.tagName === 'BUTTON' || el.tagName === 'A' ? 'inline-flex' : 'block';
+                    el.style.visibility = 'visible';
+                    el.style.opacity = '1';
+
+                    // disabled属性を削除
+                    if (el.hasAttribute('disabled')) {
+                        el.removeAttribute('disabled');
+                    }
+                    if (el.hasAttribute('readonly')) {
+                        el.removeAttribute('readonly');
+                    }
+                }
+            });
+        });
+
+        // スラッグパネル全体を表示
+        var slugPanels = document.querySelectorAll('.components-panel__row');
+        slugPanels.forEach(function(panel) {
+            if (panel.textContent.includes('スラッグ') || panel.querySelector('.editor-post-link')) {
+                panel.style.display = 'flex';
+                panel.style.visibility = 'visible';
+            }
+        });
+    }
+
+    // DOMの準備完了を待つ
+    wp.domReady(function() {
+        // 即座に実行
+        setTimeout(forceShowSlugFields, 100);
+
+        // 頻繁にチェック（最初の10秒間）
+        var intensiveChecks = 0;
+        var intensiveInterval = setInterval(function() {
+            forceShowSlugFields();
+            intensiveChecks++;
+            if (intensiveChecks > 20) {
+                clearInterval(intensiveInterval);
+            }
+        }, 500);
+
+        // その後は定期的にチェック
+        setInterval(forceShowSlugFields, 2000);
+
+        // MutationObserverでDOM変更を監視（より広範囲）
+        var observer = new MutationObserver(function(mutations) {
+            var shouldCheck = false;
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                    shouldCheck = true;
+                }
+            });
+            if (shouldCheck) {
+                forceShowSlugFields();
+            }
+        });
+
+        // body全体を監視（より確実に）
+        var targetNode = document.querySelector('.edit-post-layout') || document.body;
+        observer.observe(targetNode, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class', 'hidden', 'disabled']
+        });
+
+        // サイドバーの開閉を監視
+        if (wp.data.subscribe) {
+            var previousIsOpen = null;
+            wp.data.subscribe(function() {
+                var isOpen = wp.data.select(editPostStore) &&
+                             wp.data.select(editPostStore).isEditorSidebarOpened();
+
+                if (isOpen !== previousIsOpen) {
+                    previousIsOpen = isOpen;
+                    setTimeout(forceShowSlugFields, 100);
+                }
+            });
+        }
+
+        // カスタムスラッグフィールドをリアルタイムでブロックエディタに同期
+        var kstbInitSlugSync = setInterval(function() {
+            if (typeof wp === 'undefined' || !wp.data) return;
+
+            var slugField = document.getElementById('kstb_post_slug');
+            if (!slugField) return;
+
+            clearInterval(kstbInitSlugSync);
+
+            // 入力時にストアを更新
+            slugField.addEventListener('input', function() {
+                var newSlug = slugField.value;
+                if (newSlug) {
+                    // ブロックエディタのストアを即座に更新
+                    wp.data.dispatch('core/editor').editPost({ slug: newSlug });
+                }
+            });
+
+            // changeイベントでも更新
+            slugField.addEventListener('change', function() {
+                var newSlug = slugField.value;
+                if (newSlug) {
+                    wp.data.dispatch('core/editor').editPost({ slug: newSlug });
+                }
+            });
+
+            // 初回ロード時にも同期
+            var currentSlug = slugField.value;
+            if (currentSlug) {
+                wp.data.dispatch('core/editor').editPost({ slug: currentSlug });
+            }
+        }, 200);
+    });
+})(window.wp);
+            ";
+
+            wp_add_inline_script('wp-edit-post', $script);
         });
     }
 

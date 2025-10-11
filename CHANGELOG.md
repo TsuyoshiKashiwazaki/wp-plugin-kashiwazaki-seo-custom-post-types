@@ -5,6 +5,15 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-10-11
+
+### Added
+- 親ページ選択メタボックスにスラッグ編集フィールドを追加
+
+### Improved
+- 階層構造のカスタム投稿タイプで親を選択してもスラッグが編集可能に
+- スラッグ入力時にリアルタイムで既存パネルと同期
+
 ## [1.0.2] - 2025-10-05
 
 ### Changed
