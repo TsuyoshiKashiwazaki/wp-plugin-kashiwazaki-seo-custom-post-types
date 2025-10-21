@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,10 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.4 =
+* Fixed: 3階層ネストされたカスタム投稿タイプのアーカイブページで404エラーが発生する問題を修正
+* Improved: URL検証ロジックで再帰的なフルパス構築に対応
+
 = 1.0.3 =
 * Added: 親ページ選択メタボックスにスラッグ編集フィールドを追加
 * Improved: 階層構造のカスタム投稿タイプで親を選択してもスラッグが編集可能に
@@ -90,6 +94,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.4 =
+3階層以上のネストされたカスタム投稿タイプのアーカイブページが正しく表示されるようになりました
 
 = 1.0.3 =
 親ページを選択した状態でもスラッグを自由に編集できるようになりました

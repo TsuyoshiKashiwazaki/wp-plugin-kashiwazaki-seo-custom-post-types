@@ -29,6 +29,52 @@ class KSTB_Post_Type_Registrar {
         add_filter('bulk_post_updated_messages', array($this, 'custom_bulk_post_updated_messages'), 10, 2);
     }
 
+    /**
+     * カスタム投稿タイプのフルパスを再帰的に構築
+     */
+    private function build_full_path($slug) {
+        $post_type = KSTB_Database::get_post_type_by_slug($slug);
+        if (!$post_type || empty($post_type->parent_directory)) {
+            return $slug;
+        }
+
+        $parent = trim($post_type->parent_directory, '/');
+
+        // 親がカスタム投稿タイプかチェック
+        $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
+        if ($parent_post_type) {
+            // 親のフルパスを再帰的に取得
+            $parent_path = $this->build_full_path($parent);
+            return $parent_path . '/' . $slug;
+        }
+
+        // 親がカスタム投稿タイプでない場合（通常のディレクトリ）
+        return $parent . '/' . $slug;
+    }
+
+    /**
+     * フルパスを構築（静的メソッド版）
+     */
+    public static function build_full_path_static($slug) {
+        $post_type = KSTB_Database::get_post_type_by_slug($slug);
+        if (!$post_type || empty($post_type->parent_directory)) {
+            return $slug;
+        }
+
+        $parent = trim($post_type->parent_directory, '/');
+
+        // 親がカスタム投稿タイプかチェック
+        $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
+        if ($parent_post_type) {
+            // 親のフルパスを再帰的に取得
+            $parent_path = self::build_full_path_static($parent);
+            return $parent_path . '/' . $slug;
+        }
+
+        // 親がカスタム投稿タイプでない場合（通常のディレクトリ）
+        return $parent . '/' . $slug;
+    }
+
             public function register_post_types() {
         $post_types = KSTB_Database::get_all_post_types();
 
@@ -135,9 +181,9 @@ class KSTB_Post_Type_Registrar {
 
         // 親ディレクトリの設定を適用
         if (!empty($post_type->parent_directory)) {
-            $parent_dir = trim($post_type->parent_directory, '/');
-            // 親ディレクトリを含めたスラッグに変更
-            $rewrite['slug'] = $parent_dir . '/' . $post_type->slug;
+            // フルパスを再帰的に構築
+            $full_path = $this->build_full_path($post_type->slug);
+            $rewrite['slug'] = $full_path;
             // with_frontを強制的にfalseにして、余計なプレフィックスを防ぐ
             $rewrite['with_front'] = false;
         }

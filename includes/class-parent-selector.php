@@ -1583,18 +1583,19 @@ class KSTB_Parent_Selector {
             if (!$post_type) {
                 $post_type = get_query_var('post_type');
             }
-            
+
             if ($post_type) {
                 // データベースから投稿タイプの設定を取得
                 $post_type_data = KSTB_Database::get_post_type_by_slug($post_type);
-                
+
                 if ($post_type_data) {
                     // 親ディレクトリが設定されている場合
                     if (!empty($post_type_data->parent_directory)) {
-                        $parent_dir = trim($post_type_data->parent_directory, '/');
-                        
-                        // 親ディレクトリなしのパスでアクセスしている場合
-                        if (strpos($current_path, $parent_dir . '/' . $post_type) !== 0) {
+                        // フルパスを構築（再帰的に親を辿る）
+                        $full_path = KSTB_Post_Type_Registrar::build_full_path_static($post_type);
+
+                        // フルパスで始まっているかチェック
+                        if (strpos($current_path, $full_path) !== 0) {
                             // 404を返す
                             $wp_query->set_404();
                             status_header(404);
@@ -1763,35 +1764,101 @@ class KSTB_Parent_Selector {
     /**
      * 階層URLかどうかを判定
      */
+    /**
+     * カスタム投稿タイプのフルパスを構築（KSTB_Post_Type_Registrarと同じロジック）
+     */
+    private function build_full_path($slug) {
+        $post_type = KSTB_Database::get_post_type_by_slug($slug);
+        if (!$post_type || empty($post_type->parent_directory)) {
+            return $slug;
+        }
+
+        $parent = trim($post_type->parent_directory, '/');
+
+        // 親がカスタム投稿タイプかチェック
+        $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
+        if ($parent_post_type) {
+            // 親のフルパスを再帰的に取得
+            $parent_path = $this->build_full_path($parent);
+            return $parent_path . '/' . $slug;
+        }
+
+        // 親がカスタム投稿タイプでない場合（通常のディレクトリ）
+        return $parent . '/' . $slug;
+    }
+
+    /**
+     * URLパスから該当するカスタム投稿タイプを特定する
+     *
+     * @param array $path_parts URLパスの配列
+     * @return array|false カスタム投稿タイプ情報 ['post_type' => object, 'index' => int, 'parent_path' => string] または false
+     */
+    private function identify_custom_post_type_from_path($path_parts) {
+        if (empty($path_parts)) {
+            return false;
+        }
+
+        $custom_post_types = KSTB_Database::get_all_post_types();
+        if (empty($custom_post_types)) {
+            return false;
+        }
+
+        $path_string = implode('/', $path_parts);
+        $best_match = false;
+        $best_match_length = 0;
+
+        // 各カスタム投稿タイプのフルパスを構築してマッチング（最も長いマッチを優先）
+        foreach ($custom_post_types as $post_type) {
+            $full_path = $this->build_full_path($post_type->slug);
+            $full_path_parts = explode('/', $full_path);
+
+            // URLパスの先頭部分と比較
+            $match = true;
+            for ($i = 0; $i < count($full_path_parts); $i++) {
+                if (!isset($path_parts[$i]) || $path_parts[$i] !== $full_path_parts[$i]) {
+                    $match = false;
+                    break;
+                }
+            }
+
+            if ($match && count($full_path_parts) > $best_match_length) {
+                $best_match_length = count($full_path_parts);
+                $best_match = [
+                    'post_type' => $post_type,
+                    'index' => count($full_path_parts) - 1,  // カスタム投稿タイプのスラッグ位置
+                    'parent_path' => implode('/', array_slice($full_path_parts, 0, -1))
+                ];
+            }
+        }
+
+        return $best_match;
+    }
+
     private function is_hierarchy_url($url) {
         $path = parse_url($url, PHP_URL_PATH) ?? '';
         $path = trim($path, '/');
         $path_parts = explode('/', $path);
 
-        // 階層URL構造をチェック: /{parent_slug}/{post_type_slug}/{post_slug}/ または /{parent_slug}/{post_type_slug}/
-        if (count($path_parts) >= 2) {
-            $parent_slug = $path_parts[0];
-            $post_type_slug = $path_parts[1];
-            $post_slug = isset($path_parts[2]) ? $path_parts[2] : null;
+        // 階層URLを汎用的に処理
+        if (count($path_parts) >= 1) {
+            // URLパスから該当するカスタム投稿タイプを特定
+            $result = $this->identify_custom_post_type_from_path($path_parts);
 
-            // カスタム投稿タイプかどうか確認
-            if ($this->is_custom_post_type_slug($post_type_slug)) {
-                if ($post_slug) {
-                    // 個別投稿の場合：投稿が存在するか確認
-                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+            if ($result) {
+                $post_type = $result['post_type'];
+                $post_type_index = $result['index'];
+
+                // カスタム投稿タイプの後に続く部分を確認
+                if (isset($path_parts[$post_type_index + 1])) {
+                    // 個別投稿の可能性
+                    $post_slug = $path_parts[$post_type_index + 1];
+                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type->slug);
                     if ($found_post) {
-                        // 親ページ関係を確認
-                        $parent = self::get_parent_page($found_post->ID);
-                        if ($parent && $parent->post_name === $parent_slug) {
-                            return true;
-                        }
-                    }
-                } else {
-                    // アーカイブページの場合：親ページが存在するか確認
-                    $parent_page = get_page_by_path($parent_slug);
-                    if ($parent_page) {
                         return true;
                     }
+                } else {
+                    // アーカイブページ
+                    return true;
                 }
             }
         }
@@ -2285,18 +2352,35 @@ class KSTB_Parent_Selector {
                 $wp_query->is_archive = true;
                 $wp_query->is_post_type_archive = true;
 
-                // カスタム投稿タイプの投稿一覧を取得
-                $archive_posts = get_posts(array(
+                // カスタム投稿タイプを設定
+                $wp_query->set('post_type', $post_type_slug);
+
+                // カスタム投稿タイプオブジェクトを設定
+                $post_type_obj = get_post_type_object($post_type_slug);
+                if ($post_type_obj) {
+                    $wp_query->queried_object = $post_type_obj;
+                    $wp_query->queried_object_id = 0;
+                }
+
+                // 現在のページ番号を取得
+                $paged = get_query_var('paged') ? get_query_var('paged') : 1;
+                $posts_per_page = get_option('posts_per_page', 10);
+
+                // WP_Queryを使用してページネーション対応のクエリを実行
+                $archive_query = new WP_Query(array(
                     'post_type' => $post_type_slug,
-                    'posts_per_page' => get_option('posts_per_page', 10),
+                    'posts_per_page' => $posts_per_page,
+                    'paged' => $paged,
                     'post_status' => 'publish'
                 ));
 
-                $wp_query->posts = $archive_posts;
-                $wp_query->post_count = count($archive_posts);
-                $wp_query->found_posts = count($archive_posts);
-                $wp_query->max_num_pages = 1;
+                // WP_Queryの結果を$wp_queryに反映
+                $wp_query->posts = $archive_query->posts;
+                $wp_query->post_count = $archive_query->post_count;
+                $wp_query->found_posts = $archive_query->found_posts;
+                $wp_query->max_num_pages = $archive_query->max_num_pages;
                 $wp_query->current_post = -1;
+                $wp_query->set('paged', $paged);
                 
             // error_log("KSTB FINAL DEFENSE: Displaying post list for archive {$post_type_slug}");
             }
@@ -2315,18 +2399,27 @@ class KSTB_Parent_Selector {
             global $wp_query, $post;
             $request_path = parse_url($request_uri, PHP_URL_PATH) ?? '';
             $path_parts = explode('/', trim($request_path, '/'));
-            if (count($path_parts) >= 2) {
-                $parent_slug = $path_parts[0];
-                $post_type_slug = $path_parts[1];
-                $post_slug = isset($path_parts[2]) ? $path_parts[2] : null;
 
-                if ($this->is_custom_post_type_slug($post_type_slug)) {
+            // URLパスから該当するカスタム投稿タイプを特定
+            $result = $this->identify_custom_post_type_from_path($path_parts);
+
+            if ($result) {
+                $post_type_data = $result['post_type'];
+                $post_type_slug = $post_type_data->slug;
+                $post_type_index = $result['index'];
+                $parent_path = $result['parent_path'];
+
+                // parent_pathから最後のスラッグを取得（複数階層の場合に対応）
+                $parent_slug = !empty($parent_path) ? basename($parent_path) : '';
+
+                // カスタム投稿タイプの後に続く部分を確認
+                $post_slug = isset($path_parts[$post_type_index + 1]) ? $path_parts[$post_type_index + 1] : null;
                     if ($post_slug) {
                         // 個別投稿の処理
                         $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
                         if ($found_post) {
-                            $parent = self::get_parent_page($found_post->ID);
-                            if ($parent && $parent->post_name === $parent_slug) {
+                            // URLパスとカスタム投稿タイプの設定が一致していれば有効
+                            // （すでにidentify_custom_post_type_from_pathで検証済み）
                             // メインクエリを強制修正
                             $wp_query->is_404 = false;
                             $wp_query->is_single = true;
@@ -2362,7 +2455,6 @@ class KSTB_Parent_Selector {
                             add_action('wp_head', function() use ($found_post) {
                                 echo "<!-- KSTB TEMPLATE SUCCESS: Main query fixed for post {$found_post->ID} -->\n";
                             }, 10);
-                            }
                         }
                     } else {
                         // アーカイブページの処理
@@ -2403,27 +2495,37 @@ class KSTB_Parent_Selector {
                         if ($archive_settings['display_type'] === 'post_list') {
                             // 投稿一覧を表示する場合
                             $wp_query->is_archive = true;
-                            $wp_query->is_post_type_archive = false;
+                            $wp_query->is_post_type_archive = true;
 
-                            // 親ページが存在するかチェック
-                            $parent_page = get_page_by_path($parent_slug);
-                            if ($parent_page) {
-                                $wp_query->queried_object = $parent_page;
-                                $wp_query->queried_object_id = $parent_page->ID;
+                            // カスタム投稿タイプを設定
+                            $wp_query->set('post_type', $post_type_slug);
+
+                            // カスタム投稿タイプオブジェクトを設定
+                            $post_type_obj = get_post_type_object($post_type_slug);
+                            if ($post_type_obj) {
+                                $wp_query->queried_object = $post_type_obj;
+                                $wp_query->queried_object_id = 0;
                             }
 
-                            // カスタム投稿タイプの投稿一覧を取得
-                            $archive_posts = get_posts(array(
+                            // 現在のページ番号を取得
+                            $paged = get_query_var('paged') ? get_query_var('paged') : 1;
+                            $posts_per_page = get_option('posts_per_page', 10);
+
+                            // WP_Queryを使用してページネーション対応のクエリを実行
+                            $archive_query = new WP_Query(array(
                                 'post_type' => $post_type_slug,
-                                'posts_per_page' => get_option('posts_per_page', 10),
+                                'posts_per_page' => $posts_per_page,
+                                'paged' => $paged,
                                 'post_status' => 'publish'
                             ));
 
-                            $wp_query->posts = $archive_posts;
-                            $wp_query->post_count = count($archive_posts);
-                            $wp_query->found_posts = count($archive_posts);
-                            $wp_query->max_num_pages = 1;
+                            // WP_Queryの結果を$wp_queryに反映
+                            $wp_query->posts = $archive_query->posts;
+                            $wp_query->post_count = $archive_query->post_count;
+                            $wp_query->found_posts = $archive_query->found_posts;
+                            $wp_query->max_num_pages = $archive_query->max_num_pages;
                             $wp_query->current_post = -1;
+                            $wp_query->set('paged', $paged);
                             
             // error_log("KSTB FINAL DEFENSE: Displaying post list for archive {$post_type_slug}");
                         }
@@ -2457,7 +2559,6 @@ class KSTB_Parent_Selector {
                 }
             }
         }
-    }
 
     /**
      * 最も早い段階でのリダイレクト防止

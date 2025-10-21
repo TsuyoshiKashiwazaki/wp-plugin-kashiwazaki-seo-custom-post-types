@@ -37,21 +37,41 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * カスタム投稿タイプのフルパスを再帰的に構築
+     */
+    private function build_full_path_for_post_type($post_type) {
+        if (empty($post_type->parent_directory)) {
+            return $post_type->slug;
+        }
+
+        $parent_dir = trim($post_type->parent_directory, '/');
+
+        // 親ディレクトリが別のカスタム投稿タイプかチェック
+        $all_post_types = KSTB_Database::get_all_post_types();
+        foreach ($all_post_types as $other_type) {
+            if ($other_type->slug === $parent_dir) {
+                // 親のフルパスを再帰的に取得
+                $parent_path = $this->build_full_path_for_post_type($other_type);
+                return $parent_path . '/' . $post_type->slug;
+            }
+        }
+
+        // 通常のディレクトリ
+        return $parent_dir . '/' . $post_type->slug;
+    }
+
+    /**
      * リライトルールをフィルタリング
      */
     public function filter_rewrite_rules($rules) {
         $post_types = KSTB_Database::get_all_post_types();
 
         foreach ($post_types as $post_type) {
+            // フルパスを再帰的に構築
+            $pattern = $this->build_full_path_for_post_type($post_type);
+
             if (!$post_type->has_archive) {
                 // アーカイブが無効の場合、アーカイブ関連のリライトルールを削除
-                $pattern = $post_type->slug;
-                if (!empty($post_type->parent_directory)) {
-                    $parent_dir = trim($post_type->parent_directory, '/');
-                    $pattern = $parent_dir . '/' . $post_type->slug;
-                }
-
-                // アーカイブページのルールを削除
                 $pattern = preg_quote($pattern, '/');
                 foreach ($rules as $rule => $query) {
                     if (preg_match('/^' . $pattern . '\/?\$/', $rule)) {
@@ -63,6 +83,15 @@ class KSTB_Archive_Controller {
                     if (preg_match('/^' . $pattern . '\/page/', $rule)) {
                         unset($rules[$rule]);
                     }
+                }
+            } else {
+                // アーカイブが有効な場合、ページネーション用のルールを追加/保持
+                $pattern_escaped = preg_quote($pattern, '/');
+
+                // ページネーション用のルールが存在しない場合は追加
+                $page_rule = $pattern . '/page/?([0-9]{1,})/?$';
+                if (!isset($rules[$page_rule])) {
+                    $rules[$page_rule] = 'index.php?post_type=' . $post_type->slug . '&paged=$matches[1]';
                 }
             }
         }
