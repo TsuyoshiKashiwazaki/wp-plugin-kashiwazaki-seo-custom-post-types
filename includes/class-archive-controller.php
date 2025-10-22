@@ -29,6 +29,24 @@ class KSTB_Archive_Controller {
         // parseリクエスト時に制御
         add_action('parse_request', array($this, 'handle_request'), 1);
 
+        // parse_queryで queried_object を修正（最優先）
+        add_action('parse_query', array($this, 'fix_queried_object'), 1);
+
+        // wpアクションでも修正（テンプレート読み込み直前）
+        add_action('wp', array($this, 'fix_queried_object_on_wp'), 1);
+
+        // template_includeフィルタでテンプレート直前にも修正
+        add_filter('template_include', array($this, 'fix_queried_object_before_template'), 1);
+
+        // get_headerアクションでheader.php読み込み直前にも修正
+        add_action('get_header', array($this, 'fix_queried_object_on_wp'), 0);
+
+        // get_queried_objectフィルターで強制修正
+        add_filter('get_queried_object', array($this, 'filter_queried_object'), 1);
+
+        // WP_Post_Type関連のエラーを抑制
+        add_action('init', array($this, 'suppress_post_type_errors'), 1);
+
         // pre_get_postsでクエリを制御（最後に実行）
         add_action('pre_get_posts', array($this, 'control_query'), 999);
 
@@ -118,46 +136,99 @@ class KSTB_Archive_Controller {
         $segments = explode('/', $uri);
         $post_types = KSTB_Database::get_all_post_types();
 
+        // 最も長いパスにマッチする投稿タイプを見つける
+        $best_match = null;
+        $best_match_length = 0;
+        $best_match_is_subdir = false;
+
         foreach ($post_types as $post_type) {
             $matches = false;
             $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type->parent_directory)) {
-                $parent = trim($post_type->parent_directory, '/');
-                if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type->slug) {
-                    if (count($segments) === 2) {
-                        // スラッグトップページ
-                        $matches = true;
-                    } elseif (count($segments) > 2) {
-                        // スラッグ以下のサブディレクトリ
-                        $is_subdir = true;
+                // フルパスを再帰的に構築
+                $full_path = $this->build_full_path_for_post_type($post_type);
+                $full_segments = explode('/', $full_path);
+
+                // 現在のURLがフルパスと一致するかチェック
+                if (count($segments) >= count($full_segments)) {
+                    $path_matches = true;
+                    for ($i = 0; $i < count($full_segments); $i++) {
+                        if ($segments[$i] !== $full_segments[$i]) {
+                            $path_matches = false;
+                            break;
+                        }
+                    }
+
+                    if ($path_matches) {
+                        $match_length = count($full_segments);
+                        if (count($segments) === count($full_segments)) {
+                            // スラッグトップページ
+                            if ($match_length > $best_match_length) {
+                                $best_match = $post_type;
+                                $best_match_length = $match_length;
+                                $best_match_is_subdir = false;
+                            }
+                        } elseif (count($segments) > count($full_segments)) {
+                            // スラッグ以下のサブディレクトリ
+                            if ($match_length > $best_match_length) {
+                                $best_match = $post_type;
+                                $best_match_length = $match_length;
+                                $best_match_is_subdir = true;
+                            }
+                        }
                     }
                 }
             }
             // 単純URLの場合
             elseif ($segments[0] === $post_type->slug) {
+                $match_length = 1;
                 if (count($segments) === 1) {
                     // スラッグトップページ
-                    $matches = true;
+                    if ($match_length > $best_match_length) {
+                        $best_match = $post_type;
+                        $best_match_length = $match_length;
+                        $best_match_is_subdir = false;
+                    }
                 } elseif (count($segments) > 1) {
                     // スラッグ以下のサブディレクトリ
-                    $is_subdir = true;
+                    if ($match_length > $best_match_length) {
+                        $best_match = $post_type;
+                        $best_match_length = $match_length;
+                        $best_match_is_subdir = true;
+                    }
                 }
             }
+        }
+
+        // 最適なマッチが見つかった場合の処理
+        if ($best_match) {
+            $post_type = $best_match;
+            $is_subdir = $best_match_is_subdir;
+            $matches = !$is_subdir;
 
             // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type->has_archive) {
-                // 同じパスに固定ページが存在するかチェック
-                $page = get_page_by_path($uri);
+                // 「表示しない」の場合は何もしない（404にする）
+                if (isset($post_type->archive_display_type) && $post_type->archive_display_type === 'none') {
+                    // 何も返さない（404になる）
+                    return $query_vars;
+                }
 
-                if ($page && $page->post_status === 'publish') {
-                    // 固定ページとして処理するクエリ変数を返す
-                    return array(
-                        'pagename' => $uri,
-                        'page' => '',
-                        'post_type' => 'page'
-                    );
+                // 「指定なし」の場合のみ固定ページを探す
+                if (!isset($post_type->archive_display_type) || $post_type->archive_display_type === 'default') {
+                    // 同じパスに固定ページが存在するかチェック
+                    $page = get_page_by_path($uri);
+
+                    if ($page && $page->post_status === 'publish') {
+                        // 固定ページとして処理するクエリ変数を返す
+                        return array(
+                            'pagename' => $uri,
+                            'page' => '',
+                            'post_type' => 'page'
+                        );
+                    }
                 }
             }
 
@@ -264,59 +335,113 @@ class KSTB_Archive_Controller {
         // カスタム投稿タイプかチェック
         $post_types = KSTB_Database::get_all_post_types();
 
+        // 最も長いパスにマッチする投稿タイプを見つける
+        $best_match = null;
+        $best_match_length = 0;
+        $best_match_is_subdir = false;
+
         foreach ($post_types as $post_type) {
             $matches = false;
             $is_subdir = false;
 
             // 階層URLの場合
             if (!empty($post_type->parent_directory)) {
-                $parent = trim($post_type->parent_directory, '/');
-                if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type->slug) {
-                    if (count($segments) === 2) {
-                        // スラッグトップページ
-                        $matches = true;
-                    } elseif (count($segments) > 2) {
-                        // スラッグ以下のサブディレクトリ
-                        $is_subdir = true;
+                // フルパスを再帰的に構築
+                $full_path = $this->build_full_path_for_post_type($post_type);
+                $full_segments = explode('/', $full_path);
+
+                // 現在のURLがフルパスと一致するかチェック
+                if (count($segments) >= count($full_segments)) {
+                    $path_matches = true;
+                    for ($i = 0; $i < count($full_segments); $i++) {
+                        if ($segments[$i] !== $full_segments[$i]) {
+                            $path_matches = false;
+                            break;
+                        }
+                    }
+
+                    if ($path_matches) {
+                        $match_length = count($full_segments);
+                        if (count($segments) === count($full_segments)) {
+                            // スラッグトップページ
+                            if ($match_length > $best_match_length) {
+                                $best_match = $post_type;
+                                $best_match_length = $match_length;
+                                $best_match_is_subdir = false;
+                            }
+                        } elseif (count($segments) > count($full_segments)) {
+                            // スラッグ以下のサブディレクトリ
+                            if ($match_length > $best_match_length) {
+                                $best_match = $post_type;
+                                $best_match_length = $match_length;
+                                $best_match_is_subdir = true;
+                            }
+                        }
                     }
                 }
             }
             // 単純URLの場合
             elseif ($segments[0] === $post_type->slug) {
+                $match_length = 1;
                 if (count($segments) === 1) {
                     // スラッグトップページ
-                    $matches = true;
+                    if ($match_length > $best_match_length) {
+                        $best_match = $post_type;
+                        $best_match_length = $match_length;
+                        $best_match_is_subdir = false;
+                    }
                 } elseif (count($segments) > 1) {
                     // スラッグ以下のサブディレクトリ
-                    $is_subdir = true;
+                    if ($match_length > $best_match_length) {
+                        $best_match = $post_type;
+                        $best_match_length = $match_length;
+                        $best_match_is_subdir = true;
+                    }
                 }
             }
+        }
+
+        // 最適なマッチが見つかった場合の処理
+        if ($best_match) {
+            $post_type = $best_match;
+            $is_subdir = $best_match_is_subdir;
+            $matches = !$is_subdir;
 
             // スラッグトップページの処理
             if ($matches) {
                 if (!$post_type->has_archive) {
-                    // 同じパスに固定ページが存在するかチェック
-                    $page = get_page_by_path($request);
-
-                    if ($page && $page->post_status === 'publish') {
-                        // 固定ページが存在する場合は明示的に固定ページを表示
-                        $wp->query_vars = array(
-                            'pagename' => $request,
-                            'page' => '',
-                            'name' => '',
-                            'post_type' => 'page'
-                        );
-                        // カスタム投稿タイプ関連のクエリ変数を削除
-                        unset($wp->query_vars[$post_type->slug]);
-                        unset($wp->query_vars['post_type']);
+                    // 「表示しない」の場合は常に404
+                    if (isset($post_type->archive_display_type) && $post_type->archive_display_type === 'none') {
+                        $wp->query_vars = array('error' => '404');
                         $this->processed = true;
                         return;
                     }
 
-                    // 固定ページが存在しない場合のみ404にする
-                    $wp->query_vars = array('error' => '404');
-                    $this->processed = true;
-                    return;
+                    // 「指定なし」の場合のみ固定ページを探す
+                    if (!isset($post_type->archive_display_type) || $post_type->archive_display_type === 'default') {
+                        // 同じパスに固定ページが存在するかチェック
+                        $page = get_page_by_path($request);
+
+                        if ($page && $page->post_status === 'publish') {
+                            // 固定ページが存在する場合は明示的に固定ページを表示
+                            $wp->query_vars = array(
+                                'pagename' => $request,
+                                'page' => '',
+                                'name' => '',
+                                'post_type' => 'page'
+                            );
+                            // カスタム投稿タイプ関連のクエリ変数を削除
+                            unset($wp->query_vars[$post_type->slug]);
+                            unset($wp->query_vars['post_type']);
+                            $this->processed = true;
+                            return;
+                        }
+
+                        // 固定ページが存在しない場合のみ404にする
+                        $wp->query_vars = array('error' => '404');
+                        $this->processed = true;
+                        return;
+                    }
                 } elseif ($post_type->archive_display_type === 'custom_page' && $post_type->archive_page_id) {
                     // カスタムページを表示
                     $wp->query_vars = array(
@@ -364,6 +489,82 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * queried_objectがWP_Post_Typeの場合に修正
+     */
+    public function fix_queried_object($query) {
+        if (is_admin() || !$query->is_main_query()) {
+            return;
+        }
+
+        // queried_objectがWP_Post_Typeの場合はクリア
+        if (isset($query->queried_object) && $query->queried_object instanceof WP_Post_Type) {
+            $query->queried_object = null;
+            $query->queried_object_id = null;
+        }
+    }
+
+    /**
+     * wpアクションでqueried_objectを修正
+     */
+    public function fix_queried_object_on_wp() {
+        global $wp_query;
+
+        if (is_admin()) {
+            return;
+        }
+
+        // queried_objectがWP_Post_Typeの場合はクリア
+        if (isset($wp_query->queried_object) && $wp_query->queried_object instanceof WP_Post_Type) {
+            $wp_query->queried_object = null;
+            $wp_query->queried_object_id = null;
+        }
+    }
+
+    /**
+     * WP_Post_Type関連のエラーを抑制
+     */
+    public function suppress_post_type_errors() {
+        if (!is_admin()) {
+            set_error_handler(function($errno, $errstr, $errfile, $errline) {
+                // WP_Post_Typeの未定義プロパティエラーを抑制
+                if (strpos($errstr, 'WP_Post_Type') !== false &&
+                    (strpos($errstr, '$ID') !== false ||
+                     strpos($errstr, '$post_title') !== false ||
+                     strpos($errstr, '$post_name') !== false)) {
+                    return true; // エラーを抑制
+                }
+                return false; // 他のエラーは通常通り処理
+            }, E_WARNING | E_NOTICE);
+        }
+    }
+
+    /**
+     * get_queried_objectフィルターでWP_Post_Typeを除外
+     */
+    public function filter_queried_object($queried_object) {
+        // WP_Post_Typeの場合はnullを返す
+        if ($queried_object instanceof WP_Post_Type) {
+            return null;
+        }
+        return $queried_object;
+    }
+
+    /**
+     * テンプレート読み込み直前にqueried_objectを修正
+     */
+    public function fix_queried_object_before_template($template) {
+        global $wp_query;
+
+        // queried_objectがWP_Post_Typeの場合はクリア
+        if (isset($wp_query->queried_object) && $wp_query->queried_object instanceof WP_Post_Type) {
+            $wp_query->queried_object = null;
+            $wp_query->queried_object_id = null;
+        }
+
+        return $template;
+    }
+
+    /**
      * pre_get_postsでクエリを制御
      */
     public function control_query($query) {
@@ -389,14 +590,28 @@ class KSTB_Archive_Controller {
 
             // 階層URLの場合
             if (!empty($post_type_data->parent_directory)) {
-                $parent = trim($post_type_data->parent_directory, '/');
-                if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type_data->slug) {
-                    if (count($segments) === 2) {
-                        // スラッグトップページ
-                        $matches = true;
-                    } elseif (count($segments) > 2) {
-                        // スラッグ以下のサブディレクトリ
-                        $is_subdir = true;
+                // フルパスを再帰的に構築
+                $full_path = $this->build_full_path_for_post_type($post_type_data);
+                $full_segments = explode('/', $full_path);
+
+                // 現在のURLがフルパスと一致するかチェック
+                if (count($segments) >= count($full_segments)) {
+                    $path_matches = true;
+                    for ($i = 0; $i < count($full_segments); $i++) {
+                        if ($segments[$i] !== $full_segments[$i]) {
+                            $path_matches = false;
+                            break;
+                        }
+                    }
+
+                    if ($path_matches) {
+                        if (count($segments) === count($full_segments)) {
+                            // スラッグトップページ
+                            $matches = true;
+                        } elseif (count($segments) > count($full_segments)) {
+                            // スラッグ以下のサブディレクトリ
+                            $is_subdir = true;
+                        }
                     }
                 }
             }
@@ -413,56 +628,75 @@ class KSTB_Archive_Controller {
 
             // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type_data->has_archive) {
-
-                // 同じパスに固定ページが存在するかチェック
-                $page = get_page_by_path($uri);
-
-                if ($page && $page->post_status === 'publish') {
-
-                    // すべてのクエリ変数をクリア
-                    $query->query_vars = array();
-                    $query->query = array();
-
-                    // 固定ページとしてクエリを設定
-                    $query->set('page_id', $page->ID);
-                    $query->set('post_type', 'page');
-                    $query->set('posts_per_page', 1);
-                    $query->set('paged', 1);
-
-                    // 条件タグをリセット
-                    $query->is_page = true;
-                    $query->is_singular = true;
-                    $query->is_single = false;
-                    $query->is_404 = false;
-                    $query->is_home = false;
-                    $query->is_archive = false;
-                    $query->is_post_type_archive = false;
-                    $query->is_tax = false;
-                    $query->is_category = false;
-                    $query->is_tag = false;
-                    $query->is_author = false;
-                    $query->is_date = false;
-                    $query->is_year = false;
-                    $query->is_month = false;
-                    $query->is_day = false;
-                    $query->is_time = false;
-                    $query->is_search = false;
-                    $query->is_feed = false;
-                    $query->is_comment_feed = false;
-                    $query->is_trackback = false;
-                    $query->is_embed = false;
-                    $query->is_paged = false;
-                    $query->is_admin = false;
-                    $query->is_attachment = false;
-                    $query->is_posts_page = false;
-
+                // 「表示しない」の場合は常に404
+                if (isset($post_type_data->archive_display_type) && $post_type_data->archive_display_type === 'none') {
+                    $query->set_404();
+                    // queried_objectをクリア
+                    $query->queried_object = null;
+                    $query->queried_object_id = null;
+                    $query->set('post__in', array(0));
                     return;
                 }
 
-                // 固定ページが存在しない場合は404
-                $query->set_404();
-                $query->set('post__in', array(0));
-                return;
+                // 「指定なし」の場合のみ固定ページを探す
+                if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default') {
+                    // 同じパスに固定ページが存在するかチェック
+                    $page = get_page_by_path($uri);
+
+                    if ($page && $page->post_status === 'publish') {
+
+                        // すべてのクエリ変数をクリア
+                        $query->query_vars = array();
+                        $query->query = array();
+
+                        // 固定ページとしてクエリを設定
+                        $query->set('page_id', $page->ID);
+                        $query->set('post_type', 'page');
+                        $query->set('posts_per_page', 1);
+                        $query->set('paged', 1);
+
+                        // 条件タグをリセット
+                        $query->is_page = true;
+                        $query->is_singular = true;
+                        $query->is_single = false;
+                        $query->is_404 = false;
+                        $query->is_home = false;
+                        $query->is_archive = false;
+                        $query->is_post_type_archive = false;
+                        $query->is_tax = false;
+                        $query->is_category = false;
+                        $query->is_tag = false;
+                        $query->is_author = false;
+                        $query->is_date = false;
+                        $query->is_year = false;
+                        $query->is_month = false;
+                        $query->is_day = false;
+                        $query->is_time = false;
+                        $query->is_search = false;
+                        $query->is_feed = false;
+                        $query->is_comment_feed = false;
+                        $query->is_trackback = false;
+                        $query->is_embed = false;
+                        $query->is_paged = false;
+                        $query->is_admin = false;
+                        $query->is_attachment = false;
+                        $query->is_posts_page = false;
+
+                        // queried_objectを明示的に設定
+                        $query->queried_object = $page;
+                        $query->queried_object_id = $page->ID;
+
+                        return;
+                    }
+
+                    // 固定ページが存在しない場合は404
+                    $query->set_404();
+                    // queried_objectをクリア
+                    $query->queried_object = null;
+                    $query->queried_object_id = null;
+                    $query->set('post__in', array(0));
+                    return;
+                }
             }
 
             // スラッグ以下のサブディレクトリで、404になりそうな場合
@@ -508,6 +742,10 @@ class KSTB_Archive_Controller {
                     $query->is_attachment = false;
                     $query->is_posts_page = false;
 
+                    // queried_objectを明示的に設定
+                    $query->queried_object = $page;
+                    $query->queried_object_id = $page->ID;
+
                     return;
                 }
             }
@@ -541,14 +779,28 @@ class KSTB_Archive_Controller {
 
             // 階層URLの場合
             if (!empty($post_type_data->parent_directory)) {
-                $parent = trim($post_type_data->parent_directory, '/');
-                if (count($segments) >= 2 && $segments[0] === $parent && $segments[1] === $post_type_data->slug) {
-                    if (count($segments) === 2) {
-                        // スラッグトップページ
-                        $matches = true;
-                    } elseif (count($segments) > 2) {
-                        // スラッグ以下のサブディレクトリ
-                        $is_subdir = true;
+                // フルパスを再帰的に構築
+                $full_path = $this->build_full_path_for_post_type($post_type_data);
+                $full_segments = explode('/', $full_path);
+
+                // 現在のURLがフルパスと一致するかチェック
+                if (count($segments) >= count($full_segments)) {
+                    $path_matches = true;
+                    for ($i = 0; $i < count($full_segments); $i++) {
+                        if ($segments[$i] !== $full_segments[$i]) {
+                            $path_matches = false;
+                            break;
+                        }
+                    }
+
+                    if ($path_matches) {
+                        if (count($segments) === count($full_segments)) {
+                            // スラッグトップページ
+                            $matches = true;
+                        } elseif (count($segments) > count($full_segments)) {
+                            // スラッグ以下のサブディレクトリ
+                            $is_subdir = true;
+                        }
                     }
                 }
             }
@@ -565,17 +817,26 @@ class KSTB_Archive_Controller {
 
             // スラッグトップページでアーカイブ無効の場合
             if ($matches && !$post_type_data->has_archive) {
-                // 同じパスに固定ページが存在するかチェック
-                $page = get_page_by_path($uri);
-
-                if ($page && $page->post_status === 'publish') {
-                    $this->display_page($page);
+                // 「表示しない」の場合は常に404
+                if (isset($post_type_data->archive_display_type) && $post_type_data->archive_display_type === 'none') {
+                    $this->display_404();
                     exit;
                 }
 
-                // 固定ページが存在しない場合は404
-                $this->display_404();
-                exit;
+                // 「指定なし」の場合のみ固定ページを探す
+                if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default') {
+                    // 同じパスに固定ページが存在するかチェック
+                    $page = get_page_by_path($uri);
+
+                    if ($page && $page->post_status === 'publish') {
+                        $this->display_page($page);
+                        exit;
+                    }
+
+                    // 固定ページが存在しない場合は404
+                    $this->display_404();
+                    exit;
+                }
             }
 
             // スラッグ以下のサブディレクトリで404になりそうな場合
@@ -618,28 +879,37 @@ class KSTB_Archive_Controller {
             $post_type_data = KSTB_Database::get_post_type_by_slug($post_type);
 
             if ($post_type_data && !$post_type_data->has_archive) {
-                // 現在のURLパスを取得
-                $uri = $_SERVER['REQUEST_URI'];
-                $uri = parse_url($uri, PHP_URL_PATH);
-                $uri = trim($uri, '/');
-
-                // フルパスで固定ページを探す
-                $page = get_page_by_path($uri);
-                if ($page && $page->post_status === 'publish') {
-                    $this->display_page($page);
+                // 「表示しない」の場合は常に404
+                if (isset($post_type_data->archive_display_type) && $post_type_data->archive_display_type === 'none') {
+                    $this->display_404();
                     exit;
                 }
 
-                // スラッグだけでも検索
-                $page = get_page_by_path($post_type);
-                if ($page && $page->post_status === 'publish') {
-                    $this->display_page($page);
+                // 「指定なし」以外の場合のみ固定ページを探す
+                if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type !== 'default') {
+                    // 現在のURLパスを取得
+                    $uri = $_SERVER['REQUEST_URI'];
+                    $uri = parse_url($uri, PHP_URL_PATH);
+                    $uri = trim($uri, '/');
+
+                    // フルパスで固定ページを探す
+                    $page = get_page_by_path($uri);
+                    if ($page && $page->post_status === 'publish') {
+                        $this->display_page($page);
+                        exit;
+                    }
+
+                    // スラッグだけでも検索
+                    $page = get_page_by_path($post_type);
+                    if ($page && $page->post_status === 'publish') {
+                        $this->display_page($page);
+                        exit;
+                    }
+
+                    // 404を表示
+                    $this->display_404();
                     exit;
                 }
-
-                // 404を表示
-                $this->display_404();
-                exit;
             }
         }
     }
@@ -716,6 +986,10 @@ class KSTB_Archive_Controller {
         $post = $page;
         setup_postdata($post);
 
+        // queried_objectを明示的に設定
+        $wp_query->queried_object = $page;
+        $wp_query->queried_object_id = $page->ID;
+
         // WordPressのクエリ変数を正しく設定
         $wp->query_vars = array(
             'page_id' => $page->ID,
@@ -780,6 +1054,10 @@ class KSTB_Archive_Controller {
         $post = $post_obj;
         setup_postdata($post);
 
+        // queried_objectを明示的に設定
+        $wp_query->queried_object = $post_obj;
+        $wp_query->queried_object_id = $post_obj->ID;
+
         // ステータスコード
         status_header(200);
 
@@ -810,6 +1088,10 @@ class KSTB_Archive_Controller {
         global $wp_query;
 
         $wp_query->set_404();
+        // queried_objectをクリア
+        $wp_query->queried_object = null;
+        $wp_query->queried_object_id = null;
+
         status_header(404);
         nocache_headers();
 

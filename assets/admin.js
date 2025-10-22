@@ -18,6 +18,14 @@
             $('.kstb-tab-buttons a').on('click', this.switchTab);
 
             $(document).on('input', '#kstb-label', this.updateLabelPreview);
+
+            // Post Mover events - use delegated events for dynamic content
+            $(document).on('click', '#kstb-load-posts-btn', function() { KSTB.loadPosts(); });
+            $(document).on('change', '#kstb-select-all-checkbox', function() { KSTB.toggleAllPosts(); });
+            $(document).on('click', '#kstb-select-all-posts', function() { KSTB.selectAllPosts(true); });
+            $(document).on('click', '#kstb-deselect-all-posts', function() { KSTB.selectAllPosts(false); });
+            $(document).on('change', '#kstb-mover-source-type', function() { KSTB.validateMove(); });
+            $(document).on('click', '#kstb-move-posts-btn', function() { KSTB.movePosts(); });
         },
 
         initIconSelect: function () {
@@ -45,6 +53,9 @@
 
             // 親ディレクトリの選択をリセット
             $('select[name="parent_directory"]').val('');
+
+            // 記事移動タブを新規追加モードに設定
+            KSTB.setPostMoverMode('new');
 
             $('.kstb-form-area').slideDown();
             $('.kstb-tab-buttons a:first').click();
@@ -88,6 +99,9 @@
             // プレビューを更新
             KSTB.updateLabelPreview.call($('#kstb-label')[0]);
 
+            // 記事移動タブを編集モードに設定（移動先として現在の投稿タイプを設定）
+            KSTB.setPostMoverMode('edit', data.slug, data.label);
+
 
 
             $('input[name="public"]').prop('checked', data.public == 1);
@@ -96,13 +110,19 @@
             $('input[name="show_in_menu"]').prop('checked', data.show_in_menu == 1);
             $('input[name="query_var"]').prop('checked', data.query_var == 1);
             // スラッグトップページの設定
-            var slugTopDisplay = 'none';
-            if (data.has_archive == 1) {
+            var slugTopDisplay = 'unspecified';
+            if (data.archive_display_type === 'default') {
+                slugTopDisplay = 'unspecified';
+            } else if (data.archive_display_type === 'none') {
+                slugTopDisplay = 'none';
+            } else if (data.has_archive == 1) {
                 if (data.archive_display_type === 'custom_page' && data.archive_page_id) {
                     slugTopDisplay = 'page';
                 } else {
                     slugTopDisplay = 'archive';
                 }
+            } else {
+                slugTopDisplay = 'none';
             }
             $('input[name="slug_top_display"][value="' + slugTopDisplay + '"]').prop('checked', true);
 
@@ -266,6 +286,212 @@
             }, 5000);
         },
 
+        // Post Mover functions
+        setPostMoverMode: function (mode, targetSlug, targetLabel) {
+            if (mode === 'new') {
+                // 新規追加モード：記事移動機能を無効化
+                $('.kstb-post-mover-new-mode').show();
+                $('.kstb-post-mover-edit-mode').hide();
+                $('#kstb-posts-list-container').hide();
+                $('#kstb-mover-target-type').val('');
+            } else if (mode === 'edit') {
+                // 編集モード：移動先を現在の投稿タイプに設定
+                $('.kstb-post-mover-new-mode').hide();
+                $('.kstb-post-mover-edit-mode').show();
+                $('#kstb-current-post-type-label').text(targetLabel);
+                $('#kstb-target-post-type-label').text(targetLabel);
+                $('#kstb-mover-target-type').val(targetSlug);
+
+                // 移動元のドロップダウンから現在の投稿タイプを除外
+                $('#kstb-mover-source-type option').each(function () {
+                    if ($(this).val() === targetSlug) {
+                        $(this).prop('disabled', true).text($(this).text() + ' （現在編集中）');
+                    } else {
+                        $(this).prop('disabled', false);
+                        var text = $(this).text().replace(' （現在編集中）', '');
+                        $(this).text(text);
+                    }
+                });
+            }
+        },
+
+        loadPosts: function () {
+            var sourceType = $('#kstb-mover-source-type').val();
+
+            if (!sourceType) {
+                alert('移動元の投稿タイプを選択してください');
+                return;
+            }
+
+            $('#kstb-load-posts-btn').prop('disabled', true).text('読み込み中...');
+
+            $.ajax({
+                url: kstb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'kstb_get_posts_by_type',
+                    post_type: sourceType,
+                    nonce: kstb_ajax.nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        KSTB.displayPosts(response.data.posts, response.data.count);
+                        $('#kstb-posts-list-container').slideDown();
+                        $('#kstb-move-status').text('');
+                    } else {
+                        alert(response.data || '記事の読み込みに失敗しました');
+                    }
+                    $('#kstb-load-posts-btn').prop('disabled', false).text('記事を読み込む');
+                },
+                error: function (xhr, status, error) {
+                    alert('記事の読み込みに失敗しました');
+                    $('#kstb-load-posts-btn').prop('disabled', false).text('記事を読み込む');
+                }
+            });
+        },
+
+        displayPosts: function (posts, count) {
+            var $tbody = $('#kstb-posts-tbody');
+            $tbody.empty();
+
+            if (posts.length === 0) {
+                $tbody.append('<tr><td colspan="5" style="text-align: center;">記事が見つかりませんでした</td></tr>');
+                $('#kstb-posts-count').text('');
+                return;
+            }
+
+            $('#kstb-posts-count').text('（' + count + '件）');
+
+            $.each(posts, function (i, post) {
+                var statusLabels = {
+                    'publish': '公開',
+                    'draft': '下書き',
+                    'pending': '承認待ち',
+                    'future': '予約',
+                    'private': '非公開'
+                };
+                var statusLabel = statusLabels[post.status] || post.status;
+
+                var row = '<tr>' +
+                    '<th scope="row" class="check-column">' +
+                    '<input type="checkbox" class="kstb-post-checkbox" value="' + post.ID + '">' +
+                    '</th>' +
+                    '<td><strong>' + post.title + '</strong></td>' +
+                    '<td>' + statusLabel + '</td>' +
+                    '<td>' + post.date + '</td>' +
+                    '<td>' + post.author + '</td>' +
+                    '</tr>';
+                $tbody.append(row);
+            });
+        },
+
+        toggleAllPosts: function () {
+            var checked = $('#kstb-select-all-checkbox').prop('checked');
+            $('.kstb-post-checkbox').prop('checked', checked);
+        },
+
+        selectAllPosts: function (select) {
+            $('.kstb-post-checkbox').prop('checked', select);
+            $('#kstb-select-all-checkbox').prop('checked', select);
+        },
+
+        validateMove: function () {
+            var sourceType = $('#kstb-mover-source-type').val();
+            var targetType = $('#kstb-mover-target-type').val();
+
+            if (!sourceType || !targetType) {
+                $('#kstb-move-warnings').hide();
+                return;
+            }
+
+            if (sourceType === targetType) {
+                $('#kstb-move-warnings')
+                    .html('<strong>⚠️ 警告:</strong> 移動元と移動先が同じです。別の投稿タイプを選択してください。')
+                    .show();
+                return;
+            }
+
+            $('#kstb-move-warnings')
+                .html('<strong>⚠️ 注意:</strong> 記事を移動すると、URLが変更されます。SEOに影響する可能性があります。')
+                .show();
+        },
+
+        movePosts: function () {
+            var sourceType = $('#kstb-mover-source-type').val();
+            var targetType = $('#kstb-mover-target-type').val();
+            var targetLabel = $('#kstb-target-post-type-label').text();
+            var selectedPosts = [];
+
+            $('.kstb-post-checkbox:checked').each(function () {
+                selectedPosts.push($(this).val());
+            });
+
+            if (!sourceType) {
+                alert('移動元の投稿タイプを選択してください');
+                return;
+            }
+
+            if (!targetType) {
+                alert('エラー: 移動先の投稿タイプが設定されていません');
+                return;
+            }
+
+            if (sourceType === targetType) {
+                alert('移動元と移動先が同じです。別の投稿タイプを選択してください。');
+                return;
+            }
+
+            if (selectedPosts.length === 0) {
+                alert('移動する記事を選択してください');
+                return;
+            }
+
+            var confirmMessage = selectedPosts.length + '件の記事を「' + targetLabel + '」へ移動します。\n' +
+                '移動後はURLが変更されます。よろしいですか？';
+
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+
+            $('#kstb-move-posts-btn').prop('disabled', true);
+            $('#kstb-move-status').text('移動中...').css('color', '#0073aa');
+
+            $.ajax({
+                url: kstb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'kstb_move_posts',
+                    post_ids: selectedPosts,
+                    from_type: sourceType,
+                    to_type: targetType,
+                    nonce: kstb_ajax.nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        var message = response.data.message || response.data;
+                        $('#kstb-move-status')
+                            .text(message)
+                            .css('color', 'green');
+
+                        // 成功後、記事リストを再読み込み
+                        setTimeout(function () {
+                            KSTB.loadPosts();
+                        }, 1500);
+                    } else {
+                        $('#kstb-move-status')
+                            .text('エラー: ' + (response.data || '移動に失敗しました'))
+                            .css('color', 'red');
+                    }
+                    $('#kstb-move-posts-btn').prop('disabled', false);
+                },
+                error: function () {
+                    $('#kstb-move-status')
+                        .text('エラー: 移動に失敗しました')
+                        .css('color', 'red');
+                    $('#kstb-move-posts-btn').prop('disabled', false);
+                }
+            });
+        },
 
     };
 

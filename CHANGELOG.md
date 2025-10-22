@@ -5,6 +5,18 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2025-10-22
+
+### Fixed
+- 「スラッグトップページ」で「表示しない」を設定しているのに固定ページが表示される問題を修正
+- `archive_display_type !== 'default'` 条件で `'none'` 設定時も固定ページを探していた不具合を解消
+- ループで最初にマッチした投稿タイプで処理が終了し、最も長いパスまでチェックされない問題を修正
+
+### Improved
+- 階層URL構造で「best match」ロジックを導入し、最も長いパスにマッチする投稿タイプを優先
+- `filter_request()`, `handle_request()` のマッチングロジックを改善
+- アーカイブ表示制御の条件を `=== 'default'` に統一（「指定なし」の場合のみ固定ページを探す）
+
 ## [1.0.4] - 2025-10-21
 
 ### Fixed

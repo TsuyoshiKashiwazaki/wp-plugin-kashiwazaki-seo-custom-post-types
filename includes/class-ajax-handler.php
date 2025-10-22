@@ -24,6 +24,8 @@ class KSTB_Ajax_Handler {
         add_action('wp_ajax_kstb_reregister_post_type', array($this, 'reregister_post_type'));
         add_action('wp_ajax_kstb_force_register_all', array($this, 'force_register_all'));
         add_action('wp_ajax_kstb_force_reregister_all', array($this, 'force_reregister_all'));
+        add_action('wp_ajax_kstb_get_posts_by_type', array($this, 'get_posts_by_type'));
+        add_action('wp_ajax_kstb_move_posts', array($this, 'move_posts'));
     }
 
     public function save_post_type() {
@@ -115,12 +117,18 @@ class KSTB_Ajax_Handler {
         $taxonomies = isset($_POST['taxonomies']) && is_array($_POST['taxonomies']) ? array_map('sanitize_key', $_POST['taxonomies']) : array();
 
         // スラッグトップページの設定を処理
-        $slug_top_display = isset($_POST['slug_top_display']) ? sanitize_text_field($_POST['slug_top_display']) : 'none';
+        $slug_top_display = isset($_POST['slug_top_display']) ? sanitize_text_field($_POST['slug_top_display']) : 'unspecified';
         $has_archive = false;
         $archive_display_type = 'post_list';
         $archive_page_id = null;
 
-        if ($slug_top_display === 'archive') {
+        if ($slug_top_display === 'unspecified') {
+            $has_archive = false;
+            $archive_display_type = 'default';
+        } elseif ($slug_top_display === 'none') {
+            $has_archive = false;
+            $archive_display_type = 'none';
+        } elseif ($slug_top_display === 'archive') {
             $has_archive = true;
             $archive_display_type = 'post_list';
         } elseif ($slug_top_display === 'page') {
@@ -433,5 +441,87 @@ class KSTB_Ajax_Handler {
         KSTB_Post_Type_Registrar::get_instance()->register_post_types();
 
         wp_send_json_success(__('カスタム投稿タイプを強制再登録しました', 'kashiwazaki-seo-type-builder'));
+    }
+
+    /**
+     * 投稿タイプの記事一覧を取得（Ajax）
+     */
+    public function get_posts_by_type() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_type = isset($_POST['post_type']) ? sanitize_key($_POST['post_type']) : '';
+
+        if (empty($post_type)) {
+            wp_send_json_error(__('投稿タイプが指定されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_mover = KSTB_Post_Mover::get_instance();
+        $posts = $post_mover->get_posts_by_type($post_type);
+
+        wp_send_json_success(array(
+            'posts' => $posts,
+            'count' => count($posts)
+        ));
+    }
+
+    /**
+     * 記事を移動（Ajax）
+     */
+    public function move_posts() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_ids = isset($_POST['post_ids']) ? array_map('intval', $_POST['post_ids']) : array();
+        $from_type = isset($_POST['from_type']) ? sanitize_key($_POST['from_type']) : '';
+        $to_type = isset($_POST['to_type']) ? sanitize_key($_POST['to_type']) : '';
+
+        if (empty($post_ids)) {
+            wp_send_json_error(__('移動する記事が選択されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (empty($from_type) || empty($to_type)) {
+            wp_send_json_error(__('移動元または移動先の投稿タイプが指定されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_mover = KSTB_Post_Mover::get_instance();
+        $result = $post_mover->move_posts($post_ids, $from_type, $to_type);
+
+        if ($result['success']) {
+            $message = sprintf(
+                __('%d件の記事を移動しました。', 'kashiwazaki-seo-type-builder'),
+                $result['moved_count']
+            );
+            if ($result['failed_count'] > 0) {
+                $message .= sprintf(
+                    __(' (%d件は失敗しました)', 'kashiwazaki-seo-type-builder'),
+                    $result['failed_count']
+                );
+            }
+            wp_send_json_success(array(
+                'message' => $message,
+                'result' => $result
+            ));
+        } else {
+            $error_message = !empty($result['errors']) ? implode("\n", $result['errors']) : __('記事の移動に失敗しました', 'kashiwazaki-seo-type-builder');
+            wp_send_json_error($error_message);
+        }
     }
 }

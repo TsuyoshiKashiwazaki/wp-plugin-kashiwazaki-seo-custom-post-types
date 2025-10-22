@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,10 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.5 =
+* Fixed: 「スラッグトップページ」で「表示しない」設定時に固定ページが表示される問題を修正
+* Improved: 階層URLマッチングで最長パス優先ロジックを実装
+
 = 1.0.4 =
 * Fixed: 3階層ネストされたカスタム投稿タイプのアーカイブページで404エラーが発生する問題を修正
 * Improved: URL検証ロジックで再帰的なフルパス構築に対応
@@ -94,6 +98,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.5 =
+アーカイブ表示制御の不具合を修正しました。アップデートを推奨します。
 
 = 1.0.4 =
 3階層以上のネストされたカスタム投稿タイプのアーカイブページが正しく表示されるようになりました

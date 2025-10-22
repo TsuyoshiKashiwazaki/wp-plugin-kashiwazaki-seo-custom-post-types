@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.4--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.5--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,12 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.5 - 2025-10-22
+- **修正**: 「スラッグトップページ」で「表示しない」設定時に固定ページが表示される問題を修正
+- **修正**: `archive_display_type !== 'default'` 条件で `'none'` 設定時も固定ページを探していた不具合を解消
+- **改善**: 階層URL構造で「best match」ロジックを導入し、最も長いパスにマッチする投稿タイプを優先
+- **改善**: アーカイブ表示制御の条件を `=== 'default'` に統一
 
 ### Version 1.0.4 - 2025-10-21
 - **修正**: 3階層ネストされたカスタム投稿タイプのアーカイブページで404エラーが発生する問題を修正

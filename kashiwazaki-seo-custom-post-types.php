@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.4');
+define('KSTB_VERSION', '1.0.5');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -44,6 +44,7 @@ class KashiwazakiSeoTypeBuilder {
         require_once KSTB_PLUGIN_PATH . 'includes/class-post-type-menu-fix.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-parent-selector.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-archive-controller.php';
+        require_once KSTB_PLUGIN_PATH . 'includes/class-post-mover.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-admin.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-ajax-handler.php';
     }
@@ -60,8 +61,7 @@ class KashiwazakiSeoTypeBuilder {
         // アーカイブコントローラーを最も早いタイミングで初期化
         if (!is_admin()) {
             require_once KSTB_PLUGIN_PATH . 'includes/class-archive-controller.php';
-            // TEMPORARY: Archive Controller disabled for debugging 3-level URLs
-            // KSTB_Archive_Controller::get_instance()->init();
+            KSTB_Archive_Controller::get_instance()->init();
         }
     }
 
@@ -90,8 +90,7 @@ class KashiwazakiSeoTypeBuilder {
 
         // アーカイブページの表示制御（最優先で実行）
         if (!is_admin()) {
-            // TEMPORARY: Archive Controller disabled for debugging 3-level URLs
-            // KSTB_Archive_Controller::get_instance()->init();
+            KSTB_Archive_Controller::get_instance()->init();
         }
 
         if (is_admin()) {

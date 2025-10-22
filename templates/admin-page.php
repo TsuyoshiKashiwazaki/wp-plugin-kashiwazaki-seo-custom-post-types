@@ -6,52 +6,379 @@ if (!defined('ABSPATH')) {
 $post_types = KSTB_Database::get_all_post_types();
 
 $dashicons = array(
+    // Admin Menu
+    'dashicons-menu' => 'dashicons-menu',
+    'dashicons-menu-alt' => 'dashicons-menu-alt',
+    'dashicons-menu-alt2' => 'dashicons-menu-alt2',
+    'dashicons-menu-alt3' => 'dashicons-menu-alt3',
+    'dashicons-admin-site' => 'dashicons-admin-site',
+    'dashicons-admin-site-alt' => 'dashicons-admin-site-alt',
+    'dashicons-admin-site-alt2' => 'dashicons-admin-site-alt2',
+    'dashicons-admin-site-alt3' => 'dashicons-admin-site-alt3',
+    'dashicons-dashboard' => 'dashicons-dashboard',
     'dashicons-admin-post' => 'dashicons-admin-post',
     'dashicons-admin-media' => 'dashicons-admin-media',
+    'dashicons-admin-links' => 'dashicons-admin-links',
     'dashicons-admin-page' => 'dashicons-admin-page',
     'dashicons-admin-comments' => 'dashicons-admin-comments',
+    'dashicons-admin-appearance' => 'dashicons-admin-appearance',
+    'dashicons-admin-plugins' => 'dashicons-admin-plugins',
+    'dashicons-plugins-checked' => 'dashicons-plugins-checked',
     'dashicons-admin-users' => 'dashicons-admin-users',
     'dashicons-admin-tools' => 'dashicons-admin-tools',
     'dashicons-admin-settings' => 'dashicons-admin-settings',
-    'dashicons-controls-volumeon' => 'dashicons-controls-volumeon',
+    'dashicons-admin-network' => 'dashicons-admin-network',
+    'dashicons-admin-home' => 'dashicons-admin-home',
+    'dashicons-admin-generic' => 'dashicons-admin-generic',
+    'dashicons-admin-collapse' => 'dashicons-admin-collapse',
+    'dashicons-filter' => 'dashicons-filter',
+    'dashicons-admin-customizer' => 'dashicons-admin-customizer',
+    'dashicons-admin-multisite' => 'dashicons-admin-multisite',
+
+    // Welcome Screen
+    'dashicons-welcome-write-blog' => 'dashicons-welcome-write-blog',
+    'dashicons-welcome-add-page' => 'dashicons-welcome-add-page',
+    'dashicons-welcome-view-site' => 'dashicons-welcome-view-site',
+    'dashicons-welcome-widgets-menus' => 'dashicons-welcome-widgets-menus',
+    'dashicons-welcome-comments' => 'dashicons-welcome-comments',
+    'dashicons-welcome-learn-more' => 'dashicons-welcome-learn-more',
+
+    // Post Formats
+    'dashicons-format-aside' => 'dashicons-format-aside',
     'dashicons-format-image' => 'dashicons-format-image',
     'dashicons-format-gallery' => 'dashicons-format-gallery',
     'dashicons-format-video' => 'dashicons-format-video',
+    'dashicons-format-status' => 'dashicons-format-status',
+    'dashicons-format-quote' => 'dashicons-format-quote',
+    'dashicons-format-chat' => 'dashicons-format-chat',
+    'dashicons-format-audio' => 'dashicons-format-audio',
     'dashicons-camera' => 'dashicons-camera',
+    'dashicons-camera-alt' => 'dashicons-camera-alt',
     'dashicons-images-alt' => 'dashicons-images-alt',
+    'dashicons-images-alt2' => 'dashicons-images-alt2',
     'dashicons-video-alt' => 'dashicons-video-alt',
+    'dashicons-video-alt2' => 'dashicons-video-alt2',
+    'dashicons-video-alt3' => 'dashicons-video-alt3',
+
+    // Media
     'dashicons-media-archive' => 'dashicons-media-archive',
     'dashicons-media-audio' => 'dashicons-media-audio',
+    'dashicons-media-code' => 'dashicons-media-code',
+    'dashicons-media-default' => 'dashicons-media-default',
     'dashicons-media-document' => 'dashicons-media-document',
+    'dashicons-media-interactive' => 'dashicons-media-interactive',
+    'dashicons-media-spreadsheet' => 'dashicons-media-spreadsheet',
+    'dashicons-media-text' => 'dashicons-media-text',
     'dashicons-media-video' => 'dashicons-media-video',
-    'dashicons-database' => 'dashicons-database',
+    'dashicons-playlist-audio' => 'dashicons-playlist-audio',
+    'dashicons-playlist-video' => 'dashicons-playlist-video',
+    'dashicons-controls-play' => 'dashicons-controls-play',
+    'dashicons-controls-pause' => 'dashicons-controls-pause',
+    'dashicons-controls-forward' => 'dashicons-controls-forward',
+    'dashicons-controls-skipforward' => 'dashicons-controls-skipforward',
+    'dashicons-controls-back' => 'dashicons-controls-back',
+    'dashicons-controls-skipback' => 'dashicons-controls-skipback',
+    'dashicons-controls-repeat' => 'dashicons-controls-repeat',
+    'dashicons-controls-volumeon' => 'dashicons-controls-volumeon',
+    'dashicons-controls-volumeoff' => 'dashicons-controls-volumeoff',
+
+    // Image Editing
+    'dashicons-image-crop' => 'dashicons-image-crop',
+    'dashicons-image-rotate' => 'dashicons-image-rotate',
+    'dashicons-image-rotate-left' => 'dashicons-image-rotate-left',
+    'dashicons-image-rotate-right' => 'dashicons-image-rotate-right',
+    'dashicons-image-flip-vertical' => 'dashicons-image-flip-vertical',
+    'dashicons-image-flip-horizontal' => 'dashicons-image-flip-horizontal',
+    'dashicons-image-filter' => 'dashicons-image-filter',
+    'dashicons-undo' => 'dashicons-undo',
+    'dashicons-redo' => 'dashicons-redo',
+
+    // TinyMCE
+    'dashicons-editor-bold' => 'dashicons-editor-bold',
+    'dashicons-editor-italic' => 'dashicons-editor-italic',
+    'dashicons-editor-ul' => 'dashicons-editor-ul',
+    'dashicons-editor-ol' => 'dashicons-editor-ol',
+    'dashicons-editor-ol-rtl' => 'dashicons-editor-ol-rtl',
+    'dashicons-editor-quote' => 'dashicons-editor-quote',
+    'dashicons-editor-alignleft' => 'dashicons-editor-alignleft',
+    'dashicons-editor-aligncenter' => 'dashicons-editor-aligncenter',
+    'dashicons-editor-alignright' => 'dashicons-editor-alignright',
+    'dashicons-editor-insertmore' => 'dashicons-editor-insertmore',
+    'dashicons-editor-spellcheck' => 'dashicons-editor-spellcheck',
+    'dashicons-editor-expand' => 'dashicons-editor-expand',
+    'dashicons-editor-contract' => 'dashicons-editor-contract',
+    'dashicons-editor-kitchensink' => 'dashicons-editor-kitchensink',
+    'dashicons-editor-underline' => 'dashicons-editor-underline',
+    'dashicons-editor-justify' => 'dashicons-editor-justify',
+    'dashicons-editor-textcolor' => 'dashicons-editor-textcolor',
+    'dashicons-editor-paste-word' => 'dashicons-editor-paste-word',
+    'dashicons-editor-paste-text' => 'dashicons-editor-paste-text',
+    'dashicons-editor-removeformatting' => 'dashicons-editor-removeformatting',
+    'dashicons-editor-video' => 'dashicons-editor-video',
+    'dashicons-editor-customchar' => 'dashicons-editor-customchar',
+    'dashicons-editor-outdent' => 'dashicons-editor-outdent',
+    'dashicons-editor-indent' => 'dashicons-editor-indent',
+    'dashicons-editor-help' => 'dashicons-editor-help',
+    'dashicons-editor-strikethrough' => 'dashicons-editor-strikethrough',
+    'dashicons-editor-unlink' => 'dashicons-editor-unlink',
+    'dashicons-editor-rtl' => 'dashicons-editor-rtl',
+    'dashicons-editor-ltr' => 'dashicons-editor-ltr',
+    'dashicons-editor-break' => 'dashicons-editor-break',
+    'dashicons-editor-code' => 'dashicons-editor-code',
+    'dashicons-editor-paragraph' => 'dashicons-editor-paragraph',
+    'dashicons-editor-table' => 'dashicons-editor-table',
+
+    // Posts
+    'dashicons-align-left' => 'dashicons-align-left',
+    'dashicons-align-right' => 'dashicons-align-right',
+    'dashicons-align-center' => 'dashicons-align-center',
+    'dashicons-align-none' => 'dashicons-align-none',
+    'dashicons-lock' => 'dashicons-lock',
+    'dashicons-unlock' => 'dashicons-unlock',
+    'dashicons-calendar' => 'dashicons-calendar',
+    'dashicons-calendar-alt' => 'dashicons-calendar-alt',
+    'dashicons-visibility' => 'dashicons-visibility',
+    'dashicons-hidden' => 'dashicons-hidden',
+    'dashicons-post-status' => 'dashicons-post-status',
+    'dashicons-edit' => 'dashicons-edit',
+    'dashicons-trash' => 'dashicons-trash',
+    'dashicons-sticky' => 'dashicons-sticky',
+
+    // Sorting
+    'dashicons-external' => 'dashicons-external',
+    'dashicons-arrow-up' => 'dashicons-arrow-up',
+    'dashicons-arrow-down' => 'dashicons-arrow-down',
+    'dashicons-arrow-right' => 'dashicons-arrow-right',
+    'dashicons-arrow-left' => 'dashicons-arrow-left',
+    'dashicons-arrow-up-alt' => 'dashicons-arrow-up-alt',
+    'dashicons-arrow-down-alt' => 'dashicons-arrow-down-alt',
+    'dashicons-arrow-right-alt' => 'dashicons-arrow-right-alt',
+    'dashicons-arrow-left-alt' => 'dashicons-arrow-left-alt',
+    'dashicons-arrow-up-alt2' => 'dashicons-arrow-up-alt2',
+    'dashicons-arrow-down-alt2' => 'dashicons-arrow-down-alt2',
+    'dashicons-arrow-right-alt2' => 'dashicons-arrow-right-alt2',
+    'dashicons-arrow-left-alt2' => 'dashicons-arrow-left-alt2',
+    'dashicons-sort' => 'dashicons-sort',
+    'dashicons-leftright' => 'dashicons-leftright',
+    'dashicons-randomize' => 'dashicons-randomize',
+    'dashicons-list-view' => 'dashicons-list-view',
+    'dashicons-excerpt-view' => 'dashicons-excerpt-view',
+    'dashicons-grid-view' => 'dashicons-grid-view',
+    'dashicons-move' => 'dashicons-move',
+
+    // Social
+    'dashicons-share' => 'dashicons-share',
+    'dashicons-share-alt' => 'dashicons-share-alt',
+    'dashicons-share-alt2' => 'dashicons-share-alt2',
+    'dashicons-rss' => 'dashicons-rss',
+    'dashicons-email' => 'dashicons-email',
+    'dashicons-email-alt' => 'dashicons-email-alt',
+    'dashicons-email-alt2' => 'dashicons-email-alt2',
+    'dashicons-networking' => 'dashicons-networking',
+    'dashicons-amazon' => 'dashicons-amazon',
+    'dashicons-facebook' => 'dashicons-facebook',
+    'dashicons-facebook-alt' => 'dashicons-facebook-alt',
+    'dashicons-google' => 'dashicons-google',
+    'dashicons-instagram' => 'dashicons-instagram',
+    'dashicons-linkedin' => 'dashicons-linkedin',
+    'dashicons-pinterest' => 'dashicons-pinterest',
+    'dashicons-podio' => 'dashicons-podio',
+    'dashicons-reddit' => 'dashicons-reddit',
+    'dashicons-spotify' => 'dashicons-spotify',
+    'dashicons-twitch' => 'dashicons-twitch',
+    'dashicons-twitter' => 'dashicons-twitter',
+    'dashicons-twitter-alt' => 'dashicons-twitter-alt',
+    'dashicons-whatsapp' => 'dashicons-whatsapp',
+    'dashicons-xing' => 'dashicons-xing',
+    'dashicons-youtube' => 'dashicons-youtube',
+
+    // Jobs/WordPress.org
+    'dashicons-hammer' => 'dashicons-hammer',
+    'dashicons-art' => 'dashicons-art',
+    'dashicons-migrate' => 'dashicons-migrate',
+    'dashicons-performance' => 'dashicons-performance',
+    'dashicons-universal-access' => 'dashicons-universal-access',
+    'dashicons-universal-access-alt' => 'dashicons-universal-access-alt',
+    'dashicons-tickets' => 'dashicons-tickets',
+    'dashicons-nametag' => 'dashicons-nametag',
+    'dashicons-clipboard' => 'dashicons-clipboard',
+    'dashicons-heart' => 'dashicons-heart',
+    'dashicons-megaphone' => 'dashicons-megaphone',
+    'dashicons-schedule' => 'dashicons-schedule',
+    'dashicons-tide' => 'dashicons-tide',
+    'dashicons-rest-api' => 'dashicons-rest-api',
+    'dashicons-code-standards' => 'dashicons-code-standards',
+
+    // Internal/Products
+    'dashicons-wordpress' => 'dashicons-wordpress',
+    'dashicons-wordpress-alt' => 'dashicons-wordpress-alt',
+    'dashicons-pressthis' => 'dashicons-pressthis',
+    'dashicons-update' => 'dashicons-update',
+    'dashicons-update-alt' => 'dashicons-update-alt',
+    'dashicons-screenoptions' => 'dashicons-screenoptions',
+    'dashicons-info' => 'dashicons-info',
+    'dashicons-cart' => 'dashicons-cart',
+    'dashicons-feedback' => 'dashicons-feedback',
+    'dashicons-cloud' => 'dashicons-cloud',
+    'dashicons-translation' => 'dashicons-translation',
+
+    // Taxonomies
+    'dashicons-tag' => 'dashicons-tag',
+    'dashicons-category' => 'dashicons-category',
+
+    // Widgets
+    'dashicons-archive' => 'dashicons-archive',
+    'dashicons-tagcloud' => 'dashicons-tagcloud',
+    'dashicons-text' => 'dashicons-text',
+
+    // Notifications
+    'dashicons-bell' => 'dashicons-bell',
+    'dashicons-yes' => 'dashicons-yes',
+    'dashicons-yes-alt' => 'dashicons-yes-alt',
+    'dashicons-no' => 'dashicons-no',
+    'dashicons-no-alt' => 'dashicons-no-alt',
+    'dashicons-plus' => 'dashicons-plus',
+    'dashicons-plus-alt' => 'dashicons-plus-alt',
+    'dashicons-plus-alt2' => 'dashicons-plus-alt2',
+    'dashicons-minus' => 'dashicons-minus',
+    'dashicons-dismiss' => 'dashicons-dismiss',
+    'dashicons-marker' => 'dashicons-marker',
+    'dashicons-star-filled' => 'dashicons-star-filled',
+    'dashicons-star-half' => 'dashicons-star-half',
+    'dashicons-star-empty' => 'dashicons-star-empty',
+    'dashicons-flag' => 'dashicons-flag',
+    'dashicons-warning' => 'dashicons-warning',
+
+    // Misc/Post
+    'dashicons-location' => 'dashicons-location',
+    'dashicons-location-alt' => 'dashicons-location-alt',
+    'dashicons-vault' => 'dashicons-vault',
+    'dashicons-shield' => 'dashicons-shield',
+    'dashicons-shield-alt' => 'dashicons-shield-alt',
+    'dashicons-sos' => 'dashicons-sos',
     'dashicons-search' => 'dashicons-search',
+    'dashicons-slides' => 'dashicons-slides',
+    'dashicons-text-page' => 'dashicons-text-page',
     'dashicons-analytics' => 'dashicons-analytics',
     'dashicons-chart-pie' => 'dashicons-chart-pie',
     'dashicons-chart-bar' => 'dashicons-chart-bar',
+    'dashicons-chart-line' => 'dashicons-chart-line',
+    'dashicons-chart-area' => 'dashicons-chart-area',
     'dashicons-groups' => 'dashicons-groups',
     'dashicons-businessman' => 'dashicons-businessman',
+    'dashicons-businesswoman' => 'dashicons-businesswoman',
+    'dashicons-businessperson' => 'dashicons-businessperson',
+    'dashicons-id' => 'dashicons-id',
+    'dashicons-id-alt' => 'dashicons-id-alt',
     'dashicons-products' => 'dashicons-products',
     'dashicons-awards' => 'dashicons-awards',
     'dashicons-forms' => 'dashicons-forms',
+    'dashicons-testimonial' => 'dashicons-testimonial',
     'dashicons-portfolio' => 'dashicons-portfolio',
     'dashicons-book' => 'dashicons-book',
+    'dashicons-book-alt' => 'dashicons-book-alt',
+    'dashicons-download' => 'dashicons-download',
+    'dashicons-upload' => 'dashicons-upload',
+    'dashicons-backup' => 'dashicons-backup',
+    'dashicons-clock' => 'dashicons-clock',
     'dashicons-lightbulb' => 'dashicons-lightbulb',
+    'dashicons-microphone' => 'dashicons-microphone',
     'dashicons-desktop' => 'dashicons-desktop',
+    'dashicons-laptop' => 'dashicons-laptop',
+    'dashicons-tablet' => 'dashicons-tablet',
     'dashicons-smartphone' => 'dashicons-smartphone',
+    'dashicons-phone' => 'dashicons-phone',
+    'dashicons-index-card' => 'dashicons-index-card',
+    'dashicons-carrot' => 'dashicons-carrot',
     'dashicons-building' => 'dashicons-building',
     'dashicons-store' => 'dashicons-store',
+    'dashicons-album' => 'dashicons-album',
+    'dashicons-palmtree' => 'dashicons-palmtree',
+    'dashicons-tickets-alt' => 'dashicons-tickets-alt',
     'dashicons-money' => 'dashicons-money',
+    'dashicons-money-alt' => 'dashicons-money-alt',
     'dashicons-smiley' => 'dashicons-smiley',
     'dashicons-thumbs-up' => 'dashicons-thumbs-up',
+    'dashicons-thumbs-down' => 'dashicons-thumbs-down',
     'dashicons-layout' => 'dashicons-layout',
+    'dashicons-paperclip' => 'dashicons-paperclip',
+    'dashicons-color-picker' => 'dashicons-color-picker',
+    'dashicons-edit-large' => 'dashicons-edit-large',
     'dashicons-edit-page' => 'dashicons-edit-page',
     'dashicons-airplane' => 'dashicons-airplane',
+    'dashicons-bank' => 'dashicons-bank',
+    'dashicons-beer' => 'dashicons-beer',
+    'dashicons-calculator' => 'dashicons-calculator',
+    'dashicons-car' => 'dashicons-car',
     'dashicons-coffee' => 'dashicons-coffee',
+    'dashicons-drumstick' => 'dashicons-drumstick',
     'dashicons-food' => 'dashicons-food',
+    'dashicons-fullscreen-alt' => 'dashicons-fullscreen-alt',
+    'dashicons-fullscreen-exit-alt' => 'dashicons-fullscreen-exit-alt',
     'dashicons-games' => 'dashicons-games',
+    'dashicons-hourglass' => 'dashicons-hourglass',
+    'dashicons-open-folder' => 'dashicons-open-folder',
+    'dashicons-pdf' => 'dashicons-pdf',
     'dashicons-pets' => 'dashicons-pets',
-    'dashicons-car' => 'dashicons-car'
+    'dashicons-printer' => 'dashicons-printer',
+    'dashicons-privacy' => 'dashicons-privacy',
+    'dashicons-superhero' => 'dashicons-superhero',
+    'dashicons-superhero-alt' => 'dashicons-superhero-alt',
+
+    // Block Editor
+    'dashicons-align-full-width' => 'dashicons-align-full-width',
+    'dashicons-align-pull-left' => 'dashicons-align-pull-left',
+    'dashicons-align-pull-right' => 'dashicons-align-pull-right',
+    'dashicons-align-wide' => 'dashicons-align-wide',
+    'dashicons-block-default' => 'dashicons-block-default',
+    'dashicons-button' => 'dashicons-button',
+    'dashicons-cloud-saved' => 'dashicons-cloud-saved',
+    'dashicons-cloud-upload' => 'dashicons-cloud-upload',
+    'dashicons-columns' => 'dashicons-columns',
+    'dashicons-cover-image' => 'dashicons-cover-image',
+    'dashicons-ellipsis' => 'dashicons-ellipsis',
+    'dashicons-embed-audio' => 'dashicons-embed-audio',
+    'dashicons-embed-generic' => 'dashicons-embed-generic',
+    'dashicons-embed-photo' => 'dashicons-embed-photo',
+    'dashicons-embed-post' => 'dashicons-embed-post',
+    'dashicons-embed-video' => 'dashicons-embed-video',
+    'dashicons-exit' => 'dashicons-exit',
+    'dashicons-heading' => 'dashicons-heading',
+    'dashicons-html' => 'dashicons-html',
+    'dashicons-info-outline' => 'dashicons-info-outline',
+    'dashicons-insert' => 'dashicons-insert',
+    'dashicons-insert-after' => 'dashicons-insert-after',
+    'dashicons-insert-before' => 'dashicons-insert-before',
+    'dashicons-remove' => 'dashicons-remove',
+    'dashicons-saved' => 'dashicons-saved',
+    'dashicons-shortcode' => 'dashicons-shortcode',
+    'dashicons-table-col-after' => 'dashicons-table-col-after',
+    'dashicons-table-col-before' => 'dashicons-table-col-before',
+    'dashicons-table-col-delete' => 'dashicons-table-col-delete',
+    'dashicons-table-row-after' => 'dashicons-table-row-after',
+    'dashicons-table-row-before' => 'dashicons-table-row-before',
+    'dashicons-table-row-delete' => 'dashicons-table-row-delete',
+
+    // Buddicons/Community
+    'dashicons-buddicons-activity' => 'dashicons-buddicons-activity',
+    'dashicons-buddicons-bbpress-logo' => 'dashicons-buddicons-bbpress-logo',
+    'dashicons-buddicons-buddypress-logo' => 'dashicons-buddicons-buddypress-logo',
+    'dashicons-buddicons-community' => 'dashicons-buddicons-community',
+    'dashicons-buddicons-forums' => 'dashicons-buddicons-forums',
+    'dashicons-buddicons-friends' => 'dashicons-buddicons-friends',
+    'dashicons-buddicons-groups' => 'dashicons-buddicons-groups',
+    'dashicons-buddicons-pm' => 'dashicons-buddicons-pm',
+    'dashicons-buddicons-replies' => 'dashicons-buddicons-replies',
+    'dashicons-buddicons-topics' => 'dashicons-buddicons-topics',
+    'dashicons-buddicons-tracking' => 'dashicons-buddicons-tracking',
+
+    // Database
+    'dashicons-database' => 'dashicons-database',
+    'dashicons-database-add' => 'dashicons-database-add',
+    'dashicons-database-export' => 'dashicons-database-export',
+    'dashicons-database-import' => 'dashicons-database-import',
+    'dashicons-database-remove' => 'dashicons-database-remove',
+    'dashicons-database-view' => 'dashicons-database-view'
 );
 
 $supports = array(
@@ -199,6 +526,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                         <li><a href="#kstb-tab-settings">詳細設定</a></li>
                         <li><a href="#kstb-tab-supports">サポート機能</a></li>
                         <li><a href="#kstb-tab-taxonomies">タクソノミー</a></li>
+                        <li><a href="#kstb-tab-post-mover">記事移動</a></li>
                     </ul>
 
                     <div id="kstb-tab-basic" class="kstb-tab-content active">
@@ -385,7 +713,14 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                 <td>
                                     <div style="margin-bottom: 10px;">
                                         <label>
-                                            <input type="radio" name="slug_top_display" value="none" checked>
+                                            <input type="radio" name="slug_top_display" value="unspecified" checked>
+                                            指定なし
+                                        </label>
+                                        <p class="description" style="margin-left: 24px;">WordPressのデフォルト動作に任せます。固定ページや通常投稿で一致するスラッグがあればそれを表示し、なければ404になります。</p>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label>
+                                            <input type="radio" name="slug_top_display" value="none">
                                             表示しない
                                         </label>
                                     </div>
@@ -431,23 +766,21 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                             }
                                             ?>
                                         </optgroup>
-                                        <optgroup label="カスタム投稿タイプ（アーカイブ）">
+                                        <optgroup label="カスタム投稿タイプ">
                                             <?php
                                             // 他のカスタム投稿タイプを親として選択可能
                                             $other_post_types = KSTB_Database::get_all_post_types();
                                             foreach ($other_post_types as $other_type) {
-                                                if ($other_type->has_archive) {
-                                                    // スラッグのみを値として使用
-                                                    $value_path = '/' . $other_type->slug . '/';
-                                                    // 表示用のフルパス
-                                                    $display_path = '/' . $other_type->slug . '/';
-                                                    if (!empty($other_type->parent_directory)) {
-                                                        $parent_dir = trim($other_type->parent_directory, '/');
-                                                        $display_path = '/' . $parent_dir . '/' . $other_type->slug . '/';
-                                                    }
-                                                    echo '<option value="' . esc_attr($value_path) . '">' . 
-                                                         esc_html($other_type->label) . ' (' . esc_html($display_path) . ')</option>';
+                                                // スラッグのみを値として使用
+                                                $value_path = '/' . $other_type->slug . '/';
+                                                // 表示用のフルパス
+                                                $display_path = '/' . $other_type->slug . '/';
+                                                if (!empty($other_type->parent_directory)) {
+                                                    $parent_dir = trim($other_type->parent_directory, '/');
+                                                    $display_path = '/' . $parent_dir . '/' . $other_type->slug . '/';
                                                 }
+                                                echo '<option value="' . esc_attr($value_path) . '">' .
+                                                     esc_html($other_type->label) . ' (' . esc_html($display_path) . ')</option>';
                                             }
                                             ?>
                                         </optgroup>
@@ -501,6 +834,91 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                 </td>
                             </tr>
                         </table>
+                    </div>
+
+                    <div id="kstb-tab-post-mover" class="kstb-tab-content">
+                        <div class="kstb-post-mover-new-mode" style="display: none;">
+                            <div class="notice notice-info">
+                                <p>
+                                    <strong>ℹ️ 記事移動機能について</strong><br>
+                                    記事移動機能は、既存の投稿タイプを編集する際に使用できます。<br>
+                                    先にこの投稿タイプを保存してから、編集画面の「記事移動」タブで他の投稿タイプから記事を移動してください。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="kstb-post-mover-edit-mode" style="display: none;">
+                            <div class="notice notice-info" style="margin-bottom: 15px;">
+                                <p>
+                                    <strong>📝 この投稿タイプへ記事を移動</strong><br>
+                                    他の投稿タイプから、この投稿タイプ「<span id="kstb-current-post-type-label"></span>」へ記事を移動できます。
+                                </p>
+                            </div>
+
+                            <div class="notice notice-warning" style="margin-bottom: 15px;">
+                                <p>
+                                    <strong>⚠️ 注意事項</strong><br>
+                                    記事を移動すると、URLが変更されます。SEOに影響する可能性があるため、慎重に実行してください。<br>
+                                    移動先の投稿タイプでサポートされていない機能やタクソノミーは削除されます。
+                                </p>
+                            </div>
+
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><label for="kstb-mover-source-type">移動元の投稿タイプ</label></th>
+                                    <td>
+                                        <select id="kstb-mover-source-type" class="regular-text">
+                                            <option value="">選択してください</option>
+                                            <?php
+                                            $movable_types = KSTB_Post_Mover::get_instance()->get_movable_post_types();
+                                            foreach ($movable_types as $slug => $label) {
+                                                echo '<option value="' . esc_attr($slug) . '">' . esc_html($label) . '</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                        <button type="button" id="kstb-load-posts-btn" class="button" style="margin-left: 10px;">記事を読み込む</button>
+                                        <p class="description">どの投稿タイプから記事を移動するか選択してください</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div id="kstb-posts-list-container" style="display: none; margin-top: 20px;">
+                            <h3>記事一覧 <span id="kstb-posts-count" style="font-size: 14px; font-weight: normal; color: #666;"></span></h3>
+
+                            <div style="margin-bottom: 10px;">
+                                <button type="button" id="kstb-select-all-posts" class="button">すべて選択</button>
+                                <button type="button" id="kstb-deselect-all-posts" class="button">すべて解除</button>
+                            </div>
+
+                            <table class="wp-list-table widefat fixed striped" id="kstb-posts-table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" class="check-column">
+                                            <input type="checkbox" id="kstb-select-all-checkbox">
+                                        </th>
+                                        <th scope="col">タイトル</th>
+                                        <th scope="col">ステータス</th>
+                                        <th scope="col">日付</th>
+                                        <th scope="col">作成者</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kstb-posts-tbody">
+                                </tbody>
+                            </table>
+
+                            <input type="hidden" id="kstb-mover-target-type" value="">
+
+                            <div id="kstb-move-warnings" style="display: none; margin: 15px 0; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107;">
+                            </div>
+
+                            <p class="submit">
+                                <button type="button" id="kstb-move-posts-btn" class="button button-primary">
+                                    「<span id="kstb-target-post-type-label"></span>」へ選択した記事を移動
+                                </button>
+                                <span id="kstb-move-status" style="margin-left: 15px; font-weight: bold;"></span>
+                            </p>
+                        </div>
                     </div>
                 </div>
 
