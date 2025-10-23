@@ -20,8 +20,8 @@ class KSTB_Archive_Controller {
     private function __construct() {}
 
     public function init() {
-        // リライトルールをフィルタリング（最も早いタイミング）
-        add_filter('rewrite_rules_array', array($this, 'filter_rewrite_rules'), 999);
+        // リライトルールをフィルタリング（最後に実行して並び替え）
+        add_filter('rewrite_rules_array', array($this, 'filter_rewrite_rules'), 99999);
 
         // requestフィルターでリクエストを事前処理
         add_filter('request', array($this, 'filter_request'), 5);
@@ -79,6 +79,91 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * URIパスから全投稿タイプ（固定ページ、投稿、カスタム投稿）を検索
+     *
+     * @param string $uri URIパス（例: "seo-note/report/reportx"）
+     * @return WP_Post|null 見つかった投稿、またはnull
+     */
+    private function find_post_by_path($uri) {
+        // まず固定ページを検索（従来の動作を維持）
+        $page = get_page_by_path($uri);
+        if ($page && $page->post_status === 'publish') {
+            return $page;
+        }
+
+        // URIからスラッグを抽出（最後のセグメント）
+        $segments = explode('/', trim($uri, '/'));
+        $slug = end($segments);
+
+        // 階層URLパターンを解析（例: seo-note/report/reportx）
+        // 最後から2番目のセグメントがカスタム投稿タイプの可能性がある
+        if (count($segments) >= 3) {
+            $possible_post_type_slug = $segments[count($segments) - 2]; // 'report'
+
+            // このスラッグがカスタム投稿タイプかチェック
+            $custom_post_types = KSTB_Database::get_all_post_types();
+            foreach ($custom_post_types as $post_type) {
+                if ($post_type->slug === $possible_post_type_slug) {
+                    // カスタム投稿タイプの投稿を検索
+                    $args = array(
+                        'name' => $slug,
+                        'post_type' => $post_type->slug,
+                        'post_status' => 'publish',
+                        'posts_per_page' => 1,
+                        'no_found_rows' => true,
+                        'update_post_meta_cache' => false,
+                        'update_post_term_cache' => false,
+                    );
+
+                    $query = new WP_Query($args);
+
+                    if ($query->have_posts()) {
+                        $post = $query->posts[0];
+
+                        // 階層URLが正しいかチェック（親ディレクトリを確認）
+                        if (!empty($post_type->parent_directory)) {
+                            $parent_dir = trim($post_type->parent_directory, '/');
+                            // フルパスを再帰的に構築
+                            $full_path = $this->build_full_path_for_post_type($post_type);
+                            $expected_prefix = $full_path . '/' . $slug;
+
+                            // URIが期待されるパターンと一致するかチェック
+                            if (strpos($uri, $full_path . '/') === 0) {
+                                return $post;
+                            }
+                        } else {
+                            // 親ディレクトリがない場合
+                            return $post;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 全投稿タイプを取得
+        $post_types = get_post_types(array('public' => true), 'names');
+
+        // WP_Queryで全投稿タイプから検索
+        $args = array(
+            'name' => $slug,
+            'post_type' => $post_types,
+            'post_status' => 'publish',
+            'posts_per_page' => 1,
+            'no_found_rows' => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        );
+
+        $query = new WP_Query($args);
+
+        if ($query->have_posts()) {
+            return $query->posts[0];
+        }
+
+        return null;
+    }
+
+    /**
      * リライトルールをフィルタリング
      */
     public function filter_rewrite_rules($rules) {
@@ -113,6 +198,32 @@ class KSTB_Archive_Controller {
                 }
             }
         }
+
+        // リライトルールを並び替え：より specific なルールを先に
+        uksort($rules, function($a, $b) {
+            // 1. 固定文字列の部分をカウント（正規表現パターン以外）
+            $fixed_a = preg_replace('/[.+?*\[\]\(\)\{\}\^\$\\\\]/', '', $a);
+            $fixed_b = preg_replace('/[.+?*\[\]\(\)\{\}\^\$\\\\]/', '', $b);
+            $fixed_len_a = strlen($fixed_a);
+            $fixed_len_b = strlen($fixed_b);
+
+            if ($fixed_len_a !== $fixed_len_b) {
+                // 固定文字列が長い（より specific）方を先に
+                return $fixed_len_b - $fixed_len_a;
+            }
+
+            // 2. スラッシュの数で比較
+            $count_a = substr_count($a, '/');
+            $count_b = substr_count($b, '/');
+
+            if ($count_a !== $count_b) {
+                // スラッシュが多い方を先に
+                return $count_b - $count_a;
+            }
+
+            // 3. 全体の文字列の長さで比較
+            return strlen($b) - strlen($a);
+        });
 
         return $rules;
     }
@@ -216,9 +327,52 @@ class KSTB_Archive_Controller {
                     return $query_vars;
                 }
 
-                // 「指定なし」の場合のみ固定ページを探す
+                // 「指定なし」の場合のみ固定ページ・投稿・カスタム投稿を探す
                 if (!isset($post_type->archive_display_type) || $post_type->archive_display_type === 'default') {
-                    // 同じパスに固定ページが存在するかチェック
+                    // 同じパスに投稿（固定ページ、通常投稿、カスタム投稿）が存在するかチェック
+                    $post = $this->find_post_by_path($uri);
+
+                    if ($post) {
+                        // 投稿タイプに応じて適切なクエリ変数を返す
+                        if ($post->post_type === 'page') {
+                            return array(
+                                'pagename' => $uri,
+                                'page' => '',
+                                'post_type' => 'page'
+                            );
+                        } else {
+                            // 通常投稿やカスタム投稿の場合
+                            return array(
+                                'name' => $post->post_name,
+                                'post_type' => $post->post_type,
+                                'p' => $post->ID
+                            );
+                        }
+                    }
+                }
+            }
+
+            // スラッグ以下のサブディレクトリの場合
+            if ($is_subdir) {
+                // まずカスタム投稿タイプの個別記事として存在するかチェック
+                $post_slug = $segments[count($segments) - 1];
+                $args = array(
+                    'name' => $post_slug,
+                    'post_type' => $post_type->slug,
+                    'post_status' => 'publish',
+                    'posts_per_page' => 1
+                );
+                $posts = get_posts($args);
+
+                if (!empty($posts)) {
+                    // カスタム投稿タイプの記事が存在する場合、それを返す
+                    return array(
+                        'name' => $posts[0]->post_name,
+                        'post_type' => $posts[0]->post_type,
+                        'p' => $posts[0]->ID
+                    );
+                } else {
+                    // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
                     $page = get_page_by_path($uri);
 
                     if ($page && $page->post_status === 'publish') {
@@ -229,22 +383,6 @@ class KSTB_Archive_Controller {
                             'post_type' => 'page'
                         );
                     }
-                }
-            }
-
-            // スラッグ以下のサブディレクトリの場合
-            if ($is_subdir) {
-                // カスタム投稿タイプの個別記事として処理されそうな場合、
-                // 固定ページが存在するかチェック
-                $page = get_page_by_path($uri);
-
-                if ($page && $page->post_status === 'publish') {
-                    // 固定ページとして処理するクエリ変数を返す
-                    return array(
-                        'pagename' => $uri,
-                        'page' => '',
-                        'post_type' => 'page'
-                    );
                 }
             }
         }
@@ -417,27 +555,35 @@ class KSTB_Archive_Controller {
                         return;
                     }
 
-                    // 「指定なし」の場合のみ固定ページを探す
+                    // 「指定なし」の場合のみ固定ページ・投稿・カスタム投稿を探す
                     if (!isset($post_type->archive_display_type) || $post_type->archive_display_type === 'default') {
-                        // 同じパスに固定ページが存在するかチェック
-                        $page = get_page_by_path($request);
+                        // 同じパスに投稿（固定ページ、通常投稿、カスタム投稿）が存在するかチェック
+                        $post = $this->find_post_by_path($request);
 
-                        if ($page && $page->post_status === 'publish') {
-                            // 固定ページが存在する場合は明示的に固定ページを表示
-                            $wp->query_vars = array(
-                                'pagename' => $request,
-                                'page' => '',
-                                'name' => '',
-                                'post_type' => 'page'
-                            );
+                        if ($post) {
+                            // 投稿タイプに応じて適切なクエリ変数を設定
+                            if ($post->post_type === 'page') {
+                                $wp->query_vars = array(
+                                    'pagename' => $request,
+                                    'page' => '',
+                                    'name' => '',
+                                    'post_type' => 'page'
+                                );
+                            } else {
+                                // 通常投稿やカスタム投稿の場合
+                                $wp->query_vars = array(
+                                    'name' => $post->post_name,
+                                    'post_type' => $post->post_type,
+                                    'p' => $post->ID
+                                );
+                            }
                             // カスタム投稿タイプ関連のクエリ変数を削除
                             unset($wp->query_vars[$post_type->slug]);
-                            unset($wp->query_vars['post_type']);
                             $this->processed = true;
                             return;
                         }
 
-                        // 固定ページが存在しない場合のみ404にする
+                        // 投稿が存在しない場合のみ404にする
                         $wp->query_vars = array('error' => '404');
                         $this->processed = true;
                         return;
@@ -638,27 +784,31 @@ class KSTB_Archive_Controller {
                     return;
                 }
 
-                // 「指定なし」の場合のみ固定ページを探す
+                // 「指定なし」の場合のみ固定ページ・投稿・カスタム投稿を探す
                 if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default') {
-                    // 同じパスに固定ページが存在するかチェック
-                    $page = get_page_by_path($uri);
+                    // 同じパスに投稿（固定ページ、通常投稿、カスタム投稿）が存在するかチェック
+                    $post = $this->find_post_by_path($uri);
 
-                    if ($page && $page->post_status === 'publish') {
+                    if ($post) {
 
                         // すべてのクエリ変数をクリア
                         $query->query_vars = array();
                         $query->query = array();
 
-                        // 固定ページとしてクエリを設定
-                        $query->set('page_id', $page->ID);
-                        $query->set('post_type', 'page');
+                        if ($post->post_type === 'page') {
+                            // 固定ページとしてクエリを設定
+                            $query->set('page_id', $post->ID);
+                            $query->set('post_type', 'page');
+                        } else {
+                            // カスタム投稿としてクエリを設定
+                            $query->set('p', $post->ID);
+                            $query->set('post_type', $post->post_type);
+                        }
                         $query->set('posts_per_page', 1);
                         $query->set('paged', 1);
 
                         // 条件タグをリセット
-                        $query->is_page = true;
                         $query->is_singular = true;
-                        $query->is_single = false;
                         $query->is_404 = false;
                         $query->is_home = false;
                         $query->is_archive = false;
@@ -682,14 +832,22 @@ class KSTB_Archive_Controller {
                         $query->is_attachment = false;
                         $query->is_posts_page = false;
 
+                        if ($post->post_type === 'page') {
+                            $query->is_page = true;
+                            $query->is_single = false;
+                        } else {
+                            $query->is_page = false;
+                            $query->is_single = true;
+                        }
+
                         // queried_objectを明示的に設定
-                        $query->queried_object = $page;
-                        $query->queried_object_id = $page->ID;
+                        $query->queried_object = $post;
+                        $query->queried_object_id = $post->ID;
 
                         return;
                     }
 
-                    // 固定ページが存在しない場合は404
+                    // 投稿が存在しない場合は404
                     $query->set_404();
                     // queried_objectをクリア
                     $query->queried_object = null;
@@ -823,17 +981,21 @@ class KSTB_Archive_Controller {
                     exit;
                 }
 
-                // 「指定なし」の場合のみ固定ページを探す
+                // 「指定なし」の場合のみ固定ページ・投稿・カスタム投稿を探す
                 if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default') {
-                    // 同じパスに固定ページが存在するかチェック
-                    $page = get_page_by_path($uri);
+                    // 同じパスに投稿（固定ページ、通常投稿、カスタム投稿）が存在するかチェック
+                    $post = $this->find_post_by_path($uri);
 
-                    if ($page && $page->post_status === 'publish') {
-                        $this->display_page($page);
+                    if ($post) {
+                        if ($post->post_type === 'page') {
+                            $this->display_page($post);
+                        } else {
+                            $this->display_post($post);
+                        }
                         exit;
                     }
 
-                    // 固定ページが存在しない場合は404
+                    // 投稿が存在しない場合は404
                     $this->display_404();
                     exit;
                 }
@@ -1047,7 +1209,7 @@ class KSTB_Archive_Controller {
         // クエリをリセット
         $wp_query = new WP_Query(array(
             'p' => $post_obj->ID,
-            'post_type' => 'post',
+            'post_type' => $post_obj->post_type,
             'posts_per_page' => 1
         ));
 
