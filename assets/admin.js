@@ -12,9 +12,13 @@
             $('.kstb-edit-button').on('click', this.editPostType);
             $('.kstb-delete-button').on('click', this.deletePostType);
             $('.kstb-cancel-button').on('click', this.hideForm);
+            $('.kstb-close-button').on('click', this.hideForm);
             $('#kstb-post-type-form').on('submit', this.savePostType);
 
+            // メインタブ（一覧と説明書）
+            $('.kstb-main-tab-buttons a').on('click', this.switchMainTab);
 
+            // フォームタブ
             $('.kstb-tab-buttons a').on('click', this.switchTab);
 
             $(document).on('input', '#kstb-label', this.updateLabelPreview);
@@ -237,6 +241,18 @@
                     $button.prop('disabled', false).text(originalText);
                 }
             });
+        },
+
+        switchMainTab: function (e) {
+            e.preventDefault();
+
+            var target = $(this).attr('href');
+
+            $('.kstb-main-tab-buttons a').removeClass('active');
+            $(this).addClass('active');
+
+            $('.kstb-main-tab-content').removeClass('active');
+            $(target).addClass('active');
         },
 
         switchTab: function (e) {

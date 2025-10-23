@@ -5,6 +5,57 @@ if (!defined('ABSPATH')) {
 
 $post_types = KSTB_Database::get_all_post_types();
 
+// 各投稿タイプの完全パスを計算
+function kstb_build_full_path($post_type_slug, $all_post_types) {
+    static $cache = array();
+
+    if (isset($cache[$post_type_slug])) {
+        return $cache[$post_type_slug];
+    }
+
+    // 該当する投稿タイプを検索
+    $current = null;
+    foreach ($all_post_types as $pt) {
+        if ($pt->slug === $post_type_slug) {
+            $current = $pt;
+            break;
+        }
+    }
+
+    if (!$current) {
+        return '';
+    }
+
+    // 親ディレクトリがない場合
+    if (empty($current->parent_directory)) {
+        $cache[$post_type_slug] = '';
+        return '';
+    }
+
+    $parent_dir = trim($current->parent_directory, '/');
+
+    // 親ディレクトリが投稿タイプかどうかチェック
+    $parent_is_post_type = false;
+    foreach ($all_post_types as $pt) {
+        if ($pt->slug === $parent_dir) {
+            $parent_is_post_type = true;
+            break;
+        }
+    }
+
+    if ($parent_is_post_type) {
+        // 親の完全パスを再帰的に取得
+        $parent_full_path = kstb_build_full_path($parent_dir, $all_post_types);
+        $full_path = $parent_full_path ? $parent_full_path . '/' . $parent_dir : $parent_dir;
+    } else {
+        // 親は固定ページやその他
+        $full_path = $parent_dir;
+    }
+
+    $cache[$post_type_slug] = $full_path;
+    return $full_path;
+}
+
 $dashicons = array(
     // Admin Menu
     'dashicons-menu' => 'dashicons-menu',
@@ -429,7 +480,14 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
 
     <div class="kstb-container">
         <div class="kstb-list-area">
-            <h2>カスタム投稿タイプ一覧</h2>
+            <!-- タブ切り替え -->
+            <div class="kstb-main-tabs">
+                <ul class="kstb-main-tab-buttons">
+                    <li><a href="#kstb-main-tab-list" class="active">カスタム投稿タイプ一覧</a></li>
+                    <li><a href="#kstb-main-tab-guide">説明書</a></li>
+                </ul>
+
+                <div id="kstb-main-tab-list" class="kstb-main-tab-content active">
             <?php if (empty($post_types)) : ?>
                 <p>カスタム投稿タイプがまだ作成されていません。</p>
             <?php else : ?>
@@ -437,6 +495,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                     <thead>
                         <tr>
                             <th scope="col" class="column-label">ラベル</th>
+                            <th scope="col" class="column-path">パス</th>
                             <th scope="col" class="column-slug">スラッグ</th>
                             <th scope="col" class="column-public">公開</th>
                             <th scope="col" class="column-rest">REST API</th>
@@ -450,10 +509,27 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                     <?php if ($post_type->menu_icon) : ?>
                                         <span class="dashicons <?php echo esc_attr($post_type->menu_icon); ?>"></span>
                                     <?php endif; ?>
-                                    <?php echo esc_html($post_type->label); ?>
+                                    <?php if (post_type_exists($post_type->slug)) : ?>
+                                        <a href="<?php echo esc_url(admin_url('edit.php?post_type=' . $post_type->slug)); ?>" style="text-decoration: none; font-weight: 600;">
+                                            <?php echo esc_html($post_type->label); ?>
+                                        </a>
+                                    <?php else : ?>
+                                        <?php echo esc_html($post_type->label); ?>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="column-path">
+                                    <?php
+                                    // 完全な階層パスを絶対パスで表示
+                                    $full_path = kstb_build_full_path($post_type->slug, $post_types);
+                                    if ($full_path) {
+                                        echo '<span style="color: #666;">/' . esc_html($full_path) . '/</span>';
+                                    } else {
+                                        echo '<span style="color: #999;">/</span>';
+                                    }
+                                    ?>
                                 </td>
                                 <td class="column-slug">
-                                    <?php 
+                                    <?php
                                     $archive_url = '';
                                     if (post_type_exists($post_type->slug)) {
                                         if ($post_type->has_archive) {
@@ -472,10 +548,10 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                             }
                                         }
                                     }
-                                    
+
                                     if ($archive_url) : ?>
                                         <a href="<?php echo esc_url($archive_url); ?>" target="_blank" title="<?php echo $post_type->has_archive ? 'アーカイブページを表示' : 'サンプル投稿を表示'; ?>">
-                                            <?php echo esc_html($post_type->slug); ?> 
+                                            <?php echo esc_html($post_type->slug); ?>
                                             <span class="dashicons dashicons-external" style="font-size: 14px; vertical-align: text-top;"></span>
                                         </a>
                                     <?php else : ?>
@@ -489,14 +565,6 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                     <?php echo $post_type->show_in_rest ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no-alt"></span>'; ?>
                                 </td>
                                 <td class="column-actions">
-                                    <?php if (post_type_exists($post_type->slug)) : ?>
-                                        <span style="color: green; font-weight: bold;">✓ 登録済み</span><br>
-                                    <?php else : ?>
-                                        <span style="color: red; font-weight: bold;">✗ 未登録</span><br>
-                                    <?php endif; ?>
-                                    <?php if (post_type_exists($post_type->slug)) : ?>
-                                        <a href="<?php echo esc_url(admin_url('edit.php?post_type=' . $post_type->slug)); ?>" class="button button-primary">投稿を管理</a>
-                                    <?php endif; ?>
                                     <button type="button" class="button kstb-edit-button" data-id="<?php echo esc_attr($post_type->id); ?>">編集</button>
                                     <button type="button" class="button kstb-delete-button" data-id="<?php echo esc_attr($post_type->id); ?>">削除</button>
                                 </td>
@@ -505,16 +573,59 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                     </tbody>
                 </table>
             <?php endif; ?>
+                </div>
+
+                <!-- 説明書タブ -->
+                <div id="kstb-main-tab-guide" class="kstb-main-tab-content">
+                    <h3 style="margin-top: 10px;">💡 カスタム投稿タイプの作成ガイド</h3>
+
+                    <h4>📝 必須項目</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>スラッグ</strong> <span class="required">* 必須</span> - URL に使用される一意の識別子（半角英数字とハイフン）</li>
+                        <li><strong>ラベル</strong> <span class="required">* 必須</span> - 管理画面で表示される名前</li>
+                    </ul>
+                    <p style="margin-left: 20px;"><em>その他の項目はすべて任意です（デフォルト値が設定されています）</em></p>
+
+                    <h4>🔧 主な設定項目</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>親ディレクトリ</strong> - 階層URL構造を作成（例：<code>/親ディレクトリ/スラッグ/</code>）</li>
+                        <li><strong>アーカイブページ</strong> - 投稿一覧ページの表示を制御</li>
+                        <li><strong>スラッグトップページ</strong> - アーカイブ無効時の表示内容を選択</li>
+                        <li><strong>階層化</strong> - 投稿に親子関係を持たせる（固定ページと同様）</li>
+                    </ul>
+
+                    <h4>📋 ラベルの自動生成</h4>
+                    <p style="margin-left: 20px;">
+                        「ラベル」タブの各項目は、基本設定の「ラベル」から自動的に生成されます。<br>
+                        通常は編集する必要はありませんが、より細かくカスタマイズしたい場合に使用できます。
+                    </p>
+
+                    <h4>🔄 記事移動機能について</h4>
+                    <p style="margin-left: 20px;">
+                        「記事移動」タブは、既存の投稿タイプを編集する際に表示されます。<br>
+                        他の投稿タイプから記事を一括移動できますが、<strong>URLが変更される</strong>ため慎重に実行してください。
+                    </p>
+
+                    <h4>⚙️ 高度な設定</h4>
+                    <ul style="margin-left: 20px;">
+                        <li><strong>サポート機能</strong> - タイトル、エディター、アイキャッチ画像などの機能を選択</li>
+                        <li><strong>タクソノミー</strong> - カテゴリーやタグとの関連付け</li>
+                        <li><strong>メニュー位置</strong> - 管理画面メニューの表示順序（5〜100、デフォルト：25）</li>
+                    </ul>
+
+                    <p style="margin: 15px 20px 5px 20px; font-size: 13px; color: #666;">
+                        詳しい使い方は <a href="https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types" target="_blank">GitHub リポジトリ</a> をご覧ください。
+                    </p>
+                </div>
+            </div>
         </div>
 
         <div class="kstb-form-area" style="display: none;">
-            <h2><span class="kstb-form-title">新規カスタム投稿タイプ</span></h2>
+            <h2>
+                <span class="kstb-form-title">新規カスタム投稿タイプ</span>
+                <button type="button" class="kstb-close-button" title="閉じる">×</button>
+            </h2>
 
-            <div class="notice notice-info" style="margin: 10px 0;">
-                <p>
-                    <strong>必須項目:</strong> <span class="required">* 必須</span>マークの「スラッグ」と「ラベル」の2つだけです。他はすべて任意（デフォルト値あり）
-                </p>
-            </div>
 
             <form id="kstb-post-type-form">
                 <input type="hidden" id="kstb-post-type-id" name="id" value="">
@@ -588,12 +699,6 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                     </div>
 
                     <div id="kstb-tab-labels" class="kstb-tab-content">
-                        <div class="notice notice-info" style="margin-bottom: 15px;">
-                            <p>
-                                <strong>📋 自動生成されるラベル一覧</strong><br>
-                                これらは「ラベル」フィールドから自動的に生成されます。編集する必要はありません。
-                            </p>
-                        </div>
 
                         <table class="form-table">
                             <tr>
@@ -841,25 +946,16 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                             <div class="notice notice-info">
                                 <p>
                                     <strong>ℹ️ 記事移動機能について</strong><br>
-                                    記事移動機能は、既存の投稿タイプを編集する際に使用できます。<br>
-                                    先にこの投稿タイプを保存してから、編集画面の「記事移動」タブで他の投稿タイプから記事を移動してください。
+                                    記事移動機能は、既存の投稿タイプを編集する際に使用できます。先にこの投稿タイプを保存してから、編集画面の「記事移動」タブをご利用ください。
                                 </p>
                             </div>
                         </div>
 
                         <div class="kstb-post-mover-edit-mode" style="display: none;">
-                            <div class="notice notice-info" style="margin-bottom: 15px;">
-                                <p>
-                                    <strong>📝 この投稿タイプへ記事を移動</strong><br>
-                                    他の投稿タイプから、この投稿タイプ「<span id="kstb-current-post-type-label"></span>」へ記事を移動できます。
-                                </p>
-                            </div>
-
                             <div class="notice notice-warning" style="margin-bottom: 15px;">
                                 <p>
-                                    <strong>⚠️ 注意事項</strong><br>
-                                    記事を移動すると、URLが変更されます。SEOに影響する可能性があるため、慎重に実行してください。<br>
-                                    移動先の投稿タイプでサポートされていない機能やタクソノミーは削除されます。
+                                    <strong>⚠️ 記事移動時の注意事項</strong><br>
+                                    記事を移動すると<strong>URLが変更</strong>されます。SEOに影響する可能性があるため、慎重に実行してください。
                                 </p>
                             </div>
 
