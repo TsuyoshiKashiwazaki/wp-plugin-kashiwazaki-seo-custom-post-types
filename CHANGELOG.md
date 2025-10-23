@@ -5,6 +5,19 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2025-10-23
+
+### Fixed
+- カスタム投稿タイプの階層URLで投稿が表示されない問題を修正
+- `find_post_by_path()` メソッドで階層URL構造（例：`/parent/post-type/post-slug/`）のカスタム投稿を正しく検索できるように改善
+- `display_post()` メソッドで投稿タイプを `'post'` に固定していた問題を修正し、カスタム投稿の本文が表示されない不具合を解消
+- `filter_request()`, `handle_request()`, `control_query()`, `template_control()` でカスタム投稿タイプの投稿を検索するように修正
+
+### Improved
+- リライトルールのソート処理を実装し、固定文字列の長さで優先順位を決定
+- より具体的なルール（例：`seo-note/report/(.+?)`）が抽象的なルール（例：`seo-note/(.+?)`）より先にマッチするように改善
+- リライトルールフィルタの優先順位を99999に変更し、最後に実行されるように調整
+
 ## [1.0.5] - 2025-10-22
 
 ### Fixed

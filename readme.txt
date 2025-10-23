@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,11 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.6 =
+* Fixed: カスタム投稿タイプの階層URLで投稿が表示されない問題を修正
+* Fixed: カスタム投稿タイプの投稿本文が表示されない問題を修正
+* Improved: リライトルールのソート処理を改善し、より具体的なルールを優先
+
 = 1.0.5 =
 * Fixed: 「スラッグトップページ」で「表示しない」設定時に固定ページが表示される問題を修正
 * Improved: 階層URLマッチングで最長パス優先ロジックを実装
@@ -98,6 +103,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.6 =
+カスタム投稿タイプの階層URLで投稿が正しく表示されるようになりました。アップデートを推奨します。
 
 = 1.0.5 =
 アーカイブ表示制御の不具合を修正しました。アップデートを推奨します。
