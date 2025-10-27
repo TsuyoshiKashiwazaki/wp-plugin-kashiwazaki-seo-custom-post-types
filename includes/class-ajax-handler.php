@@ -25,6 +25,7 @@ class KSTB_Ajax_Handler {
         add_action('wp_ajax_kstb_force_register_all', array($this, 'force_register_all'));
         add_action('wp_ajax_kstb_force_reregister_all', array($this, 'force_reregister_all'));
         add_action('wp_ajax_kstb_get_posts_by_type', array($this, 'get_posts_by_type'));
+        add_action('wp_ajax_kstb_get_taxonomies_by_type', array($this, 'get_taxonomies_by_type'));
         add_action('wp_ajax_kstb_move_posts', array($this, 'move_posts'));
     }
 
@@ -40,21 +41,50 @@ class KSTB_Ajax_Handler {
         }
 
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $url_slug = isset($_POST['url_slug']) ? sanitize_key($_POST['url_slug']) : '';
         $slug = isset($_POST['slug']) ? sanitize_key($_POST['slug']) : '';
         $label = isset($_POST['label']) ? sanitize_text_field($_POST['label']) : '';
 
-        if (empty($slug) || empty($label)) {
-            wp_send_json_error(__('スラッグとラベルを入力してください', 'kashiwazaki-seo-type-builder'));
+        // URLスラッグは必須
+        if (empty($url_slug) || empty($label)) {
+            wp_send_json_error(__('URLスラッグとラベルを入力してください', 'kashiwazaki-seo-type-builder'));
             return;
         }
 
-        if (strlen($slug) > 20) {
-            wp_send_json_error(__('スラッグは20文字以内で入力してください', 'kashiwazaki-seo-type-builder'));
+        // URLスラッグの検証
+        if (strlen($url_slug) > 64) {
+            wp_send_json_error(__('URLスラッグは64文字以内で入力してください', 'kashiwazaki-seo-type-builder'));
             return;
         }
 
-        if (!preg_match('/^[a-z0-9_-]+$/', $slug)) {
-            wp_send_json_error(__('スラッグは半角英数字、ハイフン、アンダースコアのみ使用できます', 'kashiwazaki-seo-type-builder'));
+        if (!preg_match('/^[a-z0-9_-]+$/', $url_slug)) {
+            wp_send_json_error(__('URLスラッグは半角英数字、ハイフン、アンダースコアのみ使用できます', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // 内部名（短縮名）が空の場合はURLスラッグから自動生成
+        if (empty($slug)) {
+            // URLスラッグの最初の20文字を使用（ハイフンで区切られた単語を考慮）
+            if (strlen($url_slug) <= 20) {
+                $slug = $url_slug;
+            } else {
+                // 20文字まで切り詰め、最後のハイフン以降を削除して綺麗にする
+                $slug = substr($url_slug, 0, 20);
+                $last_hyphen = strrpos($slug, '-');
+                if ($last_hyphen !== false && $last_hyphen > 10) {
+                    $slug = substr($slug, 0, $last_hyphen);
+                }
+            }
+        } else {
+            // 内部名が入力されている場合は20文字以内に強制的に切り詰める
+            if (strlen($slug) > 20) {
+                $slug = substr($slug, 0, 20);
+            }
+        }
+
+        // 内部名の検証（ここでは文字種のみチェック）
+        if (!empty($slug) && !preg_match('/^[a-z0-9_-]+$/', $slug)) {
+            wp_send_json_error(__('内部名は半角英数字、ハイフン、アンダースコアのみ使用できます', 'kashiwazaki-seo-type-builder'));
             return;
         }
 
@@ -110,7 +140,7 @@ class KSTB_Ajax_Handler {
         $supports = isset($_POST['supports']) && is_array($_POST['supports']) ? array_map('sanitize_key', $_POST['supports']) : array('title', 'editor');
 
         $rewrite = array(
-            'slug' => $slug,
+            'slug' => $url_slug,
             'with_front' => false
         );
 
@@ -139,6 +169,7 @@ class KSTB_Ajax_Handler {
 
         $data = array(
             'slug' => $slug,
+            'url_slug' => $url_slug,
             'label' => $label,
             'labels' => $labels,
             'public' => isset($_POST['public']) ? (bool) $_POST['public'] : true,
@@ -157,7 +188,7 @@ class KSTB_Ajax_Handler {
             'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field($_POST['menu_icon']) : null,
             'supports' => $supports,
             'show_in_rest' => true,
-            'rest_base' => $slug,
+            'rest_base' => $url_slug,
             'taxonomies' => $taxonomies
         );
 
@@ -457,7 +488,52 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $post_type = isset($_POST['post_type']) ? sanitize_key($_POST['post_type']) : '';
+        $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : '';
+        $taxonomy = isset($_POST['taxonomy']) ? sanitize_key($_POST['taxonomy']) : '';
+        $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
+
+        if (empty($post_type)) {
+            wp_send_json_error(__('投稿タイプが指定されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $args = array();
+
+        // カテゴリフィルタが指定されている場合
+        if (!empty($taxonomy) && $term_id > 0) {
+            $args['tax_query'] = array(
+                array(
+                    'taxonomy' => $taxonomy,
+                    'field' => 'term_id',
+                    'terms' => $term_id
+                )
+            );
+        }
+
+        $post_mover = KSTB_Post_Mover::get_instance();
+        $posts = $post_mover->get_posts_by_type($post_type, $args);
+
+        wp_send_json_success(array(
+            'posts' => $posts,
+            'count' => count($posts)
+        ));
+    }
+
+    /**
+     * 投稿タイプに紐づくタクソノミー一覧を取得（Ajax）
+     */
+    public function get_taxonomies_by_type() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : '';
 
         if (empty($post_type)) {
             wp_send_json_error(__('投稿タイプが指定されていません', 'kashiwazaki-seo-type-builder'));
@@ -465,11 +541,11 @@ class KSTB_Ajax_Handler {
         }
 
         $post_mover = KSTB_Post_Mover::get_instance();
-        $posts = $post_mover->get_posts_by_type($post_type);
+        $taxonomies = $post_mover->get_taxonomies_by_post_type($post_type);
 
         wp_send_json_success(array(
-            'posts' => $posts,
-            'count' => count($posts)
+            'taxonomies' => $taxonomies,
+            'count' => count($taxonomies)
         ));
     }
 

@@ -1501,7 +1501,11 @@ class KSTB_Parent_Selector {
         if (!$post_type_obj || !$post_type_obj->rewrite) {
             return $permalink;
         }
-        
+
+        // データベースから投稿タイプ設定を取得してurl_slugを使用
+        $post_type_data = KSTB_Database::get_post_type_by_slug($post->post_type);
+        $url_slug = (!empty($post_type_data->url_slug)) ? $post_type_data->url_slug : $post->post_type;
+
         // 階層化が有効で親ページがある場合
         if ($this->is_hierarchical_post_type($post->post_type)) {
             $parent = self::get_parent_page($post->ID);
@@ -1509,18 +1513,46 @@ class KSTB_Parent_Selector {
                 // リライトスラッグを取得（親ディレクトリが含まれている）
                 $post_type_slug = isset($post_type_obj->rewrite['slug']) ? $post_type_obj->rewrite['slug'] : $post->post_type;
 
+                // 親ディレクトリを除いた投稿タイプのベーススラッグを取得
+                $slug_parts = explode('/', $post_type_slug);
+                $base_slug = end($slug_parts);
+
+                // 親ディレクトリ部分を取得（あれば）
+                $parent_dir = '';
+                if (count($slug_parts) > 1) {
+                    array_pop($slug_parts);
+                    $parent_dir = implode('/', $slug_parts) . '/';
+                }
+
                 // 完全な階層パスを取得
                 $hierarchical_path = $this->get_hierarchical_path($post->ID);
 
-                // 階層URLを生成: /投稿タイプスラッグ/完全な階層パス/
-                $hierarchical_url = home_url("/{$post_type_slug}/{$hierarchical_path}/");
+                // 階層URLを生成: /親ディレクトリ/url_slug/完全な階層パス/
+                $hierarchical_url = home_url("/{$parent_dir}{$url_slug}/{$hierarchical_path}/");
 
                 return $hierarchical_url;
             }
         }
-        
-        // 親ディレクトリが設定されている場合はそれが反映されたパーマリンクを返す
-        // （register_post_typeで既に親ディレクトリ込みのrewrite slugが設定されているので、デフォルトのパーマリンクをそのまま返す）
+
+        // 親ディレクトリが設定されている場合、url_slugを使ってパーマリンクを再構築
+        if ($post_type_data && !empty($post_type_data->url_slug) && $post_type_data->url_slug !== $post->post_type) {
+            $post_type_slug = isset($post_type_obj->rewrite['slug']) ? $post_type_obj->rewrite['slug'] : $post->post_type;
+
+            // 親ディレクトリ部分を取得（あれば）
+            $slug_parts = explode('/', $post_type_slug);
+            $base_slug = end($slug_parts);
+
+            $parent_dir = '';
+            if (count($slug_parts) > 1) {
+                array_pop($slug_parts);
+                $parent_dir = implode('/', $slug_parts) . '/';
+            }
+
+            // url_slugを使ったURLを生成
+            return home_url("/{$parent_dir}{$url_slug}/{$post->post_name}/");
+        }
+
+        // デフォルトのパーマリンクを返す
         return $permalink;
     }
 
@@ -1568,15 +1600,15 @@ class KSTB_Parent_Selector {
         if (is_admin()) {
             return;
         }
-        
+
         global $wp_query;
-        
+
         // 現在のURLパスを取得
         $current_url = $_SERVER['REQUEST_URI'];
         $current_path = parse_url($current_url, PHP_URL_PATH) ?? '';
         $current_path = trim($current_path, '/');
         $path_parts = explode('/', $current_path);
-        
+
         // カスタム投稿タイプのシングルまたはアーカイブページの場合
         if (is_singular() || is_post_type_archive()) {
             $post_type = get_post_type();
@@ -1589,6 +1621,19 @@ class KSTB_Parent_Selector {
                 $post_type_data = KSTB_Database::get_post_type_by_slug($post_type);
 
                 if ($post_type_data) {
+                    // url_slugが設定されていて、短縮名と異なる場合
+                    if (!empty($post_type_data->url_slug) && $post_type_data->url_slug !== $post_type) {
+                        // 短縮名でのアクセスをブロック（長いurl_slugのみ許可）
+                        if ($path_parts[0] === $post_type) {
+                            // 短縮名が使われている場合は404
+                            $wp_query->set_404();
+                            status_header(404);
+                            nocache_headers();
+                            include(get_404_template());
+                            exit;
+                        }
+                    }
+
                     // 親ディレクトリが設定されている場合
                     if (!empty($post_type_data->parent_directory)) {
                         // フルパスを構築（再帰的に親を辿る）
@@ -1606,8 +1651,11 @@ class KSTB_Parent_Selector {
                     } else {
                         // 親ディレクトリが設定されていない場合
                         // URLに余計なディレクトリが含まれていないかチェック
-                        if (count($path_parts) > 1 && $path_parts[0] !== $post_type) {
-                            // 投稿タイプ名の前に余計なパスがある場合は404
+                        // url_slugも考慮する
+                        $url_slug = !empty($post_type_data->url_slug) ? $post_type_data->url_slug : $post_type;
+
+                        if (count($path_parts) > 1 && $path_parts[0] !== $post_type && $path_parts[0] !== $url_slug) {
+                            // 投稿タイプ名（短縮名またはurl_slug）の前に余計なパスがある場合は404
                             $wp_query->set_404();
                             status_header(404);
                             nocache_headers();

@@ -159,25 +159,13 @@ class KSTB_Post_Type_Registrar {
         }
 
         // rewrite設定の準備
-        $rewrite = json_decode($post_type->rewrite, true);
-        if (empty($rewrite)) {
-            $rewrite = array(
-                'slug' => $post_type->slug,
-                'with_front' => false,
-                'feeds' => true,
-                'pages' => true
-            );
-        } else {
-            // slug は常に投稿タイプのslugを使用
-            $rewrite['slug'] = $post_type->slug;
-            // feeds と pages が未設定なら追加
-            if (!isset($rewrite['feeds'])) {
-                $rewrite['feeds'] = true;
-            }
-            if (!isset($rewrite['pages'])) {
-                $rewrite['pages'] = true;
-            }
-        }
+        // WordPressに登録するrewriteは短縮名を使用
+        $rewrite = array(
+            'slug' => $post_type->slug,
+            'with_front' => false,
+            'feeds' => true,
+            'pages' => true
+        );
 
         // 親ディレクトリの設定を適用
         if (!empty($post_type->parent_directory)) {
@@ -186,6 +174,56 @@ class KSTB_Post_Type_Registrar {
             $rewrite['slug'] = $full_path;
             // with_frontを強制的にfalseにして、余計なプレフィックスを防ぐ
             $rewrite['with_front'] = false;
+        }
+
+        // url_slugが存在し、slugと異なる場合はカスタムrewriteルールを追加
+        if (!empty($post_type->url_slug) && $post_type->url_slug !== $post_type->slug) {
+            $url_slug = $post_type->url_slug;
+            $internal_slug = $post_type->slug;
+
+            // 親ディレクトリがある場合はそれも含める
+            if (!empty($post_type->parent_directory)) {
+                $full_path = $this->build_full_path($post_type->slug);
+                $prefix = !empty($full_path) ? $full_path . '/' : '';
+
+                // 長いURLスラッグを短い内部名にマップ（個別投稿）
+                add_rewrite_rule(
+                    '^' . $prefix . $url_slug . '/([^/]+)/?$',
+                    'index.php?' . $internal_slug . '=$matches[1]',
+                    'top'
+                );
+                // アーカイブページ
+                add_rewrite_rule(
+                    '^' . $prefix . $url_slug . '/?$',
+                    'index.php?post_type=' . $internal_slug,
+                    'top'
+                );
+                // ページネーション
+                add_rewrite_rule(
+                    '^' . $prefix . $url_slug . '/page/?([0-9]{1,})/?$',
+                    'index.php?post_type=' . $internal_slug . '&paged=$matches[1]',
+                    'top'
+                );
+            } else {
+                // 長いURLスラッグを短い内部名にマップ（個別投稿）
+                add_rewrite_rule(
+                    '^' . $url_slug . '/([^/]+)/?$',
+                    'index.php?' . $internal_slug . '=$matches[1]',
+                    'top'
+                );
+                // アーカイブページ
+                add_rewrite_rule(
+                    '^' . $url_slug . '/?$',
+                    'index.php?post_type=' . $internal_slug,
+                    'top'
+                );
+                // ページネーション
+                add_rewrite_rule(
+                    '^' . $url_slug . '/page/?([0-9]{1,})/?$',
+                    'index.php?post_type=' . $internal_slug . '&paged=$matches[1]',
+                    'top'
+                );
+            }
         }
 
         // has_archiveの設定
@@ -199,13 +237,13 @@ class KSTB_Post_Type_Registrar {
             'public' => true,
             'publicly_queryable' => true,  // 個別投稿ページは表示可能にする
             'show_ui' => true,
-            'show_in_menu' => true,
+            'show_in_menu' => (int) $post_type->menu_position ?: 25,  // 整数値を指定することでメニュー位置が機能する
             'query_var' => true,
             'rewrite' => $rewrite,
             'capability_type' => 'post',
             'has_archive' => $has_archive,
             'hierarchical' => (bool) $post_type->hierarchical,
-            'menu_position' => (int) $post_type->menu_position ?: 25,
+            'menu_position' => null,  // show_in_menuで位置を制御するためnullにする
             'menu_icon' => $post_type->menu_icon ?: 'dashicons-admin-post',
             'supports' => $supports,
             'show_in_rest' => true,
