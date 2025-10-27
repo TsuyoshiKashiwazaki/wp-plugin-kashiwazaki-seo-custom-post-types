@@ -1,5 +1,5 @@
 .kstb-admin-wrap {
-    max-width: 1200px;
+    width: 100%;
     margin: 20px 20px 20px 0;
 }
 
@@ -30,24 +30,100 @@
     margin-top: 0;
     padding-bottom: 10px;
     border-bottom: 1px solid #e5e5e5;
+    position: relative;
+}
+
+.kstb-close-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: none;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    transition: color 0.2s;
+}
+
+.kstb-close-button:hover {
+    color: #dc3232;
+}
+
+/* メインタブ（一覧と説明書） */
+.kstb-main-tabs {
+    margin-top: 0;
+}
+
+.kstb-main-tab-buttons {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.kstb-main-tab-buttons li {
+    margin: 0;
+}
+
+.kstb-main-tab-buttons a {
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #23282d;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    background: #f1f1f1;
+    margin-right: 5px;
+}
+
+.kstb-main-tab-buttons a.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    position: relative;
+    top: 1px;
+}
+
+.kstb-main-tab-content {
+    display: none;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+    background: #fff;
+}
+
+.kstb-main-tab-content.active {
+    display: block;
 }
 
 .column-label {
-    width: 30%;
+    width: 25%;
+}
+
+.column-path {
+    width: 15%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .column-slug {
-    width: 25%;
+    width: 20%;
 }
 
 .column-public,
 .column-rest {
-    width: 10%;
+    width: 8%;
     text-align: center;
 }
 
 .column-actions {
-    width: 25%;
+    width: 24%;
 }
 
 .column-public .dashicons,
@@ -319,4 +395,54 @@
 .auto-filled:focus {
     background-color: #fff !important;
     border-left: 3px solid #0073aa !important;
+}
+
+/* ローディングスピナー */
+.kstb-loading-spinner {
+    display: none;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.kstb-loading-spinner.is-active {
+    display: inline-block;
+    visibility: visible;
+}
+
+/* テーブルソート機能 */
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+.sortable:hover {
+    background-color: #f0f0f0;
+}
+
+.sort-indicator {
+    margin-left: 5px;
+    font-size: 10px;
+    color: #999;
+}
+
+.sorted-asc .sort-indicator,
+.sorted-desc .sort-indicator {
+    color: #2271b1;
+}
+
+/* 投稿数列 */
+.column-post-count {
+    width: 100px;
+    text-align: center;
+}
+
+.column-post-count a {
+    color: #2271b1;
+    font-weight: 600;
+}
+
+.column-post-count a:hover {
+    color: #135e96;
+    text-decoration: underline;
 }

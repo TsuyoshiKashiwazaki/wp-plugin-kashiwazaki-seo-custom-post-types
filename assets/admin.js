@@ -12,20 +12,29 @@
             $('.kstb-edit-button').on('click', this.editPostType);
             $('.kstb-delete-button').on('click', this.deletePostType);
             $('.kstb-cancel-button').on('click', this.hideForm);
+            $('.kstb-close-button').on('click', this.hideForm);
             $('#kstb-post-type-form').on('submit', this.savePostType);
 
+            // メインタブ（一覧と説明書）
+            $('.kstb-main-tab-buttons a').on('click', this.switchMainTab);
 
+            // フォームタブ
             $('.kstb-tab-buttons a').on('click', this.switchTab);
 
             $(document).on('input', '#kstb-label', this.updateLabelPreview);
+            $(document).on('input', '#kstb-url-slug', this.autoGenerateSlug);
 
             // Post Mover events - use delegated events for dynamic content
             $(document).on('click', '#kstb-load-posts-btn', function() { KSTB.loadPosts(); });
             $(document).on('change', '#kstb-select-all-checkbox', function() { KSTB.toggleAllPosts(); });
             $(document).on('click', '#kstb-select-all-posts', function() { KSTB.selectAllPosts(true); });
             $(document).on('click', '#kstb-deselect-all-posts', function() { KSTB.selectAllPosts(false); });
-            $(document).on('change', '#kstb-mover-source-type', function() { KSTB.validateMove(); });
+            $(document).on('change', '#kstb-mover-source-type', function() { KSTB.loadTaxonomies(); });
+            $(document).on('change', '#kstb-mover-source-category', function() { KSTB.validateMove(); });
             $(document).on('click', '#kstb-move-posts-btn', function() { KSTB.movePosts(); });
+
+            // Table sort
+            $('.sortable').on('click', this.sortTable);
         },
 
         initIconSelect: function () {
@@ -91,6 +100,7 @@
 
         populateForm: function (data) {
             $('#kstb-post-type-id').val(data.id);
+            $('#kstb-url-slug').val(data.url_slug || data.slug);
             $('#kstb-slug').val(data.slug);
             $('#kstb-label').val(data.label);
             $('#kstb-menu-icon').val(data.menu_icon).trigger('change');
@@ -239,6 +249,18 @@
             });
         },
 
+        switchMainTab: function (e) {
+            e.preventDefault();
+
+            var target = $(this).attr('href');
+
+            $('.kstb-main-tab-buttons a').removeClass('active');
+            $(this).addClass('active');
+
+            $('.kstb-main-tab-content').removeClass('active');
+            $(target).addClass('active');
+        },
+
         switchTab: function (e) {
             e.preventDefault();
 
@@ -270,6 +292,39 @@
             $('#preview-all-items').text('すべての' + label);
             $('#preview-search-items').text(label + 'を検索');
             $('#preview-not-found').text(label + 'が見つかりません');
+        },
+
+        autoGenerateSlug: function () {
+            var urlSlug = $(this).val().trim();
+            var $slugField = $('#kstb-slug');
+            var $warning = $('#kstb-slug-warning');
+
+            if (!urlSlug) {
+                $slugField.val('');
+                $warning.hide();
+                return;
+            }
+
+            // 20文字を超えたら警告を表示、以下なら非表示
+            if (urlSlug.length > 20) {
+                $warning.slideDown(200);
+            } else {
+                $warning.slideUp(200);
+            }
+
+            // URLスラッグから短縮名を自動生成（常に自動生成）
+            var shortSlug = urlSlug;
+            if (urlSlug.length > 20) {
+                // 20文字まで切り詰め
+                shortSlug = urlSlug.substring(0, 20);
+                // 最後のハイフン以降を削除して綺麗にする
+                var lastHyphen = shortSlug.lastIndexOf('-');
+                if (lastHyphen > 10) {
+                    shortSlug = shortSlug.substring(0, lastHyphen);
+                }
+            }
+
+            $slugField.val(shortSlug);
         },
 
 
@@ -315,24 +370,121 @@
             }
         },
 
+        loadTaxonomies: function () {
+            var sourceType = $('#kstb-mover-source-type').val();
+            var $categorySelect = $('#kstb-mover-source-category');
+            var $loadHint = $('#kstb-load-posts-hint');
+
+            // 投稿タイプが未選択の場合
+            if (!sourceType) {
+                $categorySelect.prop('disabled', true).html('<option value="">カテゴリを選択してください</option>');
+                $('#kstb-load-posts-btn').prop('disabled', true);
+                $loadHint.text('');
+                KSTB.validateMove();
+                return;
+            }
+
+            // 「すべて」の場合はカテゴリ選択を必須にする
+            if (sourceType === '__all__') {
+                $loadHint.text('※ カテゴリを選択してください');
+                $('#kstb-load-posts-btn').prop('disabled', true);
+            } else {
+                $loadHint.text('');
+                $('#kstb-load-posts-btn').prop('disabled', false);
+            }
+
+            // タクソノミーを読み込む
+            $categorySelect.prop('disabled', true).html('<option value="">読み込み中...</option>');
+            $('#kstb-category-spinner').addClass('is-active');
+
+            $.ajax({
+                url: kstb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'kstb_get_taxonomies_by_type',
+                    post_type: sourceType,
+                    nonce: kstb_ajax.nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        var options = '<option value="">カテゴリを選択してください</option>';
+
+                        if (response.data.taxonomies.length === 0) {
+                            options = '<option value="">カテゴリがありません</option>';
+                            $categorySelect.html(options).prop('disabled', true);
+                        } else {
+                            // タクソノミーごとにグループ化
+                            var grouped = {};
+                            $.each(response.data.taxonomies, function (i, item) {
+                                if (!grouped[item.taxonomy_label]) {
+                                    grouped[item.taxonomy_label] = [];
+                                }
+                                grouped[item.taxonomy_label].push(item);
+                            });
+
+                            // optgroupで表示
+                            $.each(grouped, function (taxLabel, items) {
+                                options += '<optgroup label="' + taxLabel + '">';
+                                $.each(items, function (i, item) {
+                                    options += '<option value="' + item.taxonomy + '|' + item.term_id + '">' +
+                                        item.term_name + ' (' + item.count + ')</option>';
+                                });
+                                options += '</optgroup>';
+                            });
+
+                            $categorySelect.html(options).prop('disabled', false);
+                        }
+                    } else {
+                        $categorySelect.html('<option value="">読み込みに失敗しました</option>').prop('disabled', true);
+                    }
+                    $('#kstb-category-spinner').removeClass('is-active');
+                },
+                error: function () {
+                    $categorySelect.html('<option value="">読み込みに失敗しました</option>').prop('disabled', true);
+                    $('#kstb-category-spinner').removeClass('is-active');
+                }
+            });
+
+            KSTB.validateMove();
+        },
+
         loadPosts: function () {
             var sourceType = $('#kstb-mover-source-type').val();
+            var categoryValue = $('#kstb-mover-source-category').val();
 
             if (!sourceType) {
                 alert('移動元の投稿タイプを選択してください');
                 return;
             }
 
+            // 「すべて」の場合はカテゴリ必須
+            if (sourceType === '__all__' && !categoryValue) {
+                alert('カテゴリを選択してください');
+                return;
+            }
+
             $('#kstb-load-posts-btn').prop('disabled', true).text('読み込み中...');
+            $('#kstb-posts-spinner').addClass('is-active');
+
+            var ajaxData = {
+                action: 'kstb_get_posts_by_type',
+                post_type: sourceType,
+                nonce: kstb_ajax.nonce
+            };
+
+            // カテゴリフィルタを追加
+            if (categoryValue) {
+                var parts = categoryValue.split('|');
+                if (parts.length === 2) {
+                    ajaxData.taxonomy = parts[0];
+                    ajaxData.term_id = parts[1];
+                }
+            }
 
             $.ajax({
                 url: kstb_ajax.ajax_url,
                 type: 'POST',
-                data: {
-                    action: 'kstb_get_posts_by_type',
-                    post_type: sourceType,
-                    nonce: kstb_ajax.nonce
-                },
+                data: ajaxData,
                 success: function (response) {
                     if (response.success) {
                         KSTB.displayPosts(response.data.posts, response.data.count);
@@ -342,10 +494,12 @@
                         alert(response.data || '記事の読み込みに失敗しました');
                     }
                     $('#kstb-load-posts-btn').prop('disabled', false).text('記事を読み込む');
+                    $('#kstb-posts-spinner').removeClass('is-active');
                 },
                 error: function (xhr, status, error) {
                     alert('記事の読み込みに失敗しました');
                     $('#kstb-load-posts-btn').prop('disabled', false).text('記事を読み込む');
+                    $('#kstb-posts-spinner').removeClass('is-active');
                 }
             });
         },
@@ -354,8 +508,20 @@
             var $tbody = $('#kstb-posts-tbody');
             $tbody.empty();
 
+            var sourceType = $('#kstb-mover-source-type').val();
+            var showPostType = (sourceType === '__all__');
+
+            // 投稿タイプ列の表示/非表示
+            if (showPostType) {
+                $('#kstb-post-type-header').show();
+            } else {
+                $('#kstb-post-type-header').hide();
+            }
+
+            var colspan = showPostType ? 6 : 5;
+
             if (posts.length === 0) {
-                $tbody.append('<tr><td colspan="5" style="text-align: center;">記事が見つかりませんでした</td></tr>');
+                $tbody.append('<tr><td colspan="' + colspan + '" style="text-align: center;">記事が見つかりませんでした</td></tr>');
                 $('#kstb-posts-count').text('');
                 return;
             }
@@ -376,8 +542,14 @@
                     '<th scope="row" class="check-column">' +
                     '<input type="checkbox" class="kstb-post-checkbox" value="' + post.ID + '">' +
                     '</th>' +
-                    '<td><strong>' + post.title + '</strong></td>' +
-                    '<td>' + statusLabel + '</td>' +
+                    '<td><strong>' + post.title + '</strong></td>';
+
+                // 投稿タイプ列を追加（「すべて」の場合のみ）
+                if (showPostType) {
+                    row += '<td>' + (post.post_type || '') + '</td>';
+                }
+
+                row += '<td>' + statusLabel + '</td>' +
                     '<td>' + post.date + '</td>' +
                     '<td>' + post.author + '</td>' +
                     '</tr>';
@@ -397,7 +569,21 @@
 
         validateMove: function () {
             var sourceType = $('#kstb-mover-source-type').val();
+            var categoryValue = $('#kstb-mover-source-category').val();
             var targetType = $('#kstb-mover-target-type').val();
+
+            // 「すべて」選択時はカテゴリが選択されるまで読み込みボタンを無効化
+            if (sourceType === '__all__') {
+                if (categoryValue) {
+                    $('#kstb-load-posts-btn').prop('disabled', false);
+                } else {
+                    $('#kstb-load-posts-btn').prop('disabled', true);
+                }
+            } else if (sourceType) {
+                $('#kstb-load-posts-btn').prop('disabled', false);
+            } else {
+                $('#kstb-load-posts-btn').prop('disabled', true);
+            }
 
             if (!sourceType || !targetType) {
                 $('#kstb-move-warnings').hide();
@@ -454,6 +640,7 @@
             }
 
             $('#kstb-move-posts-btn').prop('disabled', true);
+            $('#kstb-move-spinner').addClass('is-active');
             $('#kstb-move-status').text('移動中...').css('color', '#0073aa');
 
             $.ajax({
@@ -483,12 +670,14 @@
                             .css('color', 'red');
                     }
                     $('#kstb-move-posts-btn').prop('disabled', false);
+                    $('#kstb-move-spinner').removeClass('is-active');
                 },
                 error: function () {
                     $('#kstb-move-status')
                         .text('エラー: 移動に失敗しました')
                         .css('color', 'red');
                     $('#kstb-move-posts-btn').prop('disabled', false);
+                    $('#kstb-move-spinner').removeClass('is-active');
                 }
             });
         },
@@ -507,6 +696,56 @@
             }
         });
 
+        // Table sorting
+        $('.sortable').on('click', function() {
+            var $th = $(this);
+            var sortKey = $th.data('sort');
+            var $tbody = $th.closest('table').find('tbody');
+            var rows = $tbody.find('tr').get();
+
+            // Determine sort direction
+            var isAsc = $th.hasClass('sorted-asc');
+            var direction = isAsc ? -1 : 1;
+
+            // Remove all sort indicators
+            $th.closest('tr').find('th').removeClass('sorted-asc sorted-desc');
+            $th.closest('tr').find('.sort-indicator').text('');
+
+            // Add sort indicator
+            if (isAsc) {
+                $th.addClass('sorted-desc');
+                $th.find('.sort-indicator').text('▼');
+            } else {
+                $th.addClass('sorted-asc');
+                $th.find('.sort-indicator').text('▲');
+            }
+
+            // Sort rows
+            rows.sort(function(a, b) {
+                var aVal = $(a).data(sortKey);
+                var bVal = $(b).data(sortKey);
+
+                // Handle numeric values (post-count)
+                if (sortKey === 'post-count') {
+                    aVal = parseInt(aVal) || 0;
+                    bVal = parseInt(bVal) || 0;
+                    return (aVal - bVal) * direction;
+                }
+
+                // Handle string values
+                aVal = String(aVal || '').toLowerCase();
+                bVal = String(bVal || '').toLowerCase();
+
+                if (aVal < bVal) return -1 * direction;
+                if (aVal > bVal) return 1 * direction;
+                return 0;
+            });
+
+            // Reorder DOM
+            $.each(rows, function(index, row) {
+                $tbody.append(row);
+            });
+        });
 
     });
 

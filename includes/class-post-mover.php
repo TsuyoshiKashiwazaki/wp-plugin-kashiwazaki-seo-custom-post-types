@@ -127,20 +127,33 @@ class KSTB_Post_Mover {
     /**
      * 指定された投稿タイプの記事一覧を取得
      *
-     * @param string $post_type 投稿タイプ
+     * @param string $post_type 投稿タイプ（'__all__'で全投稿タイプ）
      * @param array $args 追加のクエリ引数
      * @return array 記事情報の配列
      */
     public function get_posts_by_type($post_type, $args = array()) {
-        if (empty($post_type) || !post_type_exists($post_type)) {
-            return array();
+        // 投稿タイプが'__all__'の場合は、カテゴリフィルタが必須
+        if ($post_type === '__all__') {
+            // カテゴリフィルタがない場合は空配列を返す
+            if (empty($args['tax_query'])) {
+                return array();
+            }
+            // すべての公開投稿タイプを取得
+            $post_types = get_post_types(array('public' => true), 'names');
+            // attachment を除外
+            $post_types = array_diff($post_types, array('attachment'));
+        } else {
+            if (empty($post_type) || !post_type_exists($post_type)) {
+                return array();
+            }
+            $post_types = $post_type;
         }
 
         // 標準投稿タイプ（post, page）も許可
         // KSTBカスタム投稿タイプでなくてもOK
 
         $default_args = array(
-            'post_type' => $post_type,
+            'post_type' => $post_types,
             'post_status' => array('publish', 'draft', 'pending', 'future', 'private'),
             'posts_per_page' => -1,
             'orderby' => 'date',
@@ -148,7 +161,8 @@ class KSTB_Post_Mover {
             'fields' => 'all'
         );
 
-        $query_args = wp_parse_args($args, $default_args);
+        // wp_parse_argsはネストされた配列を正しくマージしないため、array_mergeを使用
+        $query_args = array_merge($default_args, $args);
         $posts = get_posts($query_args);
 
         $result = array();
@@ -159,7 +173,8 @@ class KSTB_Post_Mover {
                 'status' => $post->post_status,
                 'date' => $post->post_date,
                 'author' => get_the_author_meta('display_name', $post->post_author),
-                'permalink' => get_permalink($post->ID)
+                'permalink' => get_permalink($post->ID),
+                'post_type' => $post->post_type
             );
         }
 
@@ -204,6 +219,99 @@ class KSTB_Post_Mover {
         foreach ($post_types as $post_type) {
             if (post_type_exists($post_type->slug)) {
                 $result[$post_type->slug] = $post_type->label;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * 投稿タイプに紐づくタクソノミー一覧を取得
+     *
+     * @param string $post_type 投稿タイプ（'__all__'で全タクソノミー）
+     * @return array タクソノミー情報の配列（slug => label）
+     */
+    public function get_taxonomies_by_post_type($post_type) {
+        $result = array();
+
+        if ($post_type === '__all__') {
+            // すべての公開タクソノミーを取得
+            $taxonomies = get_taxonomies(array('public' => true), 'objects');
+        } else {
+            // 特定の投稿タイプに紐づくタクソノミーを取得
+            $taxonomy_names = get_object_taxonomies($post_type, 'names');
+            $taxonomies = array();
+            foreach ($taxonomy_names as $tax_name) {
+                $tax_obj = get_taxonomy($tax_name);
+                if ($tax_obj && $tax_obj->public) {
+                    $taxonomies[$tax_name] = $tax_obj;
+                }
+            }
+        }
+
+        // タクソノミーごとにターム一覧を取得
+        foreach ($taxonomies as $taxonomy) {
+            // nav_menu, post_format などは除外
+            if (in_array($taxonomy->name, array('nav_menu', 'link_category', 'post_format'))) {
+                continue;
+            }
+
+            $term_args = array(
+                'taxonomy' => $taxonomy->name,
+                'orderby' => 'name',
+                'order' => 'ASC'
+            );
+
+            // 特定の投稿タイプの場合は、記事が存在するタームのみ表示
+            if ($post_type !== '__all__') {
+                $term_args['hide_empty'] = true;
+                // 特定の投稿タイプに紐づくタームのみ取得
+                $term_args['object_ids'] = get_posts(array(
+                    'post_type' => $post_type,
+                    'post_status' => 'any',
+                    'posts_per_page' => -1,
+                    'fields' => 'ids'
+                ));
+            } else {
+                // 「すべて」の場合は空のタームも含める
+                $term_args['hide_empty'] = false;
+            }
+
+            $terms = get_terms($term_args);
+
+            if (!empty($terms) && !is_wp_error($terms)) {
+                foreach ($terms as $term) {
+                    // 実際に表示される件数を計算（全ステータスを含む）
+                    $count_args = array(
+                        'post_type' => $post_type === '__all__' ? get_post_types(array('public' => true), 'names') : $post_type,
+                        'post_status' => array('publish', 'draft', 'pending', 'future', 'private'),
+                        'posts_per_page' => -1,
+                        'fields' => 'ids',
+                        'tax_query' => array(
+                            array(
+                                'taxonomy' => $taxonomy->name,
+                                'field' => 'term_id',
+                                'terms' => $term->term_id
+                            )
+                        )
+                    );
+
+                    // attachmentを除外（__all__の場合）
+                    if ($post_type === '__all__') {
+                        $count_args['post_type'] = array_diff($count_args['post_type'], array('attachment'));
+                    }
+
+                    $posts_count = count(get_posts($count_args));
+
+                    $result[] = array(
+                        'taxonomy' => $taxonomy->name,
+                        'taxonomy_label' => $taxonomy->label,
+                        'term_id' => $term->term_id,
+                        'term_slug' => $term->slug,
+                        'term_name' => $term->name,
+                        'count' => $posts_count
+                    );
+                }
             }
         }
 

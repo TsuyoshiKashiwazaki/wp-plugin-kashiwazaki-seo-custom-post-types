@@ -1,36 +1,36 @@
-# 🚀 Kashiwazaki SEO Custom Post Types
+# Kashiwazaki SEO Custom Post Types
 
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.6--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.7--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
-> 🎯 **プロフェッショナルなサイト構築をシンプルに**
+> **プロフェッショナルなサイト構築をシンプルに**
 
 ## 主な機能
 
-### ✨ 基本機能
+### 基本機能
 - **ノーコード対応**: 管理画面から直感的にカスタム投稿タイプを作成
 - **日本語完全対応**: すべてのインターフェースが日本語化
 - **即座にメニュー表示**: 作成したカスタム投稿タイプは管理メニューに自動表示
 - **詳細なラベル設定**: 管理画面の表示テキストを自由にカスタマイズ
 
-### 🔧 高度な機能
+### 高度な機能
 - **階層URL対応**: `親ページ/カスタム投稿タイプ/投稿名` の形式でURL構造を構築
 - **アーカイブページ制御**: アーカイブページの表示/非表示を選択可能
 - **固定ページ統合**: アーカイブを非表示にした場合、同じURLの固定ページを自動表示
 - **REST API対応**: ブロックエディター（Gutenberg）完全対応
 - **豊富なアイコン選択**: Dashiconsから最適なアイコンを選択可能
 
-### 📋 サポート機能
+### サポート機能
 - タイトル、エディター、アイキャッチ画像
 - 抜粋、カスタムフィールド、コメント
 - リビジョン、ページ属性
 - 既存タクソノミー（カテゴリー、タグ）の関連付け
 
-## 🚀 クイックスタート
+## クイックスタート
 
 ### インストール
 
@@ -93,13 +93,35 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 
 ## 更新履歴
 
+### Version 1.0.7 - 2025-10-27
+- **追加**: 64文字までの長いスラッグに対応（url_slugとslugの分離システム）
+- **追加**: カスタムリライトルールによる長いURL→短い内部名のマッピング
+- **追加**: スラッグ入力時の20文字超過警告表示機能を追加
+- **追加**: 記事移動機能にカテゴリー/タクソノミーフィルタリング機能を追加
+- **追加**: データベースマイグレーション機能実装
+- **追加**: 管理画面一覧に投稿数列を追加（クリックで投稿一覧へ遷移）
+- **追加**: テーブルソート機能を追加（ラベル、投稿数、パス、スラッグの各列でソート可能）
+- **改善**: WordPress内部20文字制限維持、URL64文字まで対応
+- **改善**: 短いURLアクセスをブロック機能
+- **改善**: スラッグ入力UIの簡素化
+- **改善**: 管理画面一覧のデフォルトソートをパス順に変更
+- **改善**: スラッグ列でアーカイブURLを表示
+- **修正**: メニュー位置が正しく機能するように修正
+
 ### Version 1.0.6 - 2025-10-23
 - **修正**: カスタム投稿タイプの階層URLで投稿が表示されない問題を修正
 - **修正**: `find_post_by_path()` メソッドで階層URL構造のカスタム投稿を正しく検索できるように改善
 - **修正**: `display_post()` メソッドで投稿タイプを動的に取得し、カスタム投稿の本文が表示されない問題を解消
+- **追加**: 管理画面にタブ切り替え機能を実装（カスタム投稿タイプ一覧/説明書）
+- **追加**: パス列を追加し、階層構造を完全パス（ルートから）で表示
+- **追加**: 編集フォームに閉じるボタン（×）を追加
 - **改善**: リライトルールのソート処理を実装し、固定文字列の長さでより具体的なルールを優先
+- **改善**: 管理画面の横幅を100%に変更し、表示領域を拡大
+- **改善**: パス列の折り返しを防止、ラベルクリックで投稿管理画面へ遷移可能に
 
 ### Version 1.0.5 - 2025-10-22
+- **追加**: 記事移動機能の実装（カスタム投稿タイプ間で記事を移動）
+- **追加**: 管理画面に記事移動タブを追加
 - **修正**: 「スラッグトップページ」で「表示しない」設定時に固定ページが表示される問題を修正
 - **修正**: `archive_display_type !== 'default'` 条件で `'none'` 設定時も固定ページを探していた不具合を解消
 - **改善**: 階層URL構造で「best match」ロジックを導入し、最も長いパスにマッチする投稿タイプを優先
@@ -141,7 +163,7 @@ GPL-2.0-or-later
 **ウェブサイト**: https://www.tsuyoshikashiwazaki.jp/
 **サポート**: プラグインに関するご質問や不具合報告は、開発者ウェブサイトまでお問い合わせください。
 
-## 🤝 貢献
+## 貢献
 
 バグ報告や機能提案は [Issues](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/issues) からお願いします。
 
@@ -152,7 +174,7 @@ GPL-2.0-or-later
 4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
 5. プルリクエストを作成
 
-## 📞 サポート
+## サポート
 
 - **公式サイト**: https://www.tsuyoshikashiwazaki.jp/
 - **お問い合わせ**: 上記サイトのお問い合わせフォームから
@@ -162,8 +184,8 @@ GPL-2.0-or-later
 
 <div align="center">
 
-**🔍 Keywords**: WordPress, カスタム投稿タイプ, Custom Post Type, CPT, 階層URL, SEO, 日本語対応
+**Keywords**: WordPress, カスタム投稿タイプ, Custom Post Type, CPT, 階層URL, SEO, 日本語対応
 
-Made with ❤️ by [Tsuyoshi Kashiwazaki](https://github.com/TsuyoshiKashiwazaki)
+Made by [Tsuyoshi Kashiwazaki](https://github.com/TsuyoshiKashiwazaki)
 
 </div>

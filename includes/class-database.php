@@ -21,6 +21,7 @@ class KSTB_Database {
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             slug varchar(20) NOT NULL,
+            url_slug varchar(64) DEFAULT NULL,
             label varchar(100) NOT NULL,
             labels text NOT NULL,
             public tinyint(1) DEFAULT 1,
@@ -81,6 +82,12 @@ class KSTB_Database {
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'parent_directory'");
         if (empty($column_exists)) {
             $wpdb->query("ALTER TABLE $table_name ADD parent_directory varchar(100) DEFAULT NULL AFTER archive_page_id");
+        }
+
+        // url_slug カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'url_slug'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD url_slug varchar(64) DEFAULT NULL AFTER slug");
         }
 
     }
@@ -169,10 +176,14 @@ class KSTB_Database {
 
         $data = wp_parse_args($data, $defaults);
 
+        // url_slugが設定されていない場合はslugを使用
+        $url_slug = !empty($data['url_slug']) ? sanitize_key($data['url_slug']) : $data['slug'];
+
         $result = $wpdb->insert(
             $table_name,
             array(
                 'slug' => sanitize_key($data['slug']),
+                'url_slug' => $url_slug,
                 'label' => sanitize_text_field($data['label']),
                 'labels' => json_encode($data['labels']),
                 'public' => (int) $data['public'],
@@ -180,7 +191,7 @@ class KSTB_Database {
                 'show_ui' => (int) $data['show_ui'],
                 'show_in_menu' => (int) $data['show_in_menu'],
                 'query_var' => (int) $data['query_var'],
-                'rewrite' => json_encode(array('slug' => $data['slug'], 'with_front' => false)),
+                'rewrite' => json_encode(array('slug' => $url_slug, 'with_front' => false)),
                 'capability_type' => sanitize_key($data['capability_type']),
                 'has_archive' => (int) $data['has_archive'],
                 'archive_display_type' => !empty($data['archive_display_type']) ? sanitize_text_field($data['archive_display_type']) : 'post_list',
@@ -191,7 +202,7 @@ class KSTB_Database {
                 'menu_icon' => !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null,
                 'supports' => json_encode($data['supports']),
                 'show_in_rest' => (int) $data['show_in_rest'],
-                'rest_base' => $data['slug'],
+                'rest_base' => $url_slug,
                 'taxonomies' => !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null
             )
         );
@@ -211,6 +222,9 @@ class KSTB_Database {
 
         if (isset($data['slug'])) {
             $update_data['slug'] = sanitize_key($data['slug']);
+        }
+        if (isset($data['url_slug'])) {
+            $update_data['url_slug'] = sanitize_key($data['url_slug']);
         }
         if (isset($data['label'])) {
             $update_data['label'] = sanitize_text_field($data['label']);
@@ -235,6 +249,9 @@ class KSTB_Database {
         }
         if (isset($data['rewrite'])) {
             $update_data['rewrite'] = !empty($data['rewrite']) ? json_encode($data['rewrite']) : null;
+        } elseif (isset($data['url_slug'])) {
+            // url_slugが更新された場合はrewriteも更新
+            $update_data['rewrite'] = json_encode(array('slug' => sanitize_key($data['url_slug']), 'with_front' => false));
         }
         if (isset($data['capability_type'])) {
             $update_data['capability_type'] = sanitize_key($data['capability_type']);
