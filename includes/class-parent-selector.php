@@ -1817,8 +1817,15 @@ class KSTB_Parent_Selector {
      */
     private function build_full_path($slug) {
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
-        if (!$post_type || empty($post_type->parent_directory)) {
+        if (!$post_type) {
             return $slug;
+        }
+
+        // url_slugが設定されている場合はそれを使用、なければslugを使用
+        $effective_slug = (!empty($post_type->url_slug)) ? $post_type->url_slug : $slug;
+
+        if (empty($post_type->parent_directory)) {
+            return $effective_slug;
         }
 
         $parent = trim($post_type->parent_directory, '/');
@@ -1828,11 +1835,11 @@ class KSTB_Parent_Selector {
         if ($parent_post_type) {
             // 親のフルパスを再帰的に取得
             $parent_path = $this->build_full_path($parent);
-            return $parent_path . '/' . $slug;
+            return $parent_path . '/' . $effective_slug;
         }
 
         // 親がカスタム投稿タイプでない場合（通常のディレクトリ）
-        return $parent . '/' . $slug;
+        return $parent . '/' . $effective_slug;
     }
 
     /**

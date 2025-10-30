@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,10 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.8 =
+* Fix: url_slugが設定されている投稿タイプでURLマッチングが正しく動作しない問題を修正
+* Improve: build_full_path関数でurl_slugを優先的に使用するように改善
+
 = 1.0.7 =
 * Add: 64文字までの長いスラッグに対応（URLスラッグと内部スラッグを分離）
 * Add: カスタムリライトルールによる長いURL→短い内部名のマッピング機能
@@ -126,6 +130,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.8 =
+長いURLスラッグ（url_slug）が設定されている投稿タイプでURLマッチングが正しく動作するように修正されました。
 
 = 1.0.7 =
 64文字スラッグ対応の大規模アップデート。記事移動機能にカテゴリーフィルタリングを追加。データベースは自動マイグレーションされます。

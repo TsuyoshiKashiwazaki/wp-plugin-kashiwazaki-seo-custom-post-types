@@ -58,8 +58,11 @@ class KSTB_Archive_Controller {
      * カスタム投稿タイプのフルパスを再帰的に構築
      */
     private function build_full_path_for_post_type($post_type) {
+        // url_slugが設定されている場合はそれを使用、なければslugを使用
+        $effective_slug = (!empty($post_type->url_slug)) ? $post_type->url_slug : $post_type->slug;
+
         if (empty($post_type->parent_directory)) {
-            return $post_type->slug;
+            return $effective_slug;
         }
 
         $parent_dir = trim($post_type->parent_directory, '/');
@@ -70,12 +73,12 @@ class KSTB_Archive_Controller {
             if ($other_type->slug === $parent_dir) {
                 // 親のフルパスを再帰的に取得
                 $parent_path = $this->build_full_path_for_post_type($other_type);
-                return $parent_path . '/' . $post_type->slug;
+                return $parent_path . '/' . $effective_slug;
             }
         }
 
         // 通常のディレクトリ
-        return $parent_dir . '/' . $post_type->slug;
+        return $parent_dir . '/' . $effective_slug;
     }
 
     /**

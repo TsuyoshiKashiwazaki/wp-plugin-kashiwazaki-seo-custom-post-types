@@ -5,6 +5,17 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.8] - 2025-10-30
+
+### Fixed
+- url_slugが設定されている投稿タイプでURLマッチングが正しく動作しない問題を修正
+
+### Improved
+- `build_full_path()` 関数でurl_slugを優先的に使用するように改善
+  - `includes/class-parent-selector.php` の `build_full_path()` メソッド
+  - `includes/class-post-type-registrar.php` の `build_full_path()` と `build_full_path_static()` メソッド
+  - `includes/class-archive-controller.php` の `build_full_path_for_post_type()` メソッド
+
 ## [1.0.7] - 2025-10-27
 
 ### Added
