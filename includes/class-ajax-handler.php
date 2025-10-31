@@ -27,6 +27,15 @@ class KSTB_Ajax_Handler {
         add_action('wp_ajax_kstb_get_posts_by_type', array($this, 'get_posts_by_type'));
         add_action('wp_ajax_kstb_get_taxonomies_by_type', array($this, 'get_taxonomies_by_type'));
         add_action('wp_ajax_kstb_move_posts', array($this, 'move_posts'));
+
+        // メニュー管理用のアクション
+        add_action('wp_ajax_kstb_update_menu_assignment', array($this, 'update_menu_assignment'));
+        add_action('wp_ajax_kstb_add_category', array($this, 'add_category'));
+        add_action('wp_ajax_kstb_rename_category', array($this, 'rename_category'));
+        add_action('wp_ajax_kstb_delete_category', array($this, 'delete_category'));
+        add_action('wp_ajax_kstb_get_categories', array($this, 'get_categories'));
+        add_action('wp_ajax_kstb_update_category_icon', array($this, 'update_category_icon'));
+        add_action('wp_ajax_kstb_save_all_menu_assignments', array($this, 'save_all_menu_assignments'));
     }
 
     public function save_post_type() {
@@ -186,6 +195,9 @@ class KSTB_Ajax_Handler {
             'hierarchical' => isset($_POST['hierarchical']) ? (bool) $_POST['hierarchical'] : false,
             'menu_position' => isset($_POST['menu_position']) && $_POST['menu_position'] !== '' ? intval($_POST['menu_position']) : null,
             'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field($_POST['menu_icon']) : null,
+            'menu_parent_category' => isset($_POST['menu_parent_category']) ? sanitize_text_field($_POST['menu_parent_category']) : null,
+            'menu_parent_slug' => isset($_POST['menu_parent_slug']) ? sanitize_text_field($_POST['menu_parent_slug']) : null,
+            'menu_display_mode' => isset($_POST['menu_display_mode']) ? sanitize_text_field($_POST['menu_display_mode']) : 'category',
             'supports' => $supports,
             'show_in_rest' => true,
             'rest_base' => $url_slug,
@@ -598,6 +610,369 @@ class KSTB_Ajax_Handler {
         } else {
             $error_message = !empty($result['errors']) ? implode("\n", $result['errors']) : __('記事の移動に失敗しました', 'kashiwazaki-seo-type-builder');
             wp_send_json_error($error_message);
+        }
+    }
+
+    /**
+     * メニュー割り当ての更新
+     */
+    public function update_menu_assignment() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $post_type_id = isset($_POST['post_type_id']) ? intval($_POST['post_type_id']) : 0;
+        $menu_mode = isset($_POST['menu_mode']) ? sanitize_text_field($_POST['menu_mode']) : '';
+
+        if (empty($post_type_id)) {
+            wp_send_json_error(__('投稿タイプIDが指定されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // menu_modeをパース
+        $data = array();
+        if ($menu_mode === 'toplevel') {
+            $data['menu_display_mode'] = 'toplevel';
+            $data['menu_parent_category'] = null;
+            $data['menu_parent_slug'] = null;
+        } elseif (strpos($menu_mode, 'category:') === 0) {
+            $category = substr($menu_mode, 9); // "category:" を削除
+            $data['menu_display_mode'] = 'category';
+            $data['menu_parent_category'] = sanitize_text_field($category);
+            $data['menu_parent_slug'] = null;
+        } else {
+            wp_send_json_error(__('無効なメニューモードです', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $result = KSTB_Database::update_post_type($post_type_id, $data);
+
+        if ($result !== false) {
+            // 投稿タイプを再登録
+            $post_type = KSTB_Database::get_post_type($post_type_id);
+            if ($post_type) {
+                $this->force_reregister_post_type($post_type->slug);
+            }
+
+            wp_send_json_success(__('メニュー設定を更新しました', 'kashiwazaki-seo-type-builder'));
+        } else {
+            wp_send_json_error(__('メニュー設定の更新に失敗しました', 'kashiwazaki-seo-type-builder'));
+        }
+    }
+
+    /**
+     * カテゴリーの追加
+     */
+    public function add_category() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $category_name = isset($_POST['category_name']) ? trim(sanitize_text_field($_POST['category_name'])) : '';
+        $icon = isset($_POST['icon']) ? sanitize_text_field($_POST['icon']) : 'dashicons-category';
+
+        if (empty($category_name)) {
+            wp_send_json_error(__('カテゴリー名を入力してください', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // テーブルが存在するか確認
+        global $wpdb;
+        $categories_table = KSTB_Database::get_categories_table_name();
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$categories_table'") === $categories_table;
+
+        if (!$table_exists) {
+            // テーブルが存在しない場合は作成
+            KSTB_Database::create_categories_table();
+
+            // 再チェック
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$categories_table'") === $categories_table;
+            if (!$table_exists) {
+                wp_send_json_error(__('カテゴリーテーブルの作成に失敗しました。データベース権限を確認してください。', 'kashiwazaki-seo-type-builder'));
+                return;
+            }
+        }
+
+        // 既存のカテゴリーをチェック
+        $existing = KSTB_Database::get_category($category_name);
+        if ($existing) {
+            wp_send_json_error(__('このカテゴリー名は既に存在します: ' . $category_name, 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // カテゴリーを保存
+        $result = KSTB_Database::save_category($category_name, $icon);
+
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => __('カテゴリーを追加しました', 'kashiwazaki-seo-type-builder'),
+                'category' => $category_name,
+                'icon' => $icon
+            ));
+        } else {
+            // 詳細なエラー情報を返す
+            $error_msg = __('カテゴリーの追加に失敗しました', 'kashiwazaki-seo-type-builder');
+            if (!empty($wpdb->last_error)) {
+                $error_msg .= ': ' . $wpdb->last_error;
+            }
+            wp_send_json_error($error_msg);
+        }
+    }
+
+    /**
+     * カテゴリーの名前変更
+     */
+    public function rename_category() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $old_name = isset($_POST['old_name']) ? sanitize_text_field($_POST['old_name']) : '';
+        $new_name = isset($_POST['new_name']) ? sanitize_text_field($_POST['new_name']) : '';
+
+        if (empty($old_name) || empty($new_name)) {
+            wp_send_json_error(__('カテゴリー名を入力してください', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // このカテゴリーを使用しているすべての投稿タイプを更新
+        global $wpdb;
+        $table_name = KSTB_Database::get_table_name();
+
+        $result = $wpdb->update(
+            $table_name,
+            array('menu_parent_category' => $new_name),
+            array('menu_parent_category' => $old_name),
+            array('%s'),
+            array('%s')
+        );
+
+        // カテゴリーテーブルも更新
+        $categories_table = KSTB_Database::get_categories_table_name();
+        $wpdb->update(
+            $categories_table,
+            array('name' => $new_name),
+            array('name' => $old_name),
+            array('%s'),
+            array('%s')
+        );
+
+        if ($result !== false) {
+            wp_send_json_success(__('カテゴリー名を変更しました', 'kashiwazaki-seo-type-builder'));
+        } else {
+            wp_send_json_error(__('カテゴリー名の変更に失敗しました', 'kashiwazaki-seo-type-builder'));
+        }
+    }
+
+    /**
+     * カテゴリーの削除（投稿タイプをトップレベルに移動）
+     */
+    public function delete_category() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
+
+        if (empty($category_name)) {
+            wp_send_json_error(__('カテゴリー名が指定されていません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // このカテゴリーを使用しているすべての投稿タイプをトップレベルに変更
+        global $wpdb;
+        $table_name = KSTB_Database::get_table_name();
+
+        $result1 = $wpdb->update(
+            $table_name,
+            array(
+                'menu_display_mode' => 'toplevel',
+                'menu_parent_category' => null
+            ),
+            array('menu_parent_category' => $category_name),
+            array('%s', '%s'),
+            array('%s')
+        );
+
+        // カテゴリーテーブルからも削除
+        $result2 = KSTB_Database::delete_category($category_name);
+
+        // 投稿タイプの更新は0件でも成功（該当なし）、カテゴリー削除が成功すればOK
+        if ($result2 !== false && $result2 > 0) {
+            wp_send_json_success(__('カテゴリーを削除しました（投稿タイプはトップレベルに移動）', 'kashiwazaki-seo-type-builder'));
+        } else if ($result1 !== false) {
+            // カテゴリーテーブルからの削除は失敗したが、投稿タイプは更新できた
+            wp_send_json_success(__('カテゴリーを削除しました', 'kashiwazaki-seo-type-builder'));
+        } else {
+            wp_send_json_error(__('カテゴリーの削除に失敗しました', 'kashiwazaki-seo-type-builder'));
+        }
+    }
+
+    /**
+     * カテゴリー一覧の取得
+     */
+    public function get_categories() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // カテゴリーテーブルからすべてのカテゴリーを取得
+        $all_categories = KSTB_Database::get_all_categories();
+        $categories = array();
+
+        foreach ($all_categories as $cat_data) {
+            $categories[$cat_data->name] = array(
+                'name' => $cat_data->name,
+                'icon' => $cat_data->icon ?: 'dashicons-category',
+                'post_types' => array()
+            );
+        }
+
+        // 各カテゴリーに属する投稿タイプを追加
+        $post_types = KSTB_Database::get_all_post_types();
+        foreach ($post_types as $post_type) {
+            if ($post_type->menu_display_mode === 'category' && !empty($post_type->menu_parent_category)) {
+                $cat_name = $post_type->menu_parent_category;
+
+                if (isset($categories[$cat_name])) {
+                    $categories[$cat_name]['post_types'][] = array(
+                        'id' => $post_type->id,
+                        'slug' => $post_type->slug,
+                        'label' => $post_type->label
+                    );
+                }
+            }
+        }
+
+        wp_send_json_success(array_values($categories));
+    }
+
+    /**
+     * カテゴリーアイコンの更新
+     */
+    public function update_category_icon() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
+        $icon = isset($_POST['icon']) ? sanitize_text_field($_POST['icon']) : '';
+
+        if (empty($category_name) || empty($icon)) {
+            wp_send_json_error(__('カテゴリー名とアイコンが必要です', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $result = KSTB_Database::update_category_icon($category_name, $icon);
+
+        if ($result !== false) {
+            wp_send_json_success(__('アイコンを更新しました', 'kashiwazaki-seo-type-builder'));
+        } else {
+            wp_send_json_error(__('アイコンの更新に失敗しました', 'kashiwazaki-seo-type-builder'));
+        }
+    }
+
+    /**
+     * すべてのメニュー割り当てを一括保存
+     */
+    public function save_all_menu_assignments() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $assignments = isset($_POST['assignments']) ? $_POST['assignments'] : array();
+
+        if (empty($assignments) || !is_array($assignments)) {
+            wp_send_json_error(__('保存するデータがありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $success_count = 0;
+        $error_count = 0;
+
+        foreach ($assignments as $assignment) {
+            $post_type_id = isset($assignment['id']) ? intval($assignment['id']) : 0;
+            $menu_mode = isset($assignment['mode']) ? sanitize_text_field($assignment['mode']) : '';
+
+            if (empty($post_type_id) || empty($menu_mode)) {
+                $error_count++;
+                continue;
+            }
+
+            // menu_modeをパース
+            $data = array();
+            if ($menu_mode === 'toplevel') {
+                $data['menu_display_mode'] = 'toplevel';
+                $data['menu_parent_category'] = null;
+                $data['menu_parent_slug'] = null;
+            } elseif (strpos($menu_mode, 'category:') === 0) {
+                $category = substr($menu_mode, 9);
+                $data['menu_display_mode'] = 'category';
+                $data['menu_parent_category'] = sanitize_text_field($category);
+                $data['menu_parent_slug'] = null;
+            } else {
+                $error_count++;
+                continue;
+            }
+
+            $result = KSTB_Database::update_post_type($post_type_id, $data);
+
+            if ($result !== false) {
+                $success_count++;
+            } else {
+                $error_count++;
+            }
+        }
+
+        if ($success_count > 0) {
+            wp_send_json_success(sprintf(
+                __('%d件のメニュー設定を更新しました', 'kashiwazaki-seo-type-builder'),
+                $success_count
+            ));
+        } else {
+            wp_send_json_error(__('メニュー設定の更新に失敗しました', 'kashiwazaki-seo-type-builder'));
         }
     }
 }

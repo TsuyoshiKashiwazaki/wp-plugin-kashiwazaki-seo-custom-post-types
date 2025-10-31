@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.8
+ * Version: 1.0.9
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.8');
+define('KSTB_VERSION', '1.0.9');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -39,6 +39,7 @@ class KashiwazakiSeoTypeBuilder {
 
     private function load_dependencies() {
         require_once KSTB_PLUGIN_PATH . 'includes/class-database.php';
+        require_once KSTB_PLUGIN_PATH . 'includes/class-parent-menu-manager.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-post-type-registrar.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-post-type-force-register.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-post-type-menu-fix.php';
@@ -94,6 +95,9 @@ class KashiwazakiSeoTypeBuilder {
         }
 
         if (is_admin()) {
+            // 親メニュー管理を初期化（投稿タイプ登録より前に実行）
+            KSTB_Parent_Menu_Manager::init();
+
             KSTB_Admin::get_instance()->init();
             KSTB_Ajax_Handler::get_instance()->init();
             KSTB_Post_Type_Menu_Fix::init();

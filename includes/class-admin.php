@@ -45,18 +45,24 @@ class KSTB_Admin {
             return;
         }
 
+        // ファイルのタイムスタンプを使用してキャッシュを強制クリア
+        $css_file = KSTB_PLUGIN_PATH . 'assets/admin.css';
+        $js_file = KSTB_PLUGIN_PATH . 'assets/admin.js';
+        $css_version = file_exists($css_file) ? filemtime($css_file) : KSTB_VERSION;
+        $js_version = file_exists($js_file) ? filemtime($js_file) : KSTB_VERSION;
+
         wp_enqueue_style(
             'kstb-admin',
             KSTB_PLUGIN_URL . 'assets/admin.css',
             array(),
-            KSTB_VERSION
+            $css_version
         );
 
         wp_enqueue_script(
             'kstb-admin',
             KSTB_PLUGIN_URL . 'assets/admin.js',
             array('jquery', 'wp-util'),
-            KSTB_VERSION,
+            $js_version,
             true
         );
 
@@ -77,18 +83,24 @@ class KSTB_Admin {
         public function enqueue_global_scripts() {
 
         // カスタム投稿タイプメニューの表示に必要なスクリプトとスタイルを全管理画面で読み込む
+        // ファイルのタイムスタンプを使用してキャッシュを強制クリア
+        $css_global_file = KSTB_PLUGIN_PATH . 'assets/admin-global.css';
+        $js_global_file = KSTB_PLUGIN_PATH . 'assets/admin-global.js';
+        $css_global_version = file_exists($css_global_file) ? filemtime($css_global_file) : KSTB_VERSION;
+        $js_global_version = file_exists($js_global_file) ? filemtime($js_global_file) : KSTB_VERSION;
+
         wp_enqueue_style(
             'kstb-admin-global',
             KSTB_PLUGIN_URL . 'assets/admin-global.css',
             array(),
-            KSTB_VERSION
+            $css_global_version
         );
 
         wp_enqueue_script(
             'kstb-admin-global',
             KSTB_PLUGIN_URL . 'assets/admin-global.js',
             array('jquery'),
-            KSTB_VERSION,
+            $js_global_version,
             true
         );
 
@@ -106,7 +118,9 @@ class KSTB_Admin {
                 'label' => $post_type->label,
                 'menu_name' => $menu_name,
                 'menu_icon' => $post_type->menu_icon ?: 'dashicons-admin-post',
-                'menu_position' => $post_type->menu_position ?: 25
+                'menu_position' => $post_type->menu_position ?: 25,
+                'menu_display_mode' => $post_type->menu_display_mode ?: 'category',
+                'menu_parent_category' => $post_type->menu_parent_category
             );
         }
 

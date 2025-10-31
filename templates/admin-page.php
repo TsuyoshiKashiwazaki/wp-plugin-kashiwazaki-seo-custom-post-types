@@ -491,6 +491,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
             <div class="kstb-main-tabs">
                 <ul class="kstb-main-tab-buttons">
                     <li><a href="#kstb-main-tab-list" class="active">カスタム投稿タイプ一覧</a></li>
+                    <li><a href="#kstb-main-tab-menu">メニュー管理</a></li>
                     <li><a href="#kstb-main-tab-guide">説明書</a></li>
                 </ul>
 
@@ -598,6 +599,122 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                     </tbody>
                 </table>
             <?php endif; ?>
+                </div>
+
+                <!-- メニュー管理タブ -->
+                <div id="kstb-main-tab-menu" class="kstb-main-tab-content">
+                    <h3 style="margin-top: 10px;">📁 メニュー管理</h3>
+                    <p>カスタム投稿タイプを管理画面のサイドメニューでフォルダ（カテゴリー）にまとめることができます。</p>
+
+                    <div class="kstb-menu-manager">
+                        <div class="kstb-menu-categories">
+                            <h4>カテゴリー一覧</h4>
+                            <table class="wp-list-table widefat fixed striped" id="kstb-categories-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 10%;">アイコン</th>
+                                        <th style="width: 30%;">カテゴリー名</th>
+                                        <th style="width: 40%;">含まれる投稿タイプ</th>
+                                        <th style="width: 20%;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kstb-categories-list">
+                                    <!-- JavaScriptで動的に生成 -->
+                                </tbody>
+                            </table>
+                            <p>
+                                <button type="button" class="button" id="kstb-add-category-btn">+ 新しいカテゴリーを追加</button>
+                            </p>
+                        </div>
+
+                        <!-- アイコンセレクターモーダル（非表示） -->
+                        <div id="kstb-icon-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100000;">
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                                <h3 style="margin-top: 0;">アイコンを選択</h3>
+                                <div id="kstb-icon-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin: 20px 0;">
+                                    <!-- フォルダ系アイコン -->
+                                    <?php
+                                    $folder_icons = array(
+                                        'dashicons-category' => 'カテゴリー',
+                                        'dashicons-portfolio' => 'ポートフォリオ',
+                                        'dashicons-media-archive' => 'アーカイブ',
+                                        'dashicons-admin-page' => 'ページ',
+                                        'dashicons-admin-post' => '投稿',
+                                        'dashicons-admin-media' => 'メディア',
+                                        'dashicons-admin-site' => 'サイト',
+                                        'dashicons-admin-generic' => '一般',
+                                        'dashicons-admin-tools' => 'ツール',
+                                        'dashicons-admin-settings' => '設定',
+                                        'dashicons-database' => 'データベース',
+                                        'dashicons-archive' => 'アーカイブ',
+                                        'dashicons-book' => '本',
+                                        'dashicons-book-alt' => '本2',
+                                        'dashicons-businessman' => 'ビジネス',
+                                        'dashicons-groups' => 'グループ',
+                                        'dashicons-id' => 'ID',
+                                        'dashicons-id-alt' => 'ID2',
+                                        'dashicons-products' => '商品',
+                                        'dashicons-cart' => 'カート',
+                                        'dashicons-store' => 'ストア'
+                                    );
+                                    foreach ($folder_icons as $icon => $label) {
+                                        echo '<div class="kstb-icon-option" data-icon="' . esc_attr($icon) . '" style="text-align: center; cursor: pointer; padding: 10px; border: 2px solid #ddd; border-radius: 4px; transition: all 0.2s;" title="' . esc_attr($label) . '" onmouseover="this.style.borderColor=\'#2271b1\'; this.style.backgroundColor=\'#f0f6fc\';" onmouseout="this.style.borderColor=\'#ddd\'; this.style.backgroundColor=\'transparent\';">';
+                                        echo '<span class="dashicons ' . esc_attr($icon) . '" style="font-size: 32px; width: 32px; height: 32px;"></span>';
+                                        echo '</div>';
+                                    }
+                                    ?>
+                                </div>
+                                <div style="text-align: right; margin-top: 20px;">
+                                    <button type="button" class="button" id="kstb-close-icon-modal">キャンセル</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="kstb-menu-assignments" style="margin-top: 30px;">
+                            <h4>投稿タイプのメニュー設定</h4>
+                            <table class="wp-list-table widefat fixed striped">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 30%;">投稿タイプ</th>
+                                        <th style="width: 70%;">メニュー設定</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kstb-menu-assignments-list">
+                                    <?php foreach ($post_types as $post_type) : ?>
+                                        <tr data-post-type-id="<?php echo esc_attr($post_type->id); ?>">
+                                            <td>
+                                                <strong><?php echo esc_html($post_type->label); ?></strong><br>
+                                                <code><?php echo esc_html($post_type->slug); ?></code>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                $current_mode = !empty($post_type->menu_display_mode) ? $post_type->menu_display_mode : 'category';
+                                                $current_category = !empty($post_type->menu_parent_category) ? $post_type->menu_parent_category : '';
+                                                ?>
+                                                <select class="kstb-menu-mode-select" data-post-type-id="<?php echo esc_attr($post_type->id); ?>" style="width: 100%; max-width: 400px;">
+                                                    <option value="toplevel" <?php echo ($current_mode === 'toplevel') ? 'selected' : ''; ?>>
+                                                        トップレベルメニュー（個別表示）
+                                                    </option>
+                                                    <optgroup label="カテゴリー">
+                                                        <?php
+                                                        $all_categories = KSTB_Parent_Menu_Manager::get_all_categories();
+                                                        foreach ($all_categories as $category) {
+                                                            $selected = ($current_mode === 'category' && $current_category === $category) ? 'selected' : '';
+                                                            echo '<option value="category:' . esc_attr($category) . '" ' . $selected . '>' . esc_html($category) . '</option>';
+                                                        }
+                                                        ?>
+                                                    </optgroup>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <p style="text-align: right; margin-top: 15px;">
+                                <button type="button" class="button button-primary button-large" id="kstb-save-all-menu-btn">保存</button>
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 説明書タブ -->
@@ -712,18 +829,6 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                     <p class="description">
                                         <strong>管理画面メニューに表示されるアイコン</strong><br>
                                         選択すると右側にプレビューが表示されます
-                                    </p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row"><label for="kstb-menu-position">メニュー位置</label></th>
-                                <td>
-                                    <input type="number" id="kstb-menu-position" name="menu_position" class="small-text" min="5" max="100" placeholder="25">
-                                    <p class="description">
-                                        <strong>管理画面メニューの表示順序</strong><br>
-                                        5〜100の数値。小さいほど上に表示されます<br>
-                                        参考: 投稿(5), メディア(10), 固定ページ(20), コメント(25)<br>
-                                        ※ 空欄の場合は25（デフォルト）
                                     </p>
                                 </td>
                             </tr>

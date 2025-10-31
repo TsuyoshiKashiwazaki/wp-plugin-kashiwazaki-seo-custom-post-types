@@ -35,3 +35,10 @@
     display: block !important;
     visibility: visible !important;
 }
+
+/* サブメニューのテキスト折り返しを防ぐ */
+#adminmenu .wp-submenu a {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}

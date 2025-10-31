@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -73,6 +73,18 @@ https://tsuyoshikashiwazaki.jp/
 
 == Changelog ==
 
+= 1.0.9 =
+* Add: メニュー管理タブを追加（カスタム投稿タイプをカテゴリーでフォルダ化）
+* Add: カテゴリー機能（複数の投稿タイプをサイドメニューでグループ化）
+* Add: カテゴリーアイコン選択機能（21種類のフォルダ系アイコン）
+* Add: 親メニューページ（カテゴリークリック時に投稿タイプ一覧を表示）
+* Add: 一括保存機能（すべての投稿タイプのメニュー設定を一度に保存）
+* Add: 階層構造表示（サブメニューを├と└で視覚化）
+* Improve: サブメニューの文字折り返しを防止（white-space: nowrap）
+* Improve: アセットファイルのキャッシュクリア機構（ファイルタイムスタンプ使用）
+* Fix: メニュー重複表示の問題を修正
+* Fix: カテゴリーテーブルの自動作成とマイグレーション処理を改善
+
 = 1.0.8 =
 * Fix: url_slugが設定されている投稿タイプでURLマッチングが正しく動作しない問題を修正
 * Improve: build_full_path関数でurl_slugを優先的に使用するように改善
@@ -130,6 +142,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.9 =
+メニュー管理機能を追加。カスタム投稿タイプをカテゴリーでフォルダ化し、管理画面を整理できます。データベーステーブルが自動作成されます。
 
 = 1.0.8 =
 長いURLスラッグ（url_slug）が設定されている投稿タイプでURLマッチングが正しく動作するように修正されました。

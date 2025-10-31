@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.8--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.9--dev-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,18 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.9 - 2025-10-31
+- **追加**: メニュー管理タブを追加（カスタム投稿タイプをカテゴリーでフォルダ化）
+- **追加**: カテゴリー機能（複数の投稿タイプを管理画面サイドメニューでグループ化）
+- **追加**: カテゴリーアイコン選択機能（21種類のフォルダ系アイコンから選択可能）
+- **追加**: 親メニューページ（カテゴリークリック時に所属する投稿タイプ一覧を表示）
+- **追加**: 一括保存機能（すべての投稿タイプのメニュー設定を一度に保存）
+- **追加**: 階層構造表示（サブメニューを├と└で視覚化）
+- **改善**: サブメニューの文字折り返しを防止（white-space: nowrap）
+- **改善**: アセットファイルのキャッシュクリア機構（ファイルタイムスタンプ使用）
+- **修正**: メニュー重複表示の問題を修正
+- **修正**: カテゴリーテーブルの自動作成とマイグレーション処理を改善
 
 ### Version 1.0.8 - 2025-10-30
 - **修正**: url_slugが設定されている投稿タイプでURLマッチングが正しく動作しない問題を修正

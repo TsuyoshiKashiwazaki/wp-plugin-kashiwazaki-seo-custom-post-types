@@ -41,6 +41,15 @@ class KSTB_Post_Type_Menu_Fix {
                 continue;
             }
 
+            // メニュー表示モードを確認
+            $menu_display_mode = !empty($post_type->menu_display_mode) ? $post_type->menu_display_mode : 'category';
+
+            // カテゴリーまたはカスタム親メニューの場合はトップレベルメニューを追加しない
+            if ($menu_display_mode === 'category' || $menu_display_mode === 'custom_parent') {
+                continue;
+            }
+
+            // トップレベルメニューの場合のみメニューを追加
             // メニューが既に存在するか確認
             $menu_exists = false;
             foreach ($menu as $key => $menu_item) {
