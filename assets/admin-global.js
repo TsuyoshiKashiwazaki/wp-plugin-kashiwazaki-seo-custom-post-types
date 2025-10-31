@@ -25,9 +25,27 @@
 
         // 各カスタム投稿タイプのメニューを処理
         kstb_global.custom_post_types.forEach(function (postType) {
+            // メニュー表示モードを確認（トップレベルの場合のみ処理）
+            const menuDisplayMode = postType.menu_display_mode || 'category';
+
+            // カテゴリーまたはカスタム親メニューの場合はスキップ
+            if (menuDisplayMode === 'category' || menuDisplayMode === 'custom_parent') {
+                return;
+            }
+
             const menuClass = 'menu-icon-' + postType.slug;
             let menuItem = adminMenu.querySelector('li.' + menuClass + ':not(.kstb-custom-post-type)');
 
+            // menu-iconクラスで見つからない場合は、URLで検索
+            if (!menuItem) {
+                const allMenuLinks = adminMenu.querySelectorAll('li.menu-top > a');
+                for (const link of allMenuLinks) {
+                    if (link.getAttribute('href') && link.getAttribute('href').includes('post_type=' + postType.slug)) {
+                        menuItem = link.closest('li');
+                        break;
+                    }
+                }
+            }
 
             if (!menuItem) {
                 // メニューが存在しない場合は作成

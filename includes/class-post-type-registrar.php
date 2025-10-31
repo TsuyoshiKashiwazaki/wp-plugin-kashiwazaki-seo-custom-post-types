@@ -124,7 +124,17 @@ class KSTB_Post_Type_Registrar {
             $labels = array();
         }
 
-                // ラベルのデフォルト値設定（データベースクラスで既に処理済み）
+        // メニュー表示モードに応じたラベルを設定
+        $menu_display_mode = !empty($post_type->menu_display_mode) ? $post_type->menu_display_mode : 'category';
+        $parent_slug = KSTB_Parent_Menu_Manager::get_post_type_parent_slug($post_type);
+
+        // 親メニューがある場合は階層構造風のラベルにする
+        $all_items_label = 'すべての' . $post_type->label;
+        if ($parent_slug !== false) {
+            $all_items_label = '└ ' . $post_type->label;
+        }
+
+        // ラベルのデフォルト値設定（データベースクラスで既に処理済み）
         $default_labels = array(
             'name' => $post_type->label,
             'singular_name' => $post_type->label,
@@ -136,7 +146,7 @@ class KSTB_Post_Type_Registrar {
             'edit_item' => $post_type->label . 'を編集',
             'view_item' => $post_type->label . 'を表示',
             'view_items' => $post_type->label . 'を表示',
-            'all_items' => 'すべての' . $post_type->label,
+            'all_items' => $all_items_label,
             'search_items' => $post_type->label . 'を検索',
             'not_found' => $post_type->label . 'が見つかりません',
             'not_found_in_trash' => 'ゴミ箱に' . $post_type->label . 'が見つかりません',
@@ -244,6 +254,18 @@ class KSTB_Post_Type_Registrar {
         // 「表示しない」の場合は完全にfalseにする
         $has_archive = (bool) $post_type->has_archive;
 
+        // メニュー表示設定の決定
+        $parent_slug = KSTB_Parent_Menu_Manager::get_post_type_parent_slug($post_type);
+        $show_in_menu_value = false;
+
+        if ($parent_slug !== false) {
+            // サブメニューとして表示
+            $show_in_menu_value = $parent_slug;
+        } else {
+            // トップレベルメニューとして表示
+            $show_in_menu_value = (int) $post_type->menu_position ?: 25;
+        }
+
         // WordPress標準に従った引数設定
         $args = array(
             'label' => $post_type->label,
@@ -251,7 +273,7 @@ class KSTB_Post_Type_Registrar {
             'public' => true,
             'publicly_queryable' => true,  // 個別投稿ページは表示可能にする
             'show_ui' => true,
-            'show_in_menu' => (int) $post_type->menu_position ?: 25,  // 整数値を指定することでメニュー位置が機能する
+            'show_in_menu' => $show_in_menu_value,  // 親メニューまたはメニュー位置
             'query_var' => true,
             'rewrite' => $rewrite,
             'capability_type' => 'post',
@@ -290,38 +312,116 @@ class KSTB_Post_Type_Registrar {
             return;
         }
 
+        global $menu, $submenu;
+
+        // カテゴリーごとの投稿タイプ数をカウント
+        $category_counts = array();
+        foreach ($post_types as $post_type) {
+            $parent_slug = KSTB_Parent_Menu_Manager::get_post_type_parent_slug($post_type);
+            if ($parent_slug !== false) {
+                if (!isset($category_counts[$parent_slug])) {
+                    $category_counts[$parent_slug] = 0;
+                }
+                $category_counts[$parent_slug]++;
+            }
+        }
+
+        $category_indexes = array();
+
         foreach ($post_types as $post_type) {
             if (!post_type_exists($post_type->slug)) {
                 continue;
             }
 
             $post_type_object = get_post_type_object($post_type->slug);
-            if (!$post_type_object || !$post_type_object->show_in_menu) {
+            // show_in_menuがfalseの場合のみスキップ（文字列の場合は親メニューを持つので続行）
+            if (!$post_type_object || $post_type_object->show_in_menu === false) {
                 continue;
             }
 
-            global $menu, $submenu;
-            $menu_exists = false;
+            // 親メニュースラッグを取得
+            $parent_slug = KSTB_Parent_Menu_Manager::get_post_type_parent_slug($post_type);
 
-            if (is_array($menu)) {
-                foreach ($menu as $menu_item) {
-                    if (isset($menu_item[2]) && $menu_item[2] === 'edit.php?post_type=' . $post_type->slug) {
-                        $menu_exists = true;
-                        break;
+            if ($parent_slug !== false) {
+                // サブメニューとして追加
+                $menu_page = 'edit.php?post_type=' . $post_type->slug;
+
+                // サブメニューが既に存在するかチェック
+                $submenu_exists = false;
+                if (isset($submenu[$parent_slug]) && is_array($submenu[$parent_slug])) {
+                    foreach ($submenu[$parent_slug] as $submenu_item) {
+                        if (isset($submenu_item[2]) && $submenu_item[2] === $menu_page) {
+                            $submenu_exists = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!$menu_exists) {
-                add_menu_page(
-                    $post_type->label,
-                    $post_type->label,
-                    'edit_posts',
-                    'edit.php?post_type=' . $post_type->slug,
-                    '',
-                    $post_type->menu_icon ?: 'dashicons-admin-post',
-                    (int) $post_type->menu_position ?: 25
-                );
+                // カテゴリー内での順番を追跡
+                if (!isset($category_indexes[$parent_slug])) {
+                    $category_indexes[$parent_slug] = 0;
+                }
+                $category_indexes[$parent_slug]++;
+
+                // 最後の項目かどうか判定
+                $is_last = ($category_indexes[$parent_slug] === $category_counts[$parent_slug]);
+                $prefix = $is_last ? '└ ' : '├ ';
+
+                // ラベルが長い場合は省略
+                $display_label = $post_type->label;
+                if (mb_strlen($display_label) > 15) {
+                    $display_label = mb_substr($display_label, 0, 15) . '…';
+                }
+
+                if (!$submenu_exists) {
+                    // 階層構造のラベル
+                    $submenu_label = $prefix . $display_label;
+
+                    add_submenu_page(
+                        $parent_slug,
+                        $post_type->label,
+                        $submenu_label,  // メニュー表示時のラベル
+                        'edit_posts',
+                        $menu_page,
+                        '',
+                        0
+                    );
+                } else {
+                    // 既存のサブメニューのラベルを更新
+                    global $submenu;
+                    if (isset($submenu[$parent_slug])) {
+                        foreach ($submenu[$parent_slug] as $key => $item) {
+                            if ($item[2] === $menu_page) {
+                                $submenu[$parent_slug][$key][0] = $prefix . $display_label;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                // トップレベルメニューとして追加
+                $menu_exists = false;
+
+                if (is_array($menu)) {
+                    foreach ($menu as $menu_item) {
+                        if (isset($menu_item[2]) && $menu_item[2] === 'edit.php?post_type=' . $post_type->slug) {
+                            $menu_exists = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$menu_exists) {
+                    add_menu_page(
+                        $post_type->label,
+                        $post_type->label,
+                        'edit_posts',
+                        'edit.php?post_type=' . $post_type->slug,
+                        '',
+                        $post_type->menu_icon ?: 'dashicons-admin-post',
+                        (int) $post_type->menu_position ?: 25
+                    );
+                }
             }
         }
     }

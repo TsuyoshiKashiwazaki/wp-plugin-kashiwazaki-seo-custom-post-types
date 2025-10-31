@@ -5,6 +5,7 @@
         init: function () {
             this.bindEvents();
             this.initIconSelect();
+            this.loadCategoriesIfMenuTabActive();
         },
 
         bindEvents: function () {
@@ -24,6 +25,9 @@
             $(document).on('input', '#kstb-label', this.updateLabelPreview);
             $(document).on('input', '#kstb-url-slug', this.autoGenerateSlug);
 
+            // メニュー表示モードの切り替え
+            $(document).on('change', 'input[name="menu_display_mode"]', this.toggleMenuDisplayFields);
+
             // Post Mover events - use delegated events for dynamic content
             $(document).on('click', '#kstb-load-posts-btn', function() { KSTB.loadPosts(); });
             $(document).on('change', '#kstb-select-all-checkbox', function() { KSTB.toggleAllPosts(); });
@@ -35,6 +39,15 @@
 
             // Table sort
             $('.sortable').on('click', this.sortTable);
+
+            // メニュー管理
+            $(document).on('click', '#kstb-add-category-btn', this.showAddCategoryPrompt);
+            $(document).on('click', '#kstb-save-all-menu-btn', this.saveAllMenuAssignments);
+            $(document).on('click', '.kstb-rename-category-btn', this.renameCategoryPrompt);
+            $(document).on('click', '.kstb-delete-category-btn', this.deleteCategoryConfirm);
+            $(document).on('click', '.kstb-change-icon-btn', this.showIconModal);
+            $(document).on('click', '#kstb-close-icon-modal', this.closeIconModal);
+            $(document).on('click', '.kstb-icon-option', this.selectIcon);
         },
 
         initIconSelect: function () {
@@ -74,6 +87,39 @@
             $('.kstb-form-area').slideUp();
         },
 
+        toggleMenuDisplayFields: function () {
+            var mode = $('input[name="menu_display_mode"]:checked').val();
+
+            // すべての行を非表示にする
+            $('#kstb-menu-category-row').hide();
+            $('#kstb-custom-parent-row').hide();
+
+            // モードに応じて表示する行を切り替え
+            if (mode === 'category') {
+                $('#kstb-menu-category-row').show();
+            } else if (mode === 'custom_parent') {
+                $('#kstb-custom-parent-row').show();
+            }
+
+            // トップレベルの場合はメニュー位置が有効
+            if (mode === 'toplevel') {
+                $('#kstb-menu-position-row').find('.description').html(
+                    '<strong>管理画面メニューの表示順序</strong><br>' +
+                    '5〜100の数値。小さいほど上に表示されます<br>' +
+                    '参考: 投稿(5), メディア(10), 固定ページ(20), コメント(25)<br>' +
+                    '※ 空欄の場合は25（デフォルト）'
+                );
+            } else {
+                $('#kstb-menu-position-row').find('.description').html(
+                    '<strong>管理画面メニューの表示順序</strong><br>' +
+                    '5〜100の数値。小さいほど上に表示されます<br>' +
+                    '参考: 投稿(5), メディア(10), 固定ページ(20), コメント(25)<br>' +
+                    '※ 空欄の場合は25（デフォルト）<br>' +
+                    '※ トップレベルメニューの場合のみ有効（現在は無効）'
+                );
+            }
+        },
+
         editPostType: function () {
             var id = $(this).data('id');
 
@@ -105,6 +151,20 @@
             $('#kstb-label').val(data.label);
             $('#kstb-menu-icon').val(data.menu_icon).trigger('change');
             $('#kstb-menu-position').val(data.menu_position);
+
+            // メニュー表示モードの設定
+            var menuDisplayMode = data.menu_display_mode || 'category';
+            $('input[name="menu_display_mode"][value="' + menuDisplayMode + '"]').prop('checked', true).trigger('change');
+
+            // メニューカテゴリーの設定
+            if (data.menu_parent_category) {
+                $('#kstb-menu-category').val(data.menu_parent_category);
+            }
+
+            // カスタム親メニューの設定
+            if (data.menu_parent_slug) {
+                $('#kstb-custom-parent').val(data.menu_parent_slug);
+            }
 
             // プレビューを更新
             KSTB.updateLabelPreview.call($('#kstb-label')[0]);
@@ -747,6 +807,270 @@
             });
         });
 
+        // メニュー管理タブ切り替え時にカテゴリーをロード
+        $('.kstb-main-tab-buttons a[href="#kstb-main-tab-menu"]').on('click', function() {
+            KSTB.loadCategories();
+        });
+
     });
+
+    // メニュー管理関連のメソッド
+    KSTB.loadCategoriesIfMenuTabActive = function() {
+        if ($('#kstb-main-tab-menu').hasClass('active')) {
+            KSTB.loadCategories();
+        }
+    };
+
+    KSTB.loadCategories = function() {
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_get_categories',
+                nonce: kstb_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    KSTB.renderCategoriesList(response.data);
+                }
+            }
+        });
+    };
+
+    KSTB.renderCategoriesList = function(categories) {
+        var $list = $('#kstb-categories-list');
+        $list.empty();
+
+        if (categories.length === 0) {
+            $list.append('<tr><td colspan="4">カテゴリーがありません</td></tr>');
+            return;
+        }
+
+        $.each(categories, function(i, category) {
+            var icon = category.icon || 'dashicons-category';
+            var postTypesHtml = category.post_types.map(function(pt) {
+                return '<span style="display: inline-block; padding: 2px 8px; margin: 2px; background: #f0f0f0; border-radius: 3px;">' +
+                       pt.label + '</span>';
+            }).join(' ');
+
+            var row = '<tr>' +
+                '<td style="text-align: center;">' +
+                '<span class="dashicons ' + icon + '" style="font-size: 32px; width: 32px; height: 32px; cursor: pointer;" ' +
+                'class="kstb-change-icon-btn" data-category="' + category.name + '" title="アイコンを変更"></span>' +
+                '</td>' +
+                '<td><strong>' + category.name + '</strong></td>' +
+                '<td>' + postTypesHtml + '</td>' +
+                '<td>' +
+                '<button type="button" class="button kstb-change-icon-btn" data-category="' + category.name + '">アイコン変更</button> ' +
+                '<button type="button" class="button kstb-rename-category-btn" data-category="' + category.name + '">名前変更</button> ' +
+                '<button type="button" class="button kstb-delete-category-btn" data-category="' + category.name + '">削除</button>' +
+                '</td>' +
+                '</tr>';
+
+            $list.append(row);
+        });
+    };
+
+    KSTB.showIconModal = function() {
+        KSTB.currentCategoryForIcon = $(this).data('category');
+        $('#kstb-icon-modal').fadeIn();
+    };
+
+    KSTB.closeIconModal = function() {
+        $('#kstb-icon-modal').fadeOut();
+        KSTB.currentCategoryForIcon = null;
+    };
+
+    KSTB.selectIcon = function() {
+        var selectedIcon = $(this).data('icon');
+
+        if (!KSTB.currentCategoryForIcon) {
+            return;
+        }
+
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_update_category_icon',
+                nonce: kstb_ajax.nonce,
+                category_name: KSTB.currentCategoryForIcon,
+                icon: selectedIcon
+            },
+            success: function(response) {
+                if (response.success) {
+                    KSTB.showNotice(response.data, 'success');
+                    KSTB.closeIconModal();
+
+                    // ページをリロード
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    KSTB.showNotice(response.data, 'error');
+                }
+            }
+        });
+    };
+
+    KSTB.showAddCategoryPrompt = function() {
+        var categoryName = prompt('新しいカテゴリー名を入力してください:');
+
+        if (!categoryName || categoryName.trim() === '') {
+            return;
+        }
+
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_add_category',
+                nonce: kstb_ajax.nonce,
+                category_name: categoryName.trim()
+            },
+            success: function(response) {
+                if (response.success) {
+                    KSTB.showNotice(response.data.message, 'success');
+
+                    // カテゴリー一覧を再読み込み
+                    KSTB.loadCategories();
+
+                    // ドロップダウンにも追加
+                    $('.kstb-menu-mode-select optgroup[label="カテゴリー"]').each(function() {
+                        $(this).append('<option value="category:' + categoryName + '">' + categoryName + '</option>');
+                    });
+
+                    // ページをリロード
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    KSTB.showNotice(response.data, 'error');
+                }
+            }
+        });
+    };
+
+    KSTB.saveAllMenuAssignments = function() {
+        var $btn = $(this);
+        var assignments = [];
+
+        // すべての選択値を収集
+        $('.kstb-menu-mode-select').each(function() {
+            var postTypeId = $(this).data('post-type-id');
+            var menuMode = $(this).val();
+
+            assignments.push({
+                id: postTypeId,
+                mode: menuMode
+            });
+        });
+
+        if (assignments.length === 0) {
+            KSTB.showNotice('保存するデータがありません', 'error');
+            return;
+        }
+
+        $btn.prop('disabled', true).text('保存中...');
+
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_save_all_menu_assignments',
+                nonce: kstb_ajax.nonce,
+                assignments: assignments
+            },
+            success: function(response) {
+                console.log('一括保存レスポンス:', response);
+                if (response.success) {
+                    KSTB.showNotice(response.data, 'success');
+                    $btn.prop('disabled', false).text('保存');
+
+                    // ページをリロード（メニューを更新）
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    KSTB.showNotice(response.data, 'error');
+                    $btn.prop('disabled', false).text('保存');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('一括保存エラー:', error, xhr.responseText);
+                KSTB.showNotice('保存処理でエラーが発生しました', 'error');
+                $btn.prop('disabled', false).text('保存');
+            }
+        });
+    };
+
+    KSTB.renameCategoryPrompt = function() {
+        var oldName = $(this).data('category');
+        var newName = prompt('新しいカテゴリー名を入力してください:', oldName);
+
+        if (!newName || newName.trim() === '' || newName === oldName) {
+            return;
+        }
+
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_rename_category',
+                nonce: kstb_ajax.nonce,
+                old_name: oldName,
+                new_name: newName.trim()
+            },
+            success: function(response) {
+                if (response.success) {
+                    KSTB.showNotice(response.data, 'success');
+
+                    // ページをリロード
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    KSTB.showNotice(response.data, 'error');
+                }
+            }
+        });
+    };
+
+    KSTB.deleteCategoryConfirm = function() {
+        var categoryName = $(this).data('category');
+
+        if (!confirm('カテゴリー「' + categoryName + '」を削除しますか？\n\nこのカテゴリーに含まれる投稿タイプは、トップレベルメニューに移動されます。')) {
+            return;
+        }
+
+        $.ajax({
+            url: kstb_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'kstb_delete_category',
+                nonce: kstb_ajax.nonce,
+                category_name: categoryName
+            },
+            success: function(response) {
+                console.log('削除レスポンス:', response);
+                if (response.success) {
+                    KSTB.showNotice(response.data, 'success');
+                    console.log('通知を表示しました。2秒後にリロード');
+
+                    // 通知を確実に表示してからリロード
+                    setTimeout(function() {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    KSTB.showNotice(response.data, 'error');
+                    console.log('エラーレスポンス:', response.data);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('カテゴリー削除エラー:', error, xhr.responseText);
+                KSTB.showNotice('削除処理でエラーが発生しました: ' + error, 'error');
+            }
+        });
+    };
 
 })(jQuery);

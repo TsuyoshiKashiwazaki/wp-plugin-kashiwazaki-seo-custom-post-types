@@ -5,6 +5,28 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2025-10-31
+
+### Added
+- メニュー管理タブを追加（カスタム投稿タイプをカテゴリーでフォルダ化）
+- カテゴリー機能（複数の投稿タイプを管理画面サイドメニューでグループ化）
+- カテゴリーアイコン選択機能（21種類のフォルダ系アイコンから選択可能）
+- 親メニューページ（カテゴリークリック時に所属する投稿タイプ一覧を表示）
+- 一括保存機能（すべての投稿タイプのメニュー設定を一度に保存）
+- 階層構造表示（サブメニューを├と└で視覚化）
+- `includes/class-parent-menu-manager.php` - 親メニュー管理クラス
+- `wp_kstb_menu_categories` テーブル（カテゴリー情報を保存）
+
+### Improved
+- サブメニューの文字折り返しを防止（white-space: nowrap、15文字超過時は省略）
+- アセットファイルのキャッシュクリア機構（ファイルタイムスタンプベースのバージョニング）
+- メニュー重複チェックロジックを改善（URLベースの検索を追加）
+
+### Fixed
+- メニュー重複表示の問題を修正（admin-global.js、class-post-type-menu-fix.php）
+- カテゴリーテーブルの自動作成とデフォルトカテゴリー作成を改善
+- カテゴリー削除・名前変更時のテーブル同期処理を追加
+
 ## [1.0.8] - 2025-10-30
 
 ### Fixed

@@ -6,10 +6,16 @@ if (!defined('ABSPATH')) {
 
 class KSTB_Database {
     private static $table_name = 'kstb_post_types';
+    private static $categories_table_name = 'kstb_menu_categories';
 
     public static function get_table_name() {
         global $wpdb;
         return $wpdb->prefix . self::$table_name;
+    }
+
+    public static function get_categories_table_name() {
+        global $wpdb;
+        return $wpdb->prefix . self::$categories_table_name;
     }
 
     public static function create_tables() {
@@ -38,6 +44,9 @@ class KSTB_Database {
             hierarchical tinyint(1) DEFAULT 0,
             menu_position int(11) DEFAULT NULL,
             menu_icon varchar(100) DEFAULT NULL,
+            menu_parent_category varchar(200) DEFAULT NULL,
+            menu_parent_slug varchar(200) DEFAULT NULL,
+            menu_display_mode varchar(20) DEFAULT 'category',
             supports text NOT NULL,
             show_in_rest tinyint(1) DEFAULT 1,
             rest_base varchar(100) DEFAULT NULL,
@@ -54,9 +63,94 @@ class KSTB_Database {
         } catch (Exception $e) {
             throw $e;
         }
-        
+
         // アーカイブ設定カラムが存在しない場合は追加
         self::add_archive_columns_if_not_exists();
+
+        // カテゴリーテーブルの作成
+        self::create_categories_table();
+    }
+
+    /**
+     * メニューカテゴリーテーブルを作成
+     */
+    public static function create_categories_table() {
+        global $wpdb;
+
+        $table_name = self::get_categories_table_name();
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql = "CREATE TABLE $table_name (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            name varchar(200) NOT NULL,
+            icon varchar(100) DEFAULT 'dashicons-category',
+            sort_order int(11) DEFAULT 0,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY name (name)
+        ) $charset_collate;";
+
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql);
+
+        // デフォルトカテゴリーが存在しない場合は作成
+        $default_exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $table_name WHERE name = %s",
+            'カスタム投稿タイプ'
+        ));
+
+        if (!$default_exists) {
+            $wpdb->insert(
+                $table_name,
+                array('name' => 'カスタム投稿タイプ', 'icon' => 'dashicons-category'),
+                array('%s', '%s')
+            );
+        }
+
+        // 既存のカテゴリーをマイグレーション
+        self::migrate_existing_categories();
+    }
+
+    /**
+     * 既存のカテゴリーをテーブルに移行
+     */
+    private static function migrate_existing_categories() {
+        // マイグレーションは初回のみ実行
+        $migrated = get_option('kstb_categories_migrated', false);
+        if ($migrated) {
+            return;
+        }
+
+        global $wpdb;
+        $categories_table = self::get_categories_table_name();
+        $post_types_table = self::get_table_name();
+
+        // 既存のカテゴリーを取得
+        $existing_categories = $wpdb->get_col(
+            "SELECT DISTINCT menu_parent_category
+             FROM $post_types_table
+             WHERE menu_parent_category IS NOT NULL
+             AND menu_parent_category != ''"
+        );
+
+        foreach ($existing_categories as $category) {
+            // カテゴリーが既にテーブルに存在するかチェック
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $categories_table WHERE name = %s",
+                $category
+            ));
+
+            if (!$exists) {
+                $wpdb->insert(
+                    $categories_table,
+                    array('name' => $category, 'icon' => 'dashicons-category'),
+                    array('%s', '%s')
+                );
+            }
+        }
+
+        // マイグレーション完了フラグを設定
+        update_option('kstb_categories_migrated', true);
     }
 
     /**
@@ -88,6 +182,27 @@ class KSTB_Database {
         $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'url_slug'");
         if (empty($column_exists)) {
             $wpdb->query("ALTER TABLE $table_name ADD url_slug varchar(64) DEFAULT NULL AFTER slug");
+        }
+
+        // menu_parent_category カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'menu_parent_category'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD menu_parent_category varchar(200) DEFAULT NULL AFTER menu_icon");
+        }
+
+        // menu_parent_slug カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'menu_parent_slug'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD menu_parent_slug varchar(200) DEFAULT NULL AFTER menu_parent_category");
+        }
+
+        // menu_display_mode カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'menu_display_mode'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD menu_display_mode varchar(20) DEFAULT 'category' AFTER menu_parent_slug");
+
+            // 既存のレコードにデフォルトカテゴリーを設定
+            $wpdb->query("UPDATE $table_name SET menu_parent_category = 'カスタム投稿タイプ' WHERE menu_parent_category IS NULL OR menu_parent_category = ''");
         }
 
     }
@@ -171,6 +286,9 @@ class KSTB_Database {
             'archive_page_id' => null,
             'parent_directory' => null,
             'hierarchical' => 0,
+            'menu_parent_category' => 'カスタム投稿タイプ',
+            'menu_parent_slug' => null,
+            'menu_display_mode' => 'category',
             'show_in_rest' => 1
         );
 
@@ -200,6 +318,9 @@ class KSTB_Database {
                 'hierarchical' => (int) $data['hierarchical'],
                 'menu_position' => !empty($data['menu_position']) ? (int) $data['menu_position'] : 25,
                 'menu_icon' => !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null,
+                'menu_parent_category' => !empty($data['menu_parent_category']) ? sanitize_text_field($data['menu_parent_category']) : null,
+                'menu_parent_slug' => !empty($data['menu_parent_slug']) ? sanitize_text_field($data['menu_parent_slug']) : null,
+                'menu_display_mode' => !empty($data['menu_display_mode']) ? sanitize_text_field($data['menu_display_mode']) : 'category',
                 'supports' => json_encode($data['supports']),
                 'show_in_rest' => (int) $data['show_in_rest'],
                 'rest_base' => $url_slug,
@@ -277,6 +398,15 @@ class KSTB_Database {
         if (isset($data['menu_icon'])) {
             $update_data['menu_icon'] = !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null;
         }
+        if (isset($data['menu_parent_category'])) {
+            $update_data['menu_parent_category'] = !empty($data['menu_parent_category']) ? sanitize_text_field($data['menu_parent_category']) : null;
+        }
+        if (isset($data['menu_parent_slug'])) {
+            $update_data['menu_parent_slug'] = !empty($data['menu_parent_slug']) ? sanitize_text_field($data['menu_parent_slug']) : null;
+        }
+        if (isset($data['menu_display_mode'])) {
+            $update_data['menu_display_mode'] = !empty($data['menu_display_mode']) ? sanitize_text_field($data['menu_display_mode']) : 'category';
+        }
         if (isset($data['supports'])) {
             $update_data['supports'] = json_encode($data['supports']);
         }
@@ -343,5 +473,90 @@ class KSTB_Database {
         }
 
         return $diagnosis;
+    }
+
+    /**
+     * カテゴリーを取得
+     */
+    public static function get_category($name) {
+        global $wpdb;
+        $table_name = self::get_categories_table_name();
+
+        return $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table_name WHERE name = %s",
+            $name
+        ));
+    }
+
+    /**
+     * すべてのカテゴリーを取得
+     */
+    public static function get_all_categories() {
+        global $wpdb;
+        $table_name = self::get_categories_table_name();
+
+        return $wpdb->get_results("SELECT * FROM $table_name ORDER BY sort_order ASC, name ASC");
+    }
+
+    /**
+     * カテゴリーを保存（新規または更新）
+     */
+    public static function save_category($name, $icon = 'dashicons-category') {
+        global $wpdb;
+        $table_name = self::get_categories_table_name();
+
+        // 既存チェック
+        $existing = self::get_category($name);
+
+        if ($existing) {
+            // 更新
+            return $wpdb->update(
+                $table_name,
+                array('icon' => sanitize_text_field($icon)),
+                array('name' => $name),
+                array('%s'),
+                array('%s')
+            );
+        } else {
+            // 新規
+            return $wpdb->insert(
+                $table_name,
+                array(
+                    'name' => sanitize_text_field($name),
+                    'icon' => sanitize_text_field($icon)
+                ),
+                array('%s', '%s')
+            );
+        }
+    }
+
+    /**
+     * カテゴリーのアイコンを更新
+     */
+    public static function update_category_icon($name, $icon) {
+        global $wpdb;
+        $table_name = self::get_categories_table_name();
+
+        return $wpdb->update(
+            $table_name,
+            array('icon' => sanitize_text_field($icon)),
+            array('name' => $name),
+            array('%s'),
+            array('%s')
+        );
+    }
+
+    /**
+     * カテゴリーを削除
+     */
+    public static function delete_category($name) {
+        global $wpdb;
+        $table_name = self::get_categories_table_name();
+
+        return $wpdb->delete(
+            $table_name,
+            array('name' => $name),
+            array('%s')
+        );
     }
 }
