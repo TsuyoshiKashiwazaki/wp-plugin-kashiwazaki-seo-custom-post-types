@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,10 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.10 =
+* Add: パーマリンク検証機能（正しいパーマリンク以外でのアクセスを404でブロック）
+* Improve: カスタム投稿タイプのCanonical Redirectを無効化
 
 = 1.0.9 =
 * Add: メニュー管理タブを追加（カスタム投稿タイプをカテゴリーでフォルダ化）
@@ -142,6 +146,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.10 =
+パーマリンク検証機能を追加。正しくないパーマリンクでのアクセスを404でブロックし、SEOを改善します。
 
 = 1.0.9 =
 メニュー管理機能を追加。カスタム投稿タイプをカテゴリーでフォルダ化し、管理画面を整理できます。データベーステーブルが自動作成されます。
