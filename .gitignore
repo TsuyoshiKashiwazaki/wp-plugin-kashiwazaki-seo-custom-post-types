@@ -3,6 +3,16 @@ gh_*/
 *.tar.gz
 *.zip
 
+# Dependencies
+node_modules/
+package.json
+package-lock.json
+
+# Test scripts
+screenshot-blog-seo.js
+view-blog-seo.js
+*.png
+
 # Temporary files
 *.tmp
 *.temp
