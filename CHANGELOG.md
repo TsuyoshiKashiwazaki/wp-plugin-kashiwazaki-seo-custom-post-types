@@ -5,6 +5,16 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.11] - 2025-11-09
+
+### Fixed
+- カテゴリーテーブルが作成されない問題を修正
+
+### Improved
+- `update_database()` メソッドにカテゴリーテーブルの存在確認と作成処理を追加
+- `create_categories_table()` メソッドにエラーハンドリングとログ出力を追加
+- テーブル作成の成功/失敗を確認する仕組みを実装
+
 ## [1.0.10] - 2025-11-07
 
 ### Added
