@@ -90,25 +90,44 @@ class KSTB_Database {
             UNIQUE KEY name (name)
         ) $charset_collate;";
 
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        try {
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            $result = dbDelta($sql);
 
-        // デフォルトカテゴリーが存在しない場合は作成
-        $default_exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM $table_name WHERE name = %s",
-            'カスタム投稿タイプ'
-        ));
+            // テーブル作成の成功を確認
+            $table_created = $wpdb->get_var("SHOW TABLES LIKE '$table_name'") === $table_name;
 
-        if (!$default_exists) {
-            $wpdb->insert(
-                $table_name,
-                array('name' => 'カスタム投稿タイプ', 'icon' => 'dashicons-category'),
-                array('%s', '%s')
-            );
+            if (!$table_created) {
+                error_log('KSTB Error: Failed to create categories table: ' . $wpdb->last_error);
+                return false;
+            }
+
+            // デフォルトカテゴリーが存在しない場合は作成
+            $default_exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM $table_name WHERE name = %s",
+                'カスタム投稿タイプ'
+            ));
+
+            if (!$default_exists) {
+                $insert_result = $wpdb->insert(
+                    $table_name,
+                    array('name' => 'カスタム投稿タイプ', 'icon' => 'dashicons-category'),
+                    array('%s', '%s')
+                );
+
+                if ($insert_result === false) {
+                    error_log('KSTB Error: Failed to insert default category: ' . $wpdb->last_error);
+                }
+            }
+
+            // 既存のカテゴリーをマイグレーション
+            self::migrate_existing_categories();
+
+            return true;
+        } catch (Exception $e) {
+            error_log('KSTB Error: Exception in create_categories_table: ' . $e->getMessage());
+            return false;
         }
-
-        // 既存のカテゴリーをマイグレーション
-        self::migrate_existing_categories();
     }
 
     /**
@@ -211,7 +230,18 @@ class KSTB_Database {
      * データベースを最新バージョンに更新
      */
     public static function update_database() {
+        global $wpdb;
+
+        // アーカイブ設定カラムが存在しない場合は追加
         self::add_archive_columns_if_not_exists();
+
+        // カテゴリーテーブルの存在確認と作成
+        $categories_table = self::get_categories_table_name();
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$categories_table'") === $categories_table;
+
+        if (!$table_exists) {
+            self::create_categories_table();
+        }
     }
 
     public static function get_all_post_types() {
