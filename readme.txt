@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.11
+Stable tag: 1.0.12
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,11 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.12 =
+* Add: 循環参照検出機能（階層構造の無限ループを防止）
+* Add: 循環参照自動修正機能（データベースの整合性を自動修復）
+* Improve: パフォーマンス向上のためのキャッシュ機能を追加
 
 = 1.0.11 =
 * Fix: カテゴリーテーブルが作成されない問題を修正
@@ -151,6 +156,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.12 =
+循環参照検出・自動修正機能とキャッシュ機能を追加。階層構造の安定性とパフォーマンスが向上しました。
 
 = 1.0.10 =
 パーマリンク検証機能を追加。正しくないパーマリンクでのアクセスを404でブロックし、SEOを改善します。

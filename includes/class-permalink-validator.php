@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
  */
 class KSTB_Permalink_Validator {
     private static $instance = null;
+    private $post_types_cache = null;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -19,6 +20,16 @@ class KSTB_Permalink_Validator {
     }
 
     private function __construct() {}
+
+    /**
+     * 投稿タイプを取得（キャッシュ付き）
+     */
+    private function get_post_types() {
+        if ($this->post_types_cache === null) {
+            $this->post_types_cache = KSTB_Database::get_all_post_types();
+        }
+        return $this->post_types_cache;
+    }
 
     public function init() {
         // template_redirectフックで検証（優先度を高めに設定）
@@ -47,7 +58,7 @@ class KSTB_Permalink_Validator {
         }
 
         // カスタム投稿タイプかチェック
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
         $is_custom_post_type = false;
 
         foreach ($post_types as $post_type) {
@@ -85,7 +96,7 @@ class KSTB_Permalink_Validator {
         }
 
         // カスタム投稿タイプのパターンに部分的にマッチするかチェック
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
         $should_block = false;
 
         foreach ($post_types as $post_type) {
@@ -153,7 +164,16 @@ class KSTB_Permalink_Validator {
     /**
      * カスタム投稿タイプのフルパスを構築
      */
-    private function build_full_path_for_post_type($post_type) {
+    private function build_full_path_for_post_type($post_type, $visited = array()) {
+        // 循環参照を検出
+        if (in_array($post_type->slug, $visited)) {
+            error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $post_type->slug);
+            return (!empty($post_type->url_slug)) ? $post_type->url_slug : $post_type->slug;
+        }
+
+        // 訪問済みリストに追加
+        $visited[] = $post_type->slug;
+
         $effective_slug = (!empty($post_type->url_slug)) ? $post_type->url_slug : $post_type->slug;
 
         if (empty($post_type->parent_directory)) {
@@ -161,6 +181,16 @@ class KSTB_Permalink_Validator {
         }
 
         $parent_dir = trim($post_type->parent_directory, '/');
+
+        // 親ディレクトリが別のカスタム投稿タイプかチェック
+        $parent_post_type = KSTB_Database::get_post_type_by_slug($parent_dir);
+        if ($parent_post_type) {
+            // 親のフルパスを再帰的に取得
+            $parent_path = $this->build_full_path_for_post_type($parent_post_type, $visited);
+            return $parent_path . '/' . $effective_slug;
+        }
+
+        // 通常のディレクトリ
         return $parent_dir . '/' . $effective_slug;
     }
 

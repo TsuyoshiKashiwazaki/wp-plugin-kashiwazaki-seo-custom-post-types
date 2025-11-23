@@ -13,12 +13,22 @@ usort($post_types, function($a, $b) use ($post_types) {
 });
 
 // 各投稿タイプの完全パスを計算
-function kstb_build_full_path($post_type_slug, $all_post_types) {
+function kstb_build_full_path($post_type_slug, $all_post_types, $visited = array()) {
     static $cache = array();
 
     if (isset($cache[$post_type_slug])) {
         return $cache[$post_type_slug];
     }
+
+    // 循環参照を検出
+    if (in_array($post_type_slug, $visited)) {
+        error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $post_type_slug);
+        $cache[$post_type_slug] = '';
+        return '';
+    }
+
+    // 訪問済みリストに追加
+    $visited[] = $post_type_slug;
 
     // 該当する投稿タイプを検索
     $current = null;
@@ -51,8 +61,8 @@ function kstb_build_full_path($post_type_slug, $all_post_types) {
     }
 
     if ($parent_is_post_type) {
-        // 親の完全パスを再帰的に取得
-        $parent_full_path = kstb_build_full_path($parent_dir, $all_post_types);
+        // 親の完全パスを再帰的に取得（訪問済みリストを渡す）
+        $parent_full_path = kstb_build_full_path($parent_dir, $all_post_types, $visited);
         $full_path = $parent_full_path ? $parent_full_path . '/' . $parent_dir : $parent_dir;
     } else {
         // 親は固定ページやその他
