@@ -9,6 +9,7 @@ if (!defined('ABSPATH')) {
 class KSTB_Archive_Controller {
     private static $instance = null;
     private $processed = false;
+    private $post_types_cache = null;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -18,6 +19,16 @@ class KSTB_Archive_Controller {
     }
 
     private function __construct() {}
+
+    /**
+     * 投稿タイプを取得（キャッシュ付き）
+     */
+    private function get_post_types() {
+        if ($this->post_types_cache === null) {
+            $this->post_types_cache = KSTB_Database::get_all_post_types();
+        }
+        return $this->post_types_cache;
+    }
 
     public function init() {
         // リライトルールをフィルタリング（最後に実行して並び替え）
@@ -57,7 +68,17 @@ class KSTB_Archive_Controller {
     /**
      * カスタム投稿タイプのフルパスを再帰的に構築
      */
-    private function build_full_path_for_post_type($post_type) {
+    private function build_full_path_for_post_type($post_type, $visited = array()) {
+        // 循環参照を検出
+        if (in_array($post_type->slug, $visited)) {
+            error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $post_type->slug);
+            // 循環参照の場合は現在のスラッグのみを返す
+            return (!empty($post_type->url_slug)) ? $post_type->url_slug : $post_type->slug;
+        }
+
+        // 訪問済みリストに追加
+        $visited[] = $post_type->slug;
+
         // url_slugが設定されている場合はそれを使用、なければslugを使用
         $effective_slug = (!empty($post_type->url_slug)) ? $post_type->url_slug : $post_type->slug;
 
@@ -68,11 +89,11 @@ class KSTB_Archive_Controller {
         $parent_dir = trim($post_type->parent_directory, '/');
 
         // 親ディレクトリが別のカスタム投稿タイプかチェック
-        $all_post_types = KSTB_Database::get_all_post_types();
+        $all_post_types = $this->get_post_types();
         foreach ($all_post_types as $other_type) {
             if ($other_type->slug === $parent_dir) {
-                // 親のフルパスを再帰的に取得
-                $parent_path = $this->build_full_path_for_post_type($other_type);
+                // 親のフルパスを再帰的に取得（訪問済みリストを渡す）
+                $parent_path = $this->build_full_path_for_post_type($other_type, $visited);
                 return $parent_path . '/' . $effective_slug;
             }
         }
@@ -104,7 +125,7 @@ class KSTB_Archive_Controller {
             $possible_post_type_slug = $segments[count($segments) - 2]; // 'report'
 
             // このスラッグがカスタム投稿タイプかチェック
-            $custom_post_types = KSTB_Database::get_all_post_types();
+            $custom_post_types = $this->get_post_types();
             foreach ($custom_post_types as $post_type) {
                 if ($post_type->slug === $possible_post_type_slug) {
                     // カスタム投稿タイプの投稿を検索
@@ -170,7 +191,7 @@ class KSTB_Archive_Controller {
      * リライトルールをフィルタリング
      */
     public function filter_rewrite_rules($rules) {
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
 
         foreach ($post_types as $post_type) {
             // フルパスを再帰的に構築
@@ -248,7 +269,7 @@ class KSTB_Archive_Controller {
         }
 
         $segments = explode('/', $uri);
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
 
         // 最も長いパスにマッチする投稿タイプを見つける
         $best_match = null;
@@ -418,7 +439,7 @@ class KSTB_Archive_Controller {
             $slug = $segments[1];
 
             // 階層URLのカスタム投稿タイプをチェック
-            $post_types = KSTB_Database::get_all_post_types();
+            $post_types = $this->get_post_types();
             foreach ($post_types as $post_type) {
                 if ($post_type->slug === $slug &&
                     !empty($post_type->parent_directory) &&
@@ -438,7 +459,7 @@ class KSTB_Archive_Controller {
         // 1階層のURLをチェック
         if (count($segments) === 1) {
             $slug = $segments[0];
-            $post_types = KSTB_Database::get_all_post_types();
+            $post_types = $this->get_post_types();
 
             foreach ($post_types as $post_type) {
                 if ($post_type->slug === $slug && empty($post_type->parent_directory)) {
@@ -474,7 +495,7 @@ class KSTB_Archive_Controller {
         $segments = explode('/', $request);
 
         // カスタム投稿タイプかチェック
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
 
         // 最も長いパスにマッチする投稿タイプを見つける
         $best_match = null;
@@ -731,7 +752,7 @@ class KSTB_Archive_Controller {
         }
 
         $segments = explode('/', $uri);
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
 
         foreach ($post_types as $post_type_data) {
             $matches = false;
@@ -932,7 +953,7 @@ class KSTB_Archive_Controller {
         }
 
         $segments = explode('/', $uri);
-        $post_types = KSTB_Database::get_all_post_types();
+        $post_types = $this->get_post_types();
 
         foreach ($post_types as $post_type_data) {
             $matches = false;

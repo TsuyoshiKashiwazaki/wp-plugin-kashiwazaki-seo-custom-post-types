@@ -10,6 +10,7 @@ if (!defined('ABSPATH')) {
 class KSTB_Parent_Selector {
     private static $instance = null;
     private $rewrite_rules_added = false;
+    private $post_types_cache = null;
 
     public static function get_instance() {
         if (null === self::$instance) {
@@ -19,6 +20,16 @@ class KSTB_Parent_Selector {
     }
 
     private function __construct() {}
+
+    /**
+     * 投稿タイプを取得（キャッシュ付き）
+     */
+    private function get_post_types() {
+        if ($this->post_types_cache === null) {
+            $this->post_types_cache = KSTB_Database::get_all_post_types();
+        }
+        return $this->post_types_cache;
+    }
 
     public function init() {
         // 最優先：WordPressが起動する前にリダイレクトを完全阻止
@@ -96,7 +107,7 @@ class KSTB_Parent_Selector {
      * 親ページ選択用のメタボックスを追加
      */
     public function add_parent_selector_metabox() {
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
 
         foreach ($custom_post_types as $post_type) {
             if (post_type_exists($post_type->slug)) {
@@ -282,7 +293,7 @@ class KSTB_Parent_Selector {
         }
 
         // カスタム投稿タイプを軽量クエリで取得
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         foreach ($custom_post_types as $cpt) {
             if (!post_type_exists($cpt->slug)) {
                 continue;
@@ -480,7 +491,7 @@ class KSTB_Parent_Selector {
 
         if ($cache === null) {
             $cache = array();
-            $custom_post_types = KSTB_Database::get_all_post_types();
+            $custom_post_types = $this->get_post_types();
             foreach ($custom_post_types as $cpt) {
                 $cache[$cpt->slug] = true;
             }
@@ -535,7 +546,7 @@ class KSTB_Parent_Selector {
         }
 
         // カスタム投稿タイプかどうか確認
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         $is_custom_post_type = false;
 
         foreach ($custom_post_types as $cpt) {
@@ -976,7 +987,7 @@ class KSTB_Parent_Selector {
         // クエリ変数を追加
         add_filter('query_vars', array($this, 'add_query_vars'));
 
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
 
         foreach ($custom_post_types as $post_type) {
             if (post_type_exists($post_type->slug) && (bool) $post_type->hierarchical) {
@@ -1202,7 +1213,7 @@ class KSTB_Parent_Selector {
      */
     public function add_custom_rewrite_rules() {
         // 階層化されたカスタム投稿タイプ用のリライトルールを追加
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
 
         foreach ($custom_post_types as $post_type) {
             if (post_type_exists($post_type->slug) && (bool) $post_type->hierarchical) {
@@ -1672,7 +1683,7 @@ class KSTB_Parent_Selector {
      * 投稿タイプスラッグがカスタム投稿タイプかどうか判定
      */
     private function is_custom_post_type_slug($slug) {
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         foreach ($custom_post_types as $cpt) {
             $post_type_obj = get_post_type_object($cpt->slug);
             if ($post_type_obj && isset($post_type_obj->rewrite['slug']) && $post_type_obj->rewrite['slug'] === $slug) {
@@ -1689,7 +1700,7 @@ class KSTB_Parent_Selector {
      * 管理画面の投稿一覧に階層情報を追加
      */
     public function add_hierarchy_columns() {
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
 
         foreach ($custom_post_types as $post_type) {
             if (post_type_exists($post_type->slug) && (bool) $post_type->hierarchical) {
@@ -1734,7 +1745,7 @@ class KSTB_Parent_Selector {
      * 指定した投稿タイプがカスタム投稿タイプかどうか判定
      */
     private function is_custom_post_type($post_type) {
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         foreach ($custom_post_types as $cpt) {
             if ($cpt->slug === $post_type) {
                 return true;
@@ -1747,7 +1758,7 @@ class KSTB_Parent_Selector {
      * 指定した投稿タイプが階層化されているかどうか判定
      */
     private function is_hierarchical_post_type($post_type) {
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         foreach ($custom_post_types as $cpt) {
             if ($cpt->slug === $post_type) {
                 return (bool) $cpt->hierarchical;
@@ -1815,7 +1826,16 @@ class KSTB_Parent_Selector {
     /**
      * カスタム投稿タイプのフルパスを構築（KSTB_Post_Type_Registrarと同じロジック）
      */
-    private function build_full_path($slug) {
+    private function build_full_path($slug, $visited = array()) {
+        // 循環参照を検出
+        if (in_array($slug, $visited)) {
+            error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $slug);
+            return $slug;
+        }
+
+        // 訪問済みリストに追加
+        $visited[] = $slug;
+
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
         if (!$post_type) {
             return $slug;
@@ -1833,8 +1853,8 @@ class KSTB_Parent_Selector {
         // 親がカスタム投稿タイプかチェック
         $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
         if ($parent_post_type) {
-            // 親のフルパスを再帰的に取得
-            $parent_path = $this->build_full_path($parent);
+            // 親のフルパスを再帰的に取得（訪問済みリストを渡す）
+            $parent_path = $this->build_full_path($parent, $visited);
             return $parent_path . '/' . $effective_slug;
         }
 
@@ -1853,7 +1873,7 @@ class KSTB_Parent_Selector {
             return false;
         }
 
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
         if (empty($custom_post_types)) {
             return false;
         }
@@ -2017,7 +2037,7 @@ class KSTB_Parent_Selector {
         echo "<!-- グローバル変数モード: " . ($global_mode ? 'YES' : 'NO') . " -->\n";
 
         // カスタム投稿タイプ一覧
-        $custom_post_types = KSTB_Database::get_all_post_types();
+        $custom_post_types = $this->get_post_types();
                 echo "<!-- 登録済みカスタム投稿タイプ数: " . count($custom_post_types) . " -->\n";
 
         foreach ($custom_post_types as $cpt) {

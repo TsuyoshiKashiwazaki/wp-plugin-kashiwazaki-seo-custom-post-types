@@ -242,12 +242,84 @@ class KSTB_Database {
         if (!$table_exists) {
             self::create_categories_table();
         }
+
+        // 循環参照を自動修正
+        self::fix_circular_references();
+    }
+
+    /**
+     * 循環参照を検出して自動修正
+     */
+    public static function fix_circular_references() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        // キャッシュをバイパスして直接データベースから取得
+        $post_types = $wpdb->get_results("SELECT * FROM $table_name ORDER BY label ASC");
+        $fixed = array();
+
+        foreach ($post_types as $post_type) {
+            if (empty($post_type->parent_directory)) {
+                continue;
+            }
+
+            // 循環参照を検出
+            $visited = array($post_type->slug);
+            $current_slug = $post_type->slug;
+            $parent_dir = trim($post_type->parent_directory, '/');
+
+            while ($parent_dir) {
+                if (in_array($parent_dir, $visited)) {
+                    // 循環参照を検出！
+                    error_log('KSTB: Auto-fixing circular reference for post type: ' . $current_slug);
+
+                    // parent_directory をクリアして修正
+                    global $wpdb;
+                    $table_name = self::get_table_name();
+                    $wpdb->update(
+                        $table_name,
+                        array('parent_directory' => null),
+                        array('slug' => $current_slug),
+                        array('%s'),
+                        array('%s')
+                    );
+
+                    $fixed[] = $current_slug;
+                    break;
+                }
+
+                $visited[] = $parent_dir;
+
+                // 親の親を取得（キャッシュをバイパス）
+                $parent_post_type = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE slug = %s", $parent_dir));
+                if (!$parent_post_type || empty($parent_post_type->parent_directory)) {
+                    break;
+                }
+
+                $parent_dir = trim($parent_post_type->parent_directory, '/');
+            }
+        }
+
+        if (!empty($fixed)) {
+            error_log('KSTB: Fixed circular references for: ' . implode(', ', $fixed));
+            // キャッシュをクリア
+            wp_cache_flush();
+        }
+
+        return $fixed;
     }
 
     public static function get_all_post_types() {
+        // キャッシュから取得を試みる
+        static $cache = null;
+
+        if ($cache !== null) {
+            return $cache;
+        }
+
         global $wpdb;
         $table_name = self::get_table_name();
-        
+
         try {
             $results = $wpdb->get_results("SELECT * FROM $table_name ORDER BY label ASC");
         } catch (Exception $e) {
@@ -260,6 +332,9 @@ class KSTB_Database {
                 $post_type->label = ucfirst($post_type->slug);
             }
         }
+
+        // 結果をキャッシュ
+        $cache = $results;
 
         return $results;
     }
@@ -283,9 +358,16 @@ class KSTB_Database {
     }
 
     public static function get_post_type_by_slug($slug) {
+        // キャッシュから取得を試みる
+        static $cache = array();
+
+        if (isset($cache[$slug])) {
+            return $cache[$slug];
+        }
+
         global $wpdb;
         $table_name = self::get_table_name();
-        
+
         try {
             $result = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE slug = %s", $slug));
         } catch (Exception $e) {
@@ -296,6 +378,9 @@ class KSTB_Database {
         if ($result && empty($result->label)) {
             $result->label = ucfirst($result->slug);
         }
+
+        // 結果をキャッシュ
+        $cache[$slug] = $result;
 
         return $result;
     }

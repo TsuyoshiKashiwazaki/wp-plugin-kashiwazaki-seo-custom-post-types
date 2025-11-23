@@ -32,7 +32,16 @@ class KSTB_Post_Type_Registrar {
     /**
      * カスタム投稿タイプのフルパスを再帰的に構築
      */
-    private function build_full_path($slug) {
+    private function build_full_path($slug, $visited = array()) {
+        // 循環参照を検出
+        if (in_array($slug, $visited)) {
+            error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $slug);
+            return $slug;
+        }
+
+        // 訪問済みリストに追加
+        $visited[] = $slug;
+
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
         if (!$post_type) {
             return $slug;
@@ -50,8 +59,8 @@ class KSTB_Post_Type_Registrar {
         // 親がカスタム投稿タイプかチェック
         $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
         if ($parent_post_type) {
-            // 親のフルパスを再帰的に取得
-            $parent_path = $this->build_full_path($parent);
+            // 親のフルパスを再帰的に取得（訪問済みリストを渡す）
+            $parent_path = $this->build_full_path($parent, $visited);
             return $parent_path . '/' . $effective_slug;
         }
 
@@ -62,7 +71,16 @@ class KSTB_Post_Type_Registrar {
     /**
      * フルパスを構築（静的メソッド版）
      */
-    public static function build_full_path_static($slug) {
+    public static function build_full_path_static($slug, $visited = array()) {
+        // 循環参照を検出
+        if (in_array($slug, $visited)) {
+            error_log('KSTB Warning: Circular reference detected in post type hierarchy for: ' . $slug);
+            return $slug;
+        }
+
+        // 訪問済みリストに追加
+        $visited[] = $slug;
+
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
         if (!$post_type) {
             return $slug;
@@ -80,8 +98,8 @@ class KSTB_Post_Type_Registrar {
         // 親がカスタム投稿タイプかチェック
         $parent_post_type = KSTB_Database::get_post_type_by_slug($parent);
         if ($parent_post_type) {
-            // 親のフルパスを再帰的に取得
-            $parent_path = self::build_full_path_static($parent);
+            // 親のフルパスを再帰的に取得（訪問済みリストを渡す）
+            $parent_path = self::build_full_path_static($parent, $visited);
             return $parent_path . '/' . $effective_slug;
         }
 
