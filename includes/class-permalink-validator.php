@@ -85,6 +85,8 @@ class KSTB_Permalink_Validator {
             return;
         }
 
+        global $wp_query;
+
         // 現在のリクエストパスを取得
         $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $current_path = rtrim($current_path, '/') . '/';
@@ -114,14 +116,28 @@ class KSTB_Permalink_Validator {
 
         // 投稿が存在する場合は、正しいパーマリンクかチェック
         if (is_singular() && !is_404()) {
-            global $post;
+            // query_varsのpを使用（これは正しい値が設定されている）
+            $query_post_id = $wp_query->get('p');
+            $query_post_type = $wp_query->get('post_type');
 
-            if ($post) {
+            // query_varsにpost IDがある場合はそれを使用
+            $check_post = null;
+            if ($query_post_id) {
+                $check_post = get_post($query_post_id);
+            }
+
+            // フォールバック: グローバル$postを使用
+            if (!$check_post) {
+                global $post;
+                $check_post = $post;
+            }
+
+            if ($check_post) {
                 // カスタム投稿タイプかチェック
                 $is_custom_post_type = false;
 
                 foreach ($post_types as $post_type) {
-                    if ($post->post_type === $post_type->slug) {
+                    if ($check_post->post_type === $post_type->slug) {
                         $is_custom_post_type = true;
                         break;
                     }
@@ -129,7 +145,7 @@ class KSTB_Permalink_Validator {
 
                 // カスタム投稿タイプの場合、正しいパーマリンクかチェック
                 if ($is_custom_post_type) {
-                    $correct_permalink = get_permalink($post->ID);
+                    $correct_permalink = get_permalink($check_post->ID);
                     $correct_path = parse_url($correct_permalink, PHP_URL_PATH);
                     $correct_path = rtrim($correct_path, '/') . '/';
 

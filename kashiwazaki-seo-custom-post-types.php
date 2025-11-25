@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.12
+ * Version: 1.0.13
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.12');
+define('KSTB_VERSION', '1.0.13');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));

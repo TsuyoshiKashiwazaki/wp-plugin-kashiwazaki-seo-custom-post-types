@@ -260,6 +260,11 @@ class KSTB_Archive_Controller {
             return $query_vars;
         }
 
+        // 既に投稿IDが設定されている場合はスキップ（階層的投稿の処理済み）
+        if (!empty($query_vars['p'])) {
+            return $query_vars;
+        }
+
         $uri = $_SERVER['REQUEST_URI'];
         $uri = parse_url($uri, PHP_URL_PATH) ?? '';
         $uri = trim($uri, '/');
@@ -480,6 +485,11 @@ class KSTB_Archive_Controller {
      */
     public function handle_request($wp) {
         if ($this->processed || is_admin()) {
+            return;
+        }
+
+        // 既に投稿IDが設定されている場合はスキップ（階層的投稿の処理済み）
+        if (!empty($wp->query_vars['p'])) {
             return;
         }
 
@@ -940,6 +950,11 @@ class KSTB_Archive_Controller {
      */
     public function template_control() {
         if (is_admin()) {
+            return;
+        }
+
+        // 個別投稿ページの場合はスキップ（階層的投稿タイプの処理済み）
+        if (is_singular()) {
             return;
         }
 

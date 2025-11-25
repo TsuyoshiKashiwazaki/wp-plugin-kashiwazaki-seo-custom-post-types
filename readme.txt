@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.12
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,12 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.13 =
+* Add: 階層的カスタム投稿タイプのパーマリンク解決機能（親子関係を持つ投稿のURL解決）
+* Fix: 階層的な投稿URL（例: /blog/parent/child/）が404になる問題を修正
+* Improve: パーマリンク検証ロジックを改善（query_varsを使用した正確な投稿取得）
+* Improve: ドキュメントタイトルの修正機能を追加（階層的投稿で正しいタイトルを表示）
 
 = 1.0.12 =
 * Add: 循環参照検出機能（階層構造の無限ループを防止）
@@ -156,6 +162,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.13 =
+階層的カスタム投稿タイプ（hierarchical）で親子関係を持つ投稿のURLが正しく解決されるようになりました。
 
 = 1.0.12 =
 循環参照検出・自動修正機能とキャッシュ機能を追加。階層構造の安定性とパフォーマンスが向上しました。
