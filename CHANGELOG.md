@@ -5,6 +5,21 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.13] - 2025-11-26
+
+### Added
+- 階層的カスタム投稿タイプのパーマリンク解決機能（親子関係を持つ投稿のURL解決）
+- `resolve_hierarchical_request()` メソッド - requestフィルターで階層的URLを解析
+- `find_hierarchical_post()` メソッド - 親階層を検証して投稿を検索
+- `fix_document_title()` メソッド - 階層的投稿で正しいタイトルを表示
+
+### Fixed
+- 階層的な投稿URL（例: /blog/parent/child/）が404になる問題を修正
+
+### Improved
+- パーマリンク検証ロジックを改善（query_varsを使用した正確な投稿取得）
+- `class-permalink-validator.php` で `$wp_query->get('p')` を使用するよう改善
+
 ## [1.0.12] - 2025-11-23
 
 ### Added

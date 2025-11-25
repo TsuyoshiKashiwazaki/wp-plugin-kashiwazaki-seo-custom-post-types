@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.12-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.13-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,12 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.13 - 2025-11-26
+- **追加**: 階層的カスタム投稿タイプのパーマリンク解決機能（親子関係を持つ投稿のURL解決）
+- **修正**: 階層的な投稿URL（例: /blog/parent/child/）が404になる問題を修正
+- **改善**: パーマリンク検証ロジックを改善（query_varsを使用した正確な投稿取得）
+- **改善**: ドキュメントタイトルの修正機能を追加（階層的投稿で正しいタイトルを表示）
 
 ### Version 1.0.12 - 2025-11-23
 - **追加**: 循環参照検出機能（階層構造の無限ループを防止）
