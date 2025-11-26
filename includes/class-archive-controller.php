@@ -46,6 +46,9 @@ class KSTB_Archive_Controller {
         // wpアクションでも修正（テンプレート読み込み直前）
         add_action('wp', array($this, 'fix_queried_object_on_wp'), 1);
 
+        // wpアクションでis_singularを確実に設定（優先度を高くして最初に実行）
+        add_action('wp', array($this, 'ensure_singular_state'), -999);
+
         // template_includeフィルタでテンプレート直前にも修正
         add_filter('template_include', array($this, 'fix_queried_object_before_template'), 1);
 
@@ -63,6 +66,92 @@ class KSTB_Archive_Controller {
 
         // テンプレートリダイレクトで最終制御（最優先）
         add_action('template_redirect', array($this, 'template_control'), -999);
+
+        // body_classフィルターで正しいクラスを追加
+        add_filter('body_class', array($this, 'fix_body_class'), 999);
+    }
+
+    /**
+     * body_classフィルターで正しいクラスを追加
+     *
+     * 「指定なし」設定で個別投稿を表示している場合、
+     * body_classが呼ばれる時点でis_singular()がfalseになっていることがある。
+     * その場合でも正しいクラスを追加する。
+     */
+    public function fix_body_class($classes) {
+        if (is_admin()) {
+            return $classes;
+        }
+
+        global $wp_query, $post;
+
+        // 既にsingleまたはpageクラスがある場合はスキップ
+        if (in_array('single', $classes) || in_array('page', $classes)) {
+            return $classes;
+        }
+
+        // post_countが1で有効な$postがある場合、単一投稿として扱う
+        if ($wp_query->post_count === 1 && isset($post) && $post && $post->post_status === 'publish') {
+            // 現在のURLと投稿のパーマリンクを比較して確認
+            $uri = $_SERVER['REQUEST_URI'];
+            $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+            $uri = trim($uri, '/');
+
+            // このプラグインで管理しているカスタム投稿タイプかチェック
+            $post_types = $this->get_post_types();
+            $is_managed_post_type = false;
+
+            foreach ($post_types as $post_type_data) {
+                if ($post_type_data->slug === $post->post_type) {
+                    $is_managed_post_type = true;
+                    break;
+                }
+                // 「指定なし」設定のカスタム投稿タイプのスラッグトップページかチェック
+                if (!$post_type_data->has_archive &&
+                    (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default')) {
+                    // フルパスを構築
+                    $full_path = $this->build_full_path_for_post_type($post_type_data);
+                    if ($uri === $full_path) {
+                        $is_managed_post_type = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($is_managed_post_type) {
+                // wp-singularクラスを追加
+                if (!in_array('wp-singular', $classes)) {
+                    $classes[] = 'wp-singular';
+                }
+
+                // 投稿タイプに応じたクラスを追加
+                if ($post->post_type === 'page') {
+                    if (!in_array('page', $classes)) {
+                        $classes[] = 'page';
+                    }
+                    if (!in_array('page-id-' . $post->ID, $classes)) {
+                        $classes[] = 'page-id-' . $post->ID;
+                    }
+                } else {
+                    if (!in_array('single', $classes)) {
+                        $classes[] = 'single';
+                    }
+                    if (!in_array('single-' . $post->post_type, $classes)) {
+                        $classes[] = 'single-' . $post->post_type;
+                    }
+                    if (!in_array('postid-' . $post->ID, $classes)) {
+                        $classes[] = 'postid-' . $post->ID;
+                    }
+                    // テンプレートクラスを追加
+                    $template_class = $post->post_type . '-template-default';
+                    if (!in_array($template_class, $classes)) {
+                        $classes[] = $template_class;
+                    }
+                }
+            }
+        }
+
+        return $classes;
     }
 
     /**
@@ -701,6 +790,85 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * wpアクションでis_singularを確実に設定
+     *
+     * 「指定なし」設定のカスタム投稿タイプスラッグトップページで、
+     * 同名の投稿が存在する場合、is_singular等のフラグを確実に設定する。
+     */
+    public function ensure_singular_state() {
+        if (is_admin()) {
+            return;
+        }
+
+        global $wp_query, $post;
+
+        // 既にis_singularがtrueの場合はスキップ
+        if ($wp_query->is_singular) {
+            return;
+        }
+
+        // post_countが1で有効な投稿がある場合のみ処理
+        if ($wp_query->post_count !== 1 || !isset($wp_query->posts[0])) {
+            return;
+        }
+
+        $current_post = $wp_query->posts[0];
+
+        // 現在のURLを取得
+        $uri = $_SERVER['REQUEST_URI'];
+        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = trim($uri, '/');
+
+        if (empty($uri)) {
+            return;
+        }
+
+        // このプラグインで管理しているカスタム投稿タイプかチェック
+        $post_types = $this->get_post_types();
+        $is_managed = false;
+
+        foreach ($post_types as $post_type_data) {
+            // 「指定なし」設定のカスタム投稿タイプのスラッグトップページかチェック
+            if (!$post_type_data->has_archive &&
+                (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default')) {
+                // フルパスを構築
+                $full_path = $this->build_full_path_for_post_type($post_type_data);
+                if ($uri === $full_path) {
+                    $is_managed = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$is_managed) {
+            return;
+        }
+
+        // is_singularフラグを設定
+        $wp_query->is_singular = true;
+        $wp_query->is_404 = false;
+        $wp_query->is_home = false;
+        $wp_query->is_archive = false;
+        $wp_query->is_post_type_archive = false;
+
+        if ($current_post->post_type === 'page') {
+            $wp_query->is_page = true;
+            $wp_query->is_single = false;
+        } else {
+            $wp_query->is_page = false;
+            $wp_query->is_single = true;
+        }
+
+        // グローバル$postを設定
+        $post = $current_post;
+        setup_postdata($post);
+
+        // queried_objectを設定
+        $wp_query->queried_object = $current_post;
+        $wp_query->queried_object_id = $current_post->ID;
+    }
+
+    /**
      * WP_Post_Type関連のエラーを抑制
      */
     public function suppress_post_type_errors() {
@@ -730,15 +898,69 @@ class KSTB_Archive_Controller {
     }
 
     /**
-     * テンプレート読み込み直前にqueried_objectを修正
+     * テンプレート読み込み直前にqueried_objectを修正し、正しいテンプレートを返す
      */
     public function fix_queried_object_before_template($template) {
-        global $wp_query;
+        global $wp_query, $post;
 
         // queried_objectがWP_Post_Typeの場合はクリア
         if (isset($wp_query->queried_object) && $wp_query->queried_object instanceof WP_Post_Type) {
             $wp_query->queried_object = null;
             $wp_query->queried_object_id = null;
+        }
+
+        // post_countが1で有効な投稿がある場合、is_singularを再設定し正しいテンプレートを返す
+        if ($wp_query->post_count === 1 && isset($post) && $post && $post->post_status === 'publish') {
+            // 現在のURLを取得
+            $uri = $_SERVER['REQUEST_URI'];
+            $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+            $uri = trim($uri, '/');
+
+            if (empty($uri)) {
+                return $template;
+            }
+
+            // このプラグインで管理しているカスタム投稿タイプかチェック
+            $post_types = $this->get_post_types();
+            $is_managed = false;
+
+            foreach ($post_types as $post_type_data) {
+                // 「指定なし」設定のカスタム投稿タイプのスラッグトップページかチェック
+                if (!$post_type_data->has_archive &&
+                    (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type === 'default')) {
+                    // フルパスを構築
+                    $full_path = $this->build_full_path_for_post_type($post_type_data);
+                    if ($uri === $full_path) {
+                        $is_managed = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($is_managed) {
+                // is_singularフラグを再設定
+                $wp_query->is_singular = true;
+                $wp_query->is_404 = false;
+                $wp_query->is_home = false;
+                $wp_query->is_archive = false;
+                $wp_query->is_post_type_archive = false;
+
+                if ($post->post_type === 'page') {
+                    $wp_query->is_page = true;
+                    $wp_query->is_single = false;
+                    // 固定ページ用のテンプレートを探す
+                    $new_template = get_page_template();
+                } else {
+                    $wp_query->is_page = false;
+                    $wp_query->is_single = true;
+                    // 投稿用のテンプレートを探す
+                    $new_template = get_single_template();
+                }
+
+                if ($new_template) {
+                    return $new_template;
+                }
+            }
         }
 
         return $template;
@@ -824,19 +1046,33 @@ class KSTB_Archive_Controller {
                     $post = $this->find_post_by_path($uri);
 
                     if ($post) {
-
                         // すべてのクエリ変数をクリア
                         $query->query_vars = array();
-                        $query->query = array();
 
                         if ($post->post_type === 'page') {
                             // 固定ページとしてクエリを設定
                             $query->set('page_id', $post->ID);
                             $query->set('post_type', 'page');
+                            $query->set('pagename', $post->post_name);
+                            // query配列も設定（body_classなどで使用される）
+                            $query->query = array(
+                                'page_id' => $post->ID,
+                                'post_type' => 'page',
+                                'pagename' => $post->post_name,
+                            );
                         } else {
                             // カスタム投稿としてクエリを設定
                             $query->set('p', $post->ID);
                             $query->set('post_type', $post->post_type);
+                            $query->set('name', $post->post_name);
+                            $query->set($post->post_type, $post->post_name);
+                            // query配列も設定（body_classなどで使用される）
+                            $query->query = array(
+                                'p' => $post->ID,
+                                'post_type' => $post->post_type,
+                                'name' => $post->post_name,
+                                $post->post_type => $post->post_name,
+                            );
                         }
                         $query->set('posts_per_page', 1);
                         $query->set('paged', 1);
@@ -877,6 +1113,11 @@ class KSTB_Archive_Controller {
                         // queried_objectを明示的に設定
                         $query->queried_object = $post;
                         $query->queried_object_id = $post->ID;
+
+                        // postsを設定（テンプレートで使用される）
+                        $query->posts = array($post);
+                        $query->post_count = 1;
+                        $query->found_posts = 1;
 
                         return;
                     }
