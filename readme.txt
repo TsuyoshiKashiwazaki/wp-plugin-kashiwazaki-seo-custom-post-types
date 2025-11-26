@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,12 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.14 =
+* Fix: 「指定なし」設定のカスタム投稿タイプスラッグトップページで、同名の投稿が正しく単一投稿として表示されない問題を修正
+* Add: body_classフィルターで単一投稿用のクラス追加
+* Add: template_includeフィルターで正しいテンプレートを返す処理を追加
+* Add: wpアクションでis_singularフラグを確実に設定する処理を追加
 
 = 1.0.13 =
 * Add: 階層的カスタム投稿タイプのパーマリンク解決機能（親子関係を持つ投稿のURL解決）
@@ -162,6 +168,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.14 =
+「指定なし」設定のカスタム投稿タイプで、同名の投稿が正しく単一投稿として表示されるようになりました。
 
 = 1.0.13 =
 階層的カスタム投稿タイプ（hierarchical）で親子関係を持つ投稿のURLが正しく解決されるようになりました。

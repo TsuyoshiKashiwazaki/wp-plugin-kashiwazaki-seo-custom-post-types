@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.13-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.14-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,12 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.14 - 2025-11-26
+- **修正**: 「指定なし」設定のカスタム投稿タイプスラッグトップページで、同名の投稿が正しく単一投稿として表示されない問題を修正
+- **追加**: `body_class` フィルターで単一投稿用のクラス（`wp-singular`, `single`, `single-{post_type}`, `postid-{ID}`）を追加
+- **追加**: `template_include` フィルターで正しいテンプレート（`single-{post_type}.php` または `single.php`）を返す処理を追加
+- **追加**: `wp` アクションで `is_singular` フラグを確実に設定する `ensure_singular_state()` メソッドを追加
 
 ### Version 1.0.13 - 2025-11-26
 - **追加**: 階層的カスタム投稿タイプのパーマリンク解決機能（親子関係を持つ投稿のURL解決）

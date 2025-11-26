@@ -5,6 +5,17 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.14] - 2025-11-26
+
+### Fixed
+- 「指定なし」設定のカスタム投稿タイプスラッグトップページで、同名の投稿が正しく単一投稿として表示されない問題を修正
+- `template_include` フィルター実行時に `is_singular` フラグがリセットされる問題を修正
+
+### Added
+- `fix_body_class()` メソッド - 単一投稿用のクラス（`wp-singular`, `single`, `single-{post_type}`, `postid-{ID}`）を追加
+- `ensure_singular_state()` メソッド - `wp` アクションで `is_singular` フラグを確実に設定
+- `fix_queried_object_before_template()` メソッドを拡張 - 正しいテンプレート（`single-{post_type}.php` または `single.php`）を返す処理を追加
+
 ## [1.0.13] - 2025-11-26
 
 ### Added
