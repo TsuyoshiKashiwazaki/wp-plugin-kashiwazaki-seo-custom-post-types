@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.14
+Stable tag: 1.0.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,10 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.15 =
+* Fix: WordPress予約語（media, link等）をURLスラッグに使用した際、内部名を自動変換して競合を回避
+* Improve: 予約語リストを拡充（media, link, theme, plugin, user, comment, admin, dashboard等30種類以上）
 
 = 1.0.14 =
 * Fix: 「指定なし」設定のカスタム投稿タイプスラッグトップページで、同名の投稿が正しく単一投稿として表示されない問題を修正
@@ -168,6 +172,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.15 =
+WordPress予約語（media, link等）をURLスラッグに使用できるようになりました。内部名は自動変換されます。
 
 = 1.0.14 =
 「指定なし」設定のカスタム投稿タイプで、同名の投稿が正しく単一投稿として表示されるようになりました。

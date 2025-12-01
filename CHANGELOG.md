@@ -5,6 +5,14 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.15] - 2025-12-02
+
+### Fixed
+- WordPress予約語（media, link等）をURLスラッグに使用した際、内部名を自動変換して競合を回避
+
+### Improved
+- 予約語リストを拡充（media, link, links, theme, themes, plugin, plugins, user, users, option, options, comment, comments, admin, site, sites, network, dashboard, upload, edit, profile, tools, import, export, settings, update, menu, term, widget, widgets）
+
 ## [1.0.14] - 2025-11-26
 
 ### Fixed
