@@ -71,6 +71,43 @@ class KSTB_Ajax_Handler {
             return;
         }
 
+        // WordPress既存の投稿タイプ（内部名として使用不可）
+        $reserved_post_types = array('post', 'page', 'attachment', 'revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_block', 'wp_template', 'wp_template_part', 'wp_global_styles', 'wp_navigation');
+
+        // WordPress管理画面・コア機能と競合する内部名（URLスラッグとしては使用可能、内部名は自動変換）
+        $reserved_internal_names = array(
+            'media',        // メディアライブラリ画面と競合
+            'link',         // リンクマネージャーと競合
+            'links',        // リンクマネージャーと競合
+            'theme',        // テーマ管理と競合
+            'themes',       // テーマ管理と競合
+            'plugin',       // プラグイン管理と競合
+            'plugins',      // プラグイン管理と競合
+            'user',         // ユーザー管理と競合
+            'users',        // ユーザー管理と競合
+            'option',       // オプション管理と競合
+            'options',      // オプション管理と競合
+            'comment',      // コメント管理と競合
+            'comments',     // コメント管理と競合
+            'admin',        // 管理画面と競合
+            'site',         // サイト管理と競合
+            'sites',        // サイト管理と競合
+            'network',      // ネットワーク管理と競合
+            'dashboard',    // ダッシュボードと競合
+            'upload',       // アップロードと競合
+            'edit',         // 編集画面と競合
+            'profile',      // プロフィール画面と競合
+            'tools',        // ツール画面と競合
+            'import',       // インポートと競合
+            'export',       // エクスポートと競合
+            'settings',     // 設定画面と競合
+            'update',       // 更新画面と競合
+            'menu',         // メニュー管理と競合
+            'term',         // タームと競合
+            'widget',       // ウィジェットと競合
+            'widgets',      // ウィジェットと競合
+        );
+
         // 内部名（短縮名）が空の場合はURLスラッグから自動生成
         if (empty($slug)) {
             // URLスラッグの最初の20文字を使用（ハイフンで区切られた単語を考慮）
@@ -91,15 +128,20 @@ class KSTB_Ajax_Handler {
             }
         }
 
+        // 内部名が予約語の場合は自動で別名に変換
+        if (in_array($slug, $reserved_internal_names)) {
+            $slug = $slug . '_cpt';
+        }
+
         // 内部名の検証（ここでは文字種のみチェック）
         if (!empty($slug) && !preg_match('/^[a-z0-9_-]+$/', $slug)) {
             wp_send_json_error(__('内部名は半角英数字、ハイフン、アンダースコアのみ使用できます', 'kashiwazaki-seo-type-builder'));
             return;
         }
 
-        $reserved_slugs = array('post', 'page', 'attachment', 'revision', 'nav_menu_item', 'custom_css', 'customize_changeset', 'oembed_cache', 'user_request', 'wp_block', 'wp_template', 'wp_template_part', 'wp_global_styles', 'wp_navigation');
-        if (in_array($slug, $reserved_slugs)) {
-            wp_send_json_error(__('このスラッグは予約語のため使用できません', 'kashiwazaki-seo-type-builder'));
+        // 内部名のチェック（既存投稿タイプ）
+        if (in_array($slug, $reserved_post_types)) {
+            wp_send_json_error(sprintf(__('「%s」はWordPressの既存投稿タイプのため使用できません', 'kashiwazaki-seo-type-builder'), $slug));
             return;
         }
 

@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.14-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.15-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,10 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.15 - 2025-12-02
+- **修正**: WordPress予約語（media, link等）をURLスラッグに使用した際、内部名を自動変換して競合を回避
+- **改善**: 予約語リストを拡充（media, link, theme, plugin, user, comment, admin, dashboard等30種類以上）
 
 ### Version 1.0.14 - 2025-11-26
 - **修正**: 「指定なし」設定のカスタム投稿タイプスラッグトップページで、同名の投稿が正しく単一投稿として表示されない問題を修正
