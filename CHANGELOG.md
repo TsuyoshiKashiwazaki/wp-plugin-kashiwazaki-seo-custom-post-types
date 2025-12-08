@@ -5,6 +5,21 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.16] - 2025-12-08
+
+### Fixed
+- 管理バーの「編集」リンクが間違った記事（post=8650等）に遷移する問題を修正
+- 下書き・非公開・予約投稿記事が編集権限ユーザーでも404になる問題を修正
+
+### Added
+- `get_allowed_post_statuses()` メソッド - ユーザー権限に応じて許可されるpost_statusの配列を返す
+- `is_post_accessible()` メソッド - 投稿が現在のユーザーにアクセス可能かチェック
+- `fix_admin_bar_edit_link()` メソッド - admin_bar_menuフックで queried_object を正しく同期
+
+### Improved
+- 18箇所のハードコードされた `post_status === 'publish'` チェックをヘルパーメソッドに置換
+- 権限ロジック: 公開記事は全ユーザー、下書き・非公開等は `edit_post` 権限ユーザーのみアクセス可能
+
 ## [1.0.15] - 2025-12-02
 
 ### Fixed

@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,13 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.16 =
+* Fix: 管理バーの「編集」リンクが正しい記事を指すよう修正
+* Fix: 下書き・非公開記事のプレビュー対応（編集権限ユーザーのみ）
+* Add: get_allowed_post_statuses() ヘルパーメソッド追加
+* Add: is_post_accessible() ヘルパーメソッド追加
+* Add: fix_admin_bar_edit_link() メソッド追加
 
 = 1.0.15 =
 * Fix: WordPress予約語（media, link等）をURLスラッグに使用した際、内部名を自動変換して競合を回避
@@ -172,6 +179,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.16 =
+管理バーの「編集」リンクが正しい記事を指すようになりました。下書き・非公開記事のプレビューにも対応。
 
 = 1.0.15 =
 WordPress予約語（media, link等）をURLスラッグに使用できるようになりました。内部名は自動変換されます。

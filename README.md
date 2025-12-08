@@ -3,7 +3,7 @@
 [![WordPress](https://img.shields.io/badge/WordPress-5.0%2B-blue.svg)](https://wordpress.org/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-purple.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL--2.0--or--later-green.svg)](https://www.gnu.org/licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/Version-1.0.15-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.16-orange.svg)](https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases)
 
 WordPressのカスタム投稿タイプを簡単に作成・管理できる強力なプラグインです。コーディング不要で、管理画面から直感的にカスタム投稿タイプを作成でき、階層URL構造やアーカイブページの表示制御など高度な機能も搭載しています。
 
@@ -92,6 +92,13 @@ WordPressのカスタム投稿タイプを簡単に作成・管理できる強�
 - 他のSEOプラグインと併用可能
 
 ## 更新履歴
+
+### Version 1.0.16 - 2025-12-08
+- **修正**: 管理バーの「編集」リンクが正しい記事を指すよう修正
+- **修正**: 下書き・非公開記事のプレビュー対応（編集権限ユーザーのみ）
+- **追加**: `get_allowed_post_statuses()` ヘルパーメソッド（権限に応じたステータス取得）
+- **追加**: `is_post_accessible()` ヘルパーメソッド（投稿アクセス権限チェック）
+- **追加**: `fix_admin_bar_edit_link()` メソッド（管理バー編集リンク修正）
 
 ### Version 1.0.15 - 2025-12-02
 - **修正**: WordPress予約語（media, link等）をURLスラッグに使用した際、内部名を自動変換して競合を回避

@@ -30,6 +30,49 @@ class KSTB_Archive_Controller {
         return $this->post_types_cache;
     }
 
+    /**
+     * 現在のユーザーがアクセス可能な post_status の配列を取得
+     *
+     * @return array 許可される post_status の配列
+     */
+    private function get_allowed_post_statuses() {
+        $statuses = array('publish');
+
+        // ログインしていて、投稿の編集権限がある場合
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            $statuses[] = 'draft';
+            $statuses[] = 'pending';
+            $statuses[] = 'private';
+            $statuses[] = 'future';
+        }
+
+        return $statuses;
+    }
+
+    /**
+     * 投稿のステータスが現在のユーザーにとってアクセス可能かチェック
+     *
+     * @param WP_Post $post 投稿オブジェクト
+     * @return bool アクセス可能な場合true
+     */
+    private function is_post_accessible($post) {
+        if (!$post) {
+            return false;
+        }
+
+        // 公開済みは常にアクセス可能
+        if ($post->post_status === 'publish') {
+            return true;
+        }
+
+        // 非公開・下書き等は編集権限が必要
+        if (is_user_logged_in() && current_user_can('edit_post', $post->ID)) {
+            return in_array($post->post_status, array('draft', 'pending', 'private', 'future'));
+        }
+
+        return false;
+    }
+
     public function init() {
         // リライトルールをフィルタリング（最後に実行して並び替え）
         add_filter('rewrite_rules_array', array($this, 'filter_rewrite_rules'), 99999);
@@ -69,6 +112,9 @@ class KSTB_Archive_Controller {
 
         // body_classフィルターで正しいクラスを追加
         add_filter('body_class', array($this, 'fix_body_class'), 999);
+
+        // 管理バーのメニュー追加前に queried_object を修正
+        add_action('admin_bar_menu', array($this, 'fix_admin_bar_edit_link'), 1);
     }
 
     /**
@@ -91,7 +137,7 @@ class KSTB_Archive_Controller {
         }
 
         // post_countが1で有効な$postがある場合、単一投稿として扱う
-        if ($wp_query->post_count === 1 && isset($post) && $post && $post->post_status === 'publish') {
+        if ($wp_query->post_count === 1 && isset($post) && $post && $this->is_post_accessible($post)) {
             // 現在のURLと投稿のパーマリンクを比較して確認
             $uri = $_SERVER['REQUEST_URI'];
             $uri = parse_url($uri, PHP_URL_PATH) ?? '';
@@ -198,9 +244,12 @@ class KSTB_Archive_Controller {
      * @return WP_Post|null 見つかった投稿、またはnull
      */
     private function find_post_by_path($uri) {
+        // 許可されるステータスを取得
+        $allowed_statuses = $this->get_allowed_post_statuses();
+
         // まず固定ページを検索（従来の動作を維持）
         $page = get_page_by_path($uri);
-        if ($page && $page->post_status === 'publish') {
+        if ($page && $this->is_post_accessible($page)) {
             return $page;
         }
 
@@ -221,7 +270,7 @@ class KSTB_Archive_Controller {
                     $args = array(
                         'name' => $slug,
                         'post_type' => $post_type->slug,
-                        'post_status' => 'publish',
+                        'post_status' => $allowed_statuses,
                         'posts_per_page' => 1,
                         'no_found_rows' => true,
                         'update_post_meta_cache' => false,
@@ -232,6 +281,11 @@ class KSTB_Archive_Controller {
 
                     if ($query->have_posts()) {
                         $post = $query->posts[0];
+
+                        // 権限チェック
+                        if (!$this->is_post_accessible($post)) {
+                            continue;
+                        }
 
                         // 階層URLが正しいかチェック（親ディレクトリを確認）
                         if (!empty($post_type->parent_directory)) {
@@ -260,7 +314,7 @@ class KSTB_Archive_Controller {
         $args = array(
             'name' => $slug,
             'post_type' => $post_types,
-            'post_status' => 'publish',
+            'post_status' => $allowed_statuses,
             'posts_per_page' => 1,
             'no_found_rows' => true,
             'update_post_meta_cache' => false,
@@ -270,7 +324,11 @@ class KSTB_Archive_Controller {
         $query = new WP_Query($args);
 
         if ($query->have_posts()) {
-            return $query->posts[0];
+            $post = $query->posts[0];
+            // 権限チェック
+            if ($this->is_post_accessible($post)) {
+                return $post;
+            }
         }
 
         return null;
@@ -477,12 +535,12 @@ class KSTB_Archive_Controller {
                 $args = array(
                     'name' => $post_slug,
                     'post_type' => $post_type->slug,
-                    'post_status' => 'publish',
+                    'post_status' => $this->get_allowed_post_statuses(),
                     'posts_per_page' => 1
                 );
                 $posts = get_posts($args);
 
-                if (!empty($posts)) {
+                if (!empty($posts) && $this->is_post_accessible($posts[0])) {
                     // カスタム投稿タイプの記事が存在する場合、それを返す
                     return array(
                         'name' => $posts[0]->post_name,
@@ -493,7 +551,7 @@ class KSTB_Archive_Controller {
                     // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
                     $page = get_page_by_path($uri);
 
-                    if ($page && $page->post_status === 'publish') {
+                    if ($page && $this->is_post_accessible($page)) {
                         // 固定ページとして処理するクエリ変数を返す
                         return array(
                             'pagename' => $uri,
@@ -729,16 +787,22 @@ class KSTB_Archive_Controller {
                 $args = array(
                     'name' => $post_slug,
                     'post_type' => $post_type->slug,
-                    'post_status' => 'publish',
+                    'post_status' => $this->get_allowed_post_statuses(),
                     'posts_per_page' => 1
                 );
                 $posts = get_posts($args);
 
-                if (empty($posts)) {
+                // アクセス可能な記事があるかチェック
+                $accessible_post = null;
+                if (!empty($posts) && $this->is_post_accessible($posts[0])) {
+                    $accessible_post = $posts[0];
+                }
+
+                if (!$accessible_post) {
                     // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
                     $page = get_page_by_path($request);
 
-                    if ($page && $page->post_status === 'publish') {
+                    if ($page && $this->is_post_accessible($page)) {
                         // 固定ページとして処理
                         $wp->query_vars = array(
                             'pagename' => $request,
@@ -898,6 +962,33 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * 管理バーの編集リンク用に queried_object を修正
+     *
+     * 管理バーの編集リンク（wp_admin_bar_edit_menu）は queried_object を使用して
+     * 編集対象の投稿を決定する。このプラグインの処理で queried_object が
+     * 正しく設定されない場合があるため、admin_bar_menu フックの早い段階で修正する。
+     */
+    public function fix_admin_bar_edit_link($wp_admin_bar) {
+        if (is_admin()) {
+            return;
+        }
+
+        global $wp_query, $post;
+
+        // 有効な $post がある場合、queried_object を確実に設定
+        if (isset($post) && $post instanceof WP_Post && $this->is_post_accessible($post)) {
+            // queried_object が未設定または WP_Post でない場合、または ID が不一致の場合
+            if (!isset($wp_query->queried_object) ||
+                !($wp_query->queried_object instanceof WP_Post) ||
+                $wp_query->queried_object->ID !== $post->ID) {
+
+                $wp_query->queried_object = $post;
+                $wp_query->queried_object_id = $post->ID;
+            }
+        }
+    }
+
+    /**
      * テンプレート読み込み直前にqueried_objectを修正し、正しいテンプレートを返す
      */
     public function fix_queried_object_before_template($template) {
@@ -910,7 +1001,7 @@ class KSTB_Archive_Controller {
         }
 
         // post_countが1で有効な投稿がある場合、is_singularを再設定し正しいテンプレートを返す
-        if ($wp_query->post_count === 1 && isset($post) && $post && $post->post_status === 'publish') {
+        if ($wp_query->post_count === 1 && isset($post) && $post && $this->is_post_accessible($post)) {
             // 現在のURLを取得
             $uri = $_SERVER['REQUEST_URI'];
             $uri = parse_url($uri, PHP_URL_PATH) ?? '';
@@ -1137,7 +1228,7 @@ class KSTB_Archive_Controller {
                 // 固定ページが存在するかチェック
                 $page = get_page_by_path($uri);
 
-                if ($page && $page->post_status === 'publish') {
+                if ($page && $this->is_post_accessible($page)) {
                     // すべてのクエリ変数をクリア
                     $query->query_vars = array();
                     $query->query = array();
@@ -1288,16 +1379,22 @@ class KSTB_Archive_Controller {
                 $args = array(
                     'name' => $post_slug,
                     'post_type' => $post_type_data->slug,
-                    'post_status' => 'publish',
+                    'post_status' => $this->get_allowed_post_statuses(),
                     'posts_per_page' => 1
                 );
                 $posts = get_posts($args);
 
-                if (empty($posts)) {
+                // アクセス可能な記事があるかチェック
+                $accessible_post = null;
+                if (!empty($posts) && $this->is_post_accessible($posts[0])) {
+                    $accessible_post = $posts[0];
+                }
+
+                if (!$accessible_post) {
                     // カスタム投稿タイプの記事が存在しない場合、固定ページをチェック
                     $page = get_page_by_path($uri);
 
-                    if ($page && $page->post_status === 'publish') {
+                    if ($page && $this->is_post_accessible($page)) {
                         $this->display_page($page);
                         exit;
                     }
@@ -1336,14 +1433,14 @@ class KSTB_Archive_Controller {
 
                     // フルパスで固定ページを探す
                     $page = get_page_by_path($uri);
-                    if ($page && $page->post_status === 'publish') {
+                    if ($page && $this->is_post_accessible($page)) {
                         $this->display_page($page);
                         exit;
                     }
 
                     // スラッグだけでも検索
                     $page = get_page_by_path($post_type);
-                    if ($page && $page->post_status === 'publish') {
+                    if ($page && $this->is_post_accessible($page)) {
                         $this->display_page($page);
                         exit;
                     }
@@ -1367,14 +1464,14 @@ class KSTB_Archive_Controller {
 
         // 階層URLの場合はフルパスで検索
         $page = get_page_by_path($uri);
-        if ($page && $page->post_status === 'publish') {
+        if ($page && $this->is_post_accessible($page)) {
             $this->display_page($page);
             exit;
         }
 
         // スラッグだけでも検索
         $page = get_page_by_path($slug);
-        if ($page && $page->post_status === 'publish') {
+        if ($page && $this->is_post_accessible($page)) {
             $this->display_page($page);
             exit;
         }
@@ -1383,12 +1480,12 @@ class KSTB_Archive_Controller {
         $args = array(
             'name' => $slug,
             'post_type' => 'post',
-            'post_status' => 'publish',
+            'post_status' => $this->get_allowed_post_statuses(),
             'posts_per_page' => 1
         );
         $posts = get_posts($args);
 
-        if (!empty($posts)) {
+        if (!empty($posts) && $this->is_post_accessible($posts[0])) {
             $this->display_post($posts[0]);
             exit;
         }
@@ -1403,7 +1500,7 @@ class KSTB_Archive_Controller {
      */
     private function handle_custom_page($page_id) {
         $page = get_post($page_id);
-        if (!$page || $page->post_status !== 'publish') {
+        if (!$page || !$this->is_post_accessible($page)) {
             $this->display_404();
             exit;
         }
