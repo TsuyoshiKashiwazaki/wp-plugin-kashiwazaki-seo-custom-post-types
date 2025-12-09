@@ -36,6 +36,9 @@ class KSTB_Ajax_Handler {
         add_action('wp_ajax_kstb_get_categories', array($this, 'get_categories'));
         add_action('wp_ajax_kstb_update_category_icon', array($this, 'update_category_icon'));
         add_action('wp_ajax_kstb_save_all_menu_assignments', array($this, 'save_all_menu_assignments'));
+
+        // 親ページ検索用
+        add_action('wp_ajax_kstb_search_parent_pages', array($this, 'search_parent_pages'));
     }
 
     public function save_post_type() {
@@ -1016,5 +1019,105 @@ class KSTB_Ajax_Handler {
         } else {
             wp_send_json_error(__('メニュー設定の更新に失敗しました', 'kashiwazaki-seo-type-builder'));
         }
+    }
+
+    /**
+     * 親ページ検索（AJAX）
+     */
+    public function search_parent_pages() {
+        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
+            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $exclude_id = isset($_POST['exclude_id']) ? intval($_POST['exclude_id']) : 0;
+
+        if (empty($search) || mb_strlen($search) < 2) {
+            wp_send_json_success(array('results' => array()));
+            return;
+        }
+
+        global $wpdb;
+        $results = array();
+        $search_like = '%' . $wpdb->esc_like($search) . '%';
+
+        // 固定ページを検索
+        $pages = $wpdb->get_results($wpdb->prepare(
+            "SELECT ID, post_title, post_type FROM {$wpdb->posts}
+             WHERE post_type = 'page'
+             AND post_status = 'publish'
+             AND ID != %d
+             AND post_title LIKE %s
+             ORDER BY post_title ASC
+             LIMIT 50",
+            $exclude_id,
+            $search_like
+        ));
+
+        foreach ($pages as $page) {
+            $results[] = array(
+                'id' => $page->ID,
+                'title' => $page->post_title,
+                'type' => '固定ページ'
+            );
+        }
+
+        // 投稿ページを検索
+        $posts = $wpdb->get_results($wpdb->prepare(
+            "SELECT ID, post_title, post_type FROM {$wpdb->posts}
+             WHERE post_type = 'post'
+             AND post_status = 'publish'
+             AND ID != %d
+             AND post_title LIKE %s
+             ORDER BY post_title ASC
+             LIMIT 50",
+            $exclude_id,
+            $search_like
+        ));
+
+        foreach ($posts as $post) {
+            $results[] = array(
+                'id' => $post->ID,
+                'title' => $post->post_title,
+                'type' => '投稿'
+            );
+        }
+
+        // カスタム投稿タイプを検索
+        $custom_post_types = KSTB_Database::get_all_post_types();
+        foreach ($custom_post_types as $cpt) {
+            if (!post_type_exists($cpt->slug)) {
+                continue;
+            }
+
+            $custom_posts = $wpdb->get_results($wpdb->prepare(
+                "SELECT ID, post_title, post_type FROM {$wpdb->posts}
+                 WHERE post_type = %s
+                 AND post_status = 'publish'
+                 AND ID != %d
+                 AND post_title LIKE %s
+                 ORDER BY post_title ASC
+                 LIMIT 30",
+                $cpt->slug,
+                $exclude_id,
+                $search_like
+            ));
+
+            foreach ($custom_posts as $custom_post) {
+                $results[] = array(
+                    'id' => $custom_post->ID,
+                    'title' => $custom_post->post_title,
+                    'type' => $cpt->label
+                );
+            }
+        }
+
+        wp_send_json_success(array('results' => $results));
     }
 }

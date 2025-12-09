@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,13 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.17 =
+* Add: 親ページセレクターに検索機能を追加（ページ名でフィルタリング）
+* Add: 検索時にセレクトボックスを展開表示
+* Add: 選択中の親ページを常時表示するUI
+* Add: クリアボタンで親ページ解除可能に
+* Improve: 標準の親セレクター・スラッグとの双方向連動
 
 = 1.0.16 =
 * Fix: 管理バーの「編集」リンクが正しい記事を指すよう修正

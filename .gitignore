@@ -12,6 +12,7 @@ package-lock.json
 screenshot-blog-seo.js
 view-blog-seo.js
 *.png
+test-results/
 
 # Temporary files
 *.tmp
