@@ -5,6 +5,18 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.17] - 2025-12-10
+
+### Added
+- 親ページセレクターに検索機能を追加（ページ名でフィルタリング）
+- 検索時にセレクトボックスを展開表示（size=8で複数項目表示）
+- 選択中の親ページを常時表示するUI（タイプ名付き）
+- クリアボタンで親ページ解除可能に
+
+### Improved
+- 標準の親セレクター・スラッグとの双方向連動
+- スラッグ入力時にWordPress標準フィールドもリアルタイム更新
+
 ## [1.0.16] - 2025-12-08
 
 ### Fixed
@@ -264,3 +276,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - カスタムデータベーステーブル実装
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
+
+[1.0.17]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.16...v1.0.17
+[1.0.16]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.15...v1.0.16
+[1.0.15]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.14...v1.0.15
+[1.0.14]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.13...v1.0.14
+[1.0.13]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.12...v1.0.13
+[1.0.12]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.11...v1.0.12
+[1.0.11]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.10...v1.0.11
+[1.0.10]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.9...v1.0.10
+[1.0.9]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.8...v1.0.9
+[1.0.8]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.7...v1.0.8
+[1.0.0]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/releases/tag/v1.0.0

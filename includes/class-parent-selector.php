@@ -170,12 +170,45 @@ class KSTB_Parent_Selector {
                 </p>
                 <script>
                 function kstbUpdateSlug(newSlug) {
-                    // 既存パネルのスラッグテキストを更新
+                    // クラシックエディタの標準スラッグフィールドを更新
+                    var postNameInput = document.getElementById('post_name');
+                    if (postNameInput) {
+                        postNameInput.value = newSlug;
+                    }
+
+                    // クラシックエディタの表示用スラッグを更新
+                    var editablePostName = document.getElementById('editable-post-name');
+                    if (editablePostName) {
+                        editablePostName.textContent = newSlug;
+                    }
+                    var editablePostNameFull = document.getElementById('editable-post-name-full');
+                    if (editablePostNameFull) {
+                        editablePostNameFull.textContent = newSlug;
+                    }
+
+                    // サンプルパーマリンクのURLも更新
+                    var samplePermalink = document.getElementById('sample-permalink');
+                    if (samplePermalink) {
+                        var permalinkA = samplePermalink.querySelector('a');
+                        if (permalinkA && permalinkA.href) {
+                            var href = permalinkA.href;
+                            var parts = href.split('/');
+                            for (var i = parts.length - 1; i >= 0; i--) {
+                                if (parts[i] && parts[i] !== '') {
+                                    parts[i] = newSlug;
+                                    break;
+                                }
+                            }
+                            permalinkA.href = parts.join('/');
+                        }
+                    }
+
+                    // ブロックエディタ用：パネルのスラッグテキストを更新
                     document.querySelectorAll('.editor-post-link__link-post-name').forEach(function(el) {
                         el.textContent = newSlug;
                     });
 
-                    // 既存パネルのリンクURLを更新
+                    // ブロックエディタ用：リンクURLを更新
                     document.querySelectorAll('.editor-post-link__link').forEach(function(link) {
                         if (link.href) {
                             var parts = link.href.split('/');
@@ -190,7 +223,7 @@ class KSTB_Parent_Selector {
                     });
 
                     // ブロックエディタのストアも更新
-                    if (typeof wp !== 'undefined' && wp.data) {
+                    if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
                         wp.data.dispatch('core/editor').editPost({ slug: newSlug });
                     }
                 }
@@ -199,14 +232,31 @@ class KSTB_Parent_Selector {
 
             <!-- 親ページ選択 -->
             <p>
-                <label for="kstb_parent_page_select">親ページを選択:</label>
+                <label for="kstb_parent_page_select"><strong>親ページを選択:</strong></label>
             </p>
-            <select name="kstb_parent_page" id="kstb_parent_page_select" style="width: 100%;">
+
+            <!-- 現在の選択を表示 -->
+            <div id="kstb_current_selection" style="margin-bottom: 10px; padding: 8px; background: #f0f0f1; border-radius: 4px; display: <?php echo $current_parent_id ? 'block' : 'none'; ?>;">
+                <span id="kstb_selected_label"><?php
+                    if ($current_parent_id) {
+                        $parent_post = get_post($current_parent_id);
+                        if ($parent_post) {
+                            echo esc_html($parent_post->post_title);
+                            echo ' <small style="color: #666;">(' . get_post_type_object($parent_post->post_type)->label . ')</small>';
+                        }
+                    }
+                ?></span>
+                <button type="button" id="kstb_clear_parent" style="float: right; background: none; border: none; color: #b32d2e; cursor: pointer; padding: 0; font-size: 12px;">クリア</button>
+            </div>
+
+            <!-- 検索とセレクト -->
+            <input type="text" id="kstb_parent_search" placeholder="ページ名で検索..." style="width: 100%; margin-bottom: 8px; padding: 6px 8px; box-sizing: border-box;" />
+            <select name="kstb_parent_page" id="kstb_parent_page_select" style="width: 100%; box-sizing: border-box;">
                 <option value="">— 親ページなし —</option>
                 <?php foreach ($available_parents as $group_label => $pages): ?>
                     <optgroup label="<?php echo esc_attr($group_label); ?>">
                         <?php foreach ($pages as $page): ?>
-                            <option value="<?php echo esc_attr($page['ID']); ?>" <?php selected($current_parent_id, $page['ID']); ?>>
+                            <option value="<?php echo esc_attr($page['ID']); ?>" data-type="<?php echo esc_attr($group_label); ?>" <?php selected($current_parent_id, $page['ID']); ?>>
                                 <?php echo esc_html($page['title']); ?>
                             </option>
                         <?php endforeach; ?>
@@ -214,22 +264,8 @@ class KSTB_Parent_Selector {
                 <?php endforeach; ?>
             </select>
 
-            <?php if ($current_parent_id): ?>
-                <?php $parent_post = get_post($current_parent_id); ?>
-                <?php if ($parent_post): ?>
-                    <div class="kstb-current-parent" style="margin-top: 10px; padding: 8px; background: #f0f0f1; border-radius: 4px;">
-                        <strong>現在の親ページ:</strong><br>
-                        <a href="<?php echo get_edit_post_link($parent_post->ID); ?>" target="_blank">
-                            <?php echo esc_html($parent_post->post_title); ?>
-                        </a>
-                        <br>
-                        <small>タイプ: <?php echo get_post_type_object($parent_post->post_type)->label; ?></small>
-                    </div>
-                <?php endif; ?>
-            <?php endif; ?>
-
             <p class="description" style="margin-top: 10px;">
-                この投稿の親ページを固定ページ、投稿ページ、またはカスタム投稿ページから選択できます。
+                固定ページ、投稿ページ、またはカスタム投稿ページから選択できます。
             </p>
         </div>
         <?php
@@ -575,6 +611,10 @@ class KSTB_Parent_Selector {
                 text-decoration: none;
                 font-weight: bold;
             }
+            #kstb_parent_page_select option.kstb-hidden,
+            #kstb_parent_page_select optgroup.kstb-hidden {
+                display: none;
+            }
             </style>
             <?php
         });
@@ -595,14 +635,211 @@ class KSTB_Parent_Selector {
                     }
                 }
 
+                // 選択表示を更新する関数
+                function updateSelectionDisplay(selectBox) {
+                    var currentSelection = document.getElementById('kstb_current_selection');
+                    var selectedLabel = document.getElementById('kstb_selected_label');
+                    if (!currentSelection || !selectedLabel) return;
+
+                    var selectedOption = selectBox.options[selectBox.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        var title = selectedOption.textContent.trim();
+                        var type = selectedOption.getAttribute('data-type') || '';
+                        selectedLabel.innerHTML = title + (type ? ' <small style="color: #666;">(' + type + ')</small>' : '');
+                        currentSelection.style.display = 'block';
+                    } else {
+                        currentSelection.style.display = 'none';
+                        selectedLabel.innerHTML = '';
+                    }
+                }
+
+                // 親ページ検索機能
+                function initParentSearch() {
+                    var searchInput = document.getElementById('kstb_parent_search');
+                    var selectBox = document.getElementById('kstb_parent_page_select');
+                    var clearButton = document.getElementById('kstb_clear_parent');
+
+                    if (searchInput && selectBox) {
+                        // 検索入力時
+                        searchInput.addEventListener('input', function() {
+                            var searchText = this.value.toLowerCase();
+                            var options = selectBox.querySelectorAll('option');
+                            var optgroups = selectBox.querySelectorAll('optgroup');
+
+                            // 検索中はセレクトを展開表示
+                            if (searchText.length > 0) {
+                                selectBox.size = 8;
+                                selectBox.style.height = 'auto';
+                            } else {
+                                selectBox.size = 0;
+                                selectBox.style.height = '';
+                            }
+
+                            // 各オプションをフィルタリング
+                            options.forEach(function(option) {
+                                if (option.value === '') {
+                                    // 「親ページなし」は常に表示
+                                    return;
+                                }
+                                var text = option.textContent.toLowerCase();
+                                if (searchText === '' || text.indexOf(searchText) !== -1) {
+                                    option.classList.remove('kstb-hidden');
+                                } else {
+                                    option.classList.add('kstb-hidden');
+                                }
+                            });
+
+                            // 空のoptgroupを非表示
+                            optgroups.forEach(function(optgroup) {
+                                var visibleOptions = optgroup.querySelectorAll('option:not(.kstb-hidden)');
+                                if (visibleOptions.length === 0) {
+                                    optgroup.classList.add('kstb-hidden');
+                                } else {
+                                    optgroup.classList.remove('kstb-hidden');
+                                }
+                            });
+                        });
+
+                        // フォーカスアウト時にセレクトを閉じる
+                        searchInput.addEventListener('blur', function() {
+                            // 少し遅延させてクリックイベントを優先
+                            setTimeout(function() {
+                                if (document.activeElement !== selectBox) {
+                                    selectBox.size = 0;
+                                    selectBox.style.height = '';
+                                }
+                            }, 200);
+                        });
+
+                        // 親ページ選択時の処理
+                        selectBox.addEventListener('change', function() {
+                            var selectedValue = this.value;
+
+                            // セレクトを閉じて検索をリセット
+                            selectBox.size = 0;
+                            selectBox.style.height = '';
+                            searchInput.value = '';
+                            selectBox.querySelectorAll('option, optgroup').forEach(function(el) {
+                                el.classList.remove('kstb-hidden');
+                            });
+
+                            // 選択表示を更新
+                            updateSelectionDisplay(this);
+
+                            // クラシックエディタの標準親セレクター
+                            var standardParent = document.getElementById('parent_id');
+                            if (standardParent) {
+                                // 標準セレクターに同じ値があれば選択
+                                var optionExists = standardParent.querySelector('option[value="' + selectedValue + '"]');
+                                if (optionExists) {
+                                    standardParent.value = selectedValue;
+                                } else {
+                                    standardParent.value = '';
+                                }
+                            }
+
+                            // ブロックエディタのpost_parentを更新
+                            if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                                wp.data.dispatch('core/editor').editPost({ parent: parseInt(selectedValue) || 0 });
+                            }
+                        });
+
+                        // クリアボタン
+                        if (clearButton) {
+                            clearButton.addEventListener('click', function() {
+                                selectBox.value = '';
+                                updateSelectionDisplay(selectBox);
+
+                                // 標準の親もクリア
+                                var standardParent = document.getElementById('parent_id');
+                                if (standardParent) {
+                                    standardParent.value = '';
+                                }
+
+                                // ブロックエディタもクリア
+                                if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                                    wp.data.dispatch('core/editor').editPost({ parent: 0 });
+                                }
+                            });
+                        }
+                    }
+
+                    // スラッグフィールドの連動
+                    var kstbSlugInput = document.getElementById('kstb_post_slug');
+                    if (kstbSlugInput) {
+                        kstbSlugInput.addEventListener('input', function() {
+                            var newSlug = this.value;
+
+                            // クラシックエディタの標準スラッグ
+                            var standardSlug = document.getElementById('post_name');
+                            if (standardSlug) {
+                                standardSlug.value = newSlug;
+                            }
+
+                            // 表示用スラッグ更新
+                            var slugDisplay = document.getElementById('editable-post-name');
+                            if (slugDisplay) {
+                                slugDisplay.textContent = newSlug;
+                            }
+                            var slugDisplayFull = document.getElementById('editable-post-name-full');
+                            if (slugDisplayFull) {
+                                slugDisplayFull.textContent = newSlug;
+                            }
+
+                            // ブロックエディタのスラッグを更新
+                            if (typeof wp !== 'undefined' && wp.data && wp.data.dispatch) {
+                                wp.data.dispatch('core/editor').editPost({ slug: newSlug });
+                            }
+                        });
+                    }
+                }
+
                 // DOM読み込み完了後に実行（クラシックエディタ用）
                 document.addEventListener('DOMContentLoaded', function() {
                     forceShowSlugEditButton();
+                    initParentSearch();
 
-                    var parentSelector = document.getElementById('parent_id');
-                    if (parentSelector) {
-                        parentSelector.addEventListener('change', function() {
+                    // 標準の親セレクター → プラグインの親セレクターに連動
+                    var standardParentSelector = document.getElementById('parent_id');
+                    var kstbParentSelector = document.getElementById('kstb_parent_page_select');
+                    if (standardParentSelector) {
+                        standardParentSelector.addEventListener('change', function() {
                             setTimeout(forceShowSlugEditButton, 10);
+
+                            // プラグインの親セレクターに連動
+                            if (kstbParentSelector) {
+                                var selectedValue = this.value;
+                                var optionExists = kstbParentSelector.querySelector('option[value="' + selectedValue + '"]');
+                                if (optionExists) {
+                                    kstbParentSelector.value = selectedValue;
+                                } else {
+                                    kstbParentSelector.value = '';
+                                }
+                                updateSelectionDisplay(kstbParentSelector);
+                            }
+                        });
+                    }
+
+                    // ブロックエディタの親変更を監視
+                    if (typeof wp !== 'undefined' && wp.data && wp.data.subscribe) {
+                        var lastParent = null;
+                        wp.data.subscribe(function() {
+                            var editor = wp.data.select('core/editor');
+                            if (editor) {
+                                var currentParent = editor.getEditedPostAttribute('parent');
+                                if (currentParent !== lastParent) {
+                                    lastParent = currentParent;
+                                    if (kstbParentSelector && currentParent !== undefined) {
+                                        var optionExists = kstbParentSelector.querySelector('option[value="' + currentParent + '"]');
+                                        if (optionExists) {
+                                            kstbParentSelector.value = currentParent;
+                                        } else {
+                                            kstbParentSelector.value = '';
+                                        }
+                                        updateSelectionDisplay(kstbParentSelector);
+                                    }
+                                }
+                            }
                         });
                     }
 
