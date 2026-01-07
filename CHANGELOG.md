@@ -5,6 +5,11 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.18] - 2026-01-07
+
+### Added
+- 著者アーカイブページにカスタム投稿タイプの記事を含めるよう対応
+
 ## [1.0.17] - 2025-12-10
 
 ### Added
