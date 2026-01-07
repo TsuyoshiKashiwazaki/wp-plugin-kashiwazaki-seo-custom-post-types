@@ -1065,6 +1065,19 @@ class KSTB_Archive_Controller {
             return;
         }
 
+        // 著者アーカイブページの場合、カスタム投稿タイプも含める
+        if ($query->is_author()) {
+            $post_types = $this->get_post_types();
+            $post_type_slugs = array('post'); // 通常投稿も含める
+
+            foreach ($post_types as $post_type_data) {
+                $post_type_slugs[] = $post_type_data->slug;
+            }
+
+            $query->set('post_type', $post_type_slugs);
+            return;
+        }
+
         // 現在のURLを取得
         $uri = $_SERVER['REQUEST_URI'];
         $uri = parse_url($uri, PHP_URL_PATH) ?? '';
