@@ -238,6 +238,7 @@ class KSTB_Ajax_Handler {
             'archive_page_id' => $archive_page_id,
             'parent_directory' => isset($_POST['parent_directory']) ? sanitize_text_field($_POST['parent_directory']) : '',
             'hierarchical' => isset($_POST['hierarchical']) ? (bool) $_POST['hierarchical'] : false,
+            'allow_shortlink' => isset($_POST['allow_shortlink']) ? 1 : 0,
             'menu_position' => isset($_POST['menu_position']) && $_POST['menu_position'] !== '' ? intval($_POST['menu_position']) : null,
             'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field($_POST['menu_icon']) : null,
             'menu_parent_category' => isset($_POST['menu_parent_category']) ? sanitize_text_field($_POST['menu_parent_category']) : null,

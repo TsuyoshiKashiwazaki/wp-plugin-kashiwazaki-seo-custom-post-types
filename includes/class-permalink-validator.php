@@ -57,23 +57,40 @@ class KSTB_Permalink_Validator {
             return $redirect_url;
         }
 
-        // カスタム投稿タイプかチェック
+        // カスタム投稿タイプかチェックし、設定を取得
         $post_types = $this->get_post_types();
-        $is_custom_post_type = false;
+        $current_post_type = null;
 
         foreach ($post_types as $post_type) {
             if ($post->post_type === $post_type->slug) {
-                $is_custom_post_type = true;
+                $current_post_type = $post_type;
                 break;
             }
         }
 
-        // カスタム投稿タイプの場合はCanonical Redirectを無効化
-        if ($is_custom_post_type) {
-            return false;
+        // カスタム投稿タイプでない場合は通常処理
+        if (!$current_post_type) {
+            return $redirect_url;
         }
 
-        return $redirect_url;
+        // クエリ文字列URL（?p=ID や ?post_type=xxx&p=ID）でアクセスされた場合
+        $is_query_string_access = (
+            strpos($requested_url, '?') !== false &&
+            (isset($_GET['p']) || isset($_GET['page_id']) || isset($_GET['post_type']))
+        );
+
+        if ($is_query_string_access) {
+            // allow_shortlink が有効な場合はリダイレクトしない（そのまま表示）
+            if (!empty($current_post_type->allow_shortlink)) {
+                return false;
+            }
+            // allow_shortlink が無効な場合はリダイレクトを許可（正規URLへ転送）
+            return $redirect_url;
+        }
+
+        // クエリ文字列以外のアクセス（階層的パーマリンク等）の場合は
+        // 従来通りリダイレクトを無効化
+        return false;
     }
 
     /**

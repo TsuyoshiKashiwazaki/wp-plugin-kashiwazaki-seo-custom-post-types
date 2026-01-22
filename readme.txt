@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.18
+Stable tag: 1.0.19
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,14 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.19 =
+* Add: 短縮URL形式（?p=ID）許可機能を追加
+* Add: カスタム投稿タイプごとにクエリ文字列URLのリダイレクト動作を制御可能に
+* Fix: 短縮URL設定がデータベースに保存されないバグを修正
+
+= 1.0.18 =
+* Add: 著者アーカイブページにカスタム投稿タイプの記事を含めるよう対応
 
 = 1.0.17 =
 * Add: 親ページセレクターに検索機能を追加（ページ名でフィルタリング）

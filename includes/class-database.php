@@ -42,6 +42,7 @@ class KSTB_Database {
             archive_page_id int(11) DEFAULT NULL,
             parent_directory varchar(100) DEFAULT NULL,
             hierarchical tinyint(1) DEFAULT 0,
+            allow_shortlink tinyint(1) DEFAULT 0,
             menu_position int(11) DEFAULT NULL,
             menu_icon varchar(100) DEFAULT NULL,
             menu_parent_category varchar(200) DEFAULT NULL,
@@ -66,6 +67,9 @@ class KSTB_Database {
 
         // アーカイブ設定カラムが存在しない場合は追加
         self::add_archive_columns_if_not_exists();
+
+        // 短縮URLカラムが存在しない場合は追加
+        self::add_shortlink_column_if_not_exists();
 
         // カテゴリーテーブルの作成
         self::create_categories_table();
@@ -227,6 +231,20 @@ class KSTB_Database {
     }
 
     /**
+     * allow_shortlinkカラムが存在しない場合は追加
+     */
+    public static function add_shortlink_column_if_not_exists() {
+        global $wpdb;
+        $table_name = self::get_table_name();
+
+        // allow_shortlink カラムが存在するかチェック
+        $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'allow_shortlink'");
+        if (empty($column_exists)) {
+            $wpdb->query("ALTER TABLE $table_name ADD allow_shortlink tinyint(1) DEFAULT 0 AFTER hierarchical");
+        }
+    }
+
+    /**
      * データベースを最新バージョンに更新
      */
     public static function update_database() {
@@ -234,6 +252,9 @@ class KSTB_Database {
 
         // アーカイブ設定カラムが存在しない場合は追加
         self::add_archive_columns_if_not_exists();
+
+        // 短縮URLカラムが存在しない場合は追加
+        self::add_shortlink_column_if_not_exists();
 
         // カテゴリーテーブルの存在確認と作成
         $categories_table = self::get_categories_table_name();
@@ -401,6 +422,7 @@ class KSTB_Database {
             'archive_page_id' => null,
             'parent_directory' => null,
             'hierarchical' => 0,
+            'allow_shortlink' => 0,
             'menu_parent_category' => 'カスタム投稿タイプ',
             'menu_parent_slug' => null,
             'menu_display_mode' => 'category',
@@ -431,6 +453,7 @@ class KSTB_Database {
                 'archive_page_id' => !empty($data['archive_page_id']) ? (int) $data['archive_page_id'] : null,
                 'parent_directory' => isset($data['parent_directory']) && $data['parent_directory'] !== '' ? sanitize_text_field($data['parent_directory']) : null,
                 'hierarchical' => (int) $data['hierarchical'],
+                'allow_shortlink' => isset($data['allow_shortlink']) ? (int) $data['allow_shortlink'] : 0,
                 'menu_position' => !empty($data['menu_position']) ? (int) $data['menu_position'] : 25,
                 'menu_icon' => !empty($data['menu_icon']) ? sanitize_text_field($data['menu_icon']) : null,
                 'menu_parent_category' => !empty($data['menu_parent_category']) ? sanitize_text_field($data['menu_parent_category']) : null,
@@ -506,6 +529,9 @@ class KSTB_Database {
         }
         if (isset($data['hierarchical'])) {
             $update_data['hierarchical'] = (int) $data['hierarchical'];
+        }
+        if (isset($data['allow_shortlink'])) {
+            $update_data['allow_shortlink'] = (int) $data['allow_shortlink'];
         }
         if (isset($data['menu_position'])) {
             $update_data['menu_position'] = !empty($data['menu_position']) ? (int) $data['menu_position'] : null;
