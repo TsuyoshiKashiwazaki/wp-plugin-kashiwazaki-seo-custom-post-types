@@ -961,6 +961,18 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                 </td>
                             </tr>
                             <tr>
+                                <th scope="row">短縮URL</th>
+                                <td>
+                                    <label><input type="checkbox" name="allow_shortlink" value="1"> 短縮URL形式（?p=ID）を許可</label>
+                                    <p class="description">
+                                        <strong>クエリ文字列形式のURLでのアクセスを許可する</strong><br>
+                                        チェックを外すと、<code>?post_type=xxx&p=ID</code> 形式のURLでアクセスした場合、<br>
+                                        正規のパーマリンクURL（例: <code>/blog/post-slug/</code>）へ自動的に301リダイレクトされます。<br>
+                                        <span style="color: #d63638;">※ SEO対策として、通常はチェックを外すことを推奨します</span>
+                                    </p>
+                                </td>
+                            </tr>
+                            <tr>
                                 <th scope="row">スラッグトップページ</th>
                                 <td>
                                     <div style="margin-bottom: 10px;">

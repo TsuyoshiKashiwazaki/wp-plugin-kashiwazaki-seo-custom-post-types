@@ -5,6 +5,16 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.19] - 2026-01-22
+
+### Added
+- 短縮URL形式（?p=ID）許可機能を追加
+- カスタム投稿タイプごとに `?post_type=xxx&p=ID` 形式のURLでのリダイレクト動作を制御可能に
+- 「詳細設定」タブに「短縮URL形式（?p=ID）を許可」チェックボックスを追加
+
+### Fixed
+- 短縮URL設定がデータベースに保存されないバグを修正（class-ajax-handler.php）
+
 ## [1.0.18] - 2026-01-07
 
 ### Added

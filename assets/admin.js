@@ -219,6 +219,7 @@
             }
 
             $('input[name="hierarchical"]').prop('checked', data.hierarchical == 1);
+            $('input[name="allow_shortlink"]').prop('checked', data.allow_shortlink == 1);
 
             $('input[name="supports[]"]').prop('checked', false);
             if (data.supports) {
