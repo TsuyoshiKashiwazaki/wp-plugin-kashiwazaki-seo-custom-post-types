@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.19
+Stable tag: 1.0.20
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,10 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.20 =
+* Add: 階層的カスタム投稿タイプの旧スラッグ保存機能を追加
+* Add: スラッグ変更時に旧URLから新URLへの301リダイレクトが機能するよう対応
 
 = 1.0.19 =
 * Add: 短縮URL形式（?p=ID）許可機能を追加
@@ -194,6 +198,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.20 =
+階層的カスタム投稿タイプでスラッグ変更時に旧URLから自動で301リダイレクトされるようになりました。
 
 = 1.0.16 =
 管理バーの「編集」リンクが正しい記事を指すようになりました。下書き・非公開記事のプレビューにも対応。

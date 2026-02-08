@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.19
+ * Version: 1.0.20
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.19');
+define('KSTB_VERSION', '1.0.20');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -47,6 +47,7 @@ class KashiwazakiSeoTypeBuilder {
         require_once KSTB_PLUGIN_PATH . 'includes/class-archive-controller.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-post-mover.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-permalink-validator.php';
+        require_once KSTB_PLUGIN_PATH . 'includes/class-old-slug-tracker.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-admin.php';
         require_once KSTB_PLUGIN_PATH . 'includes/class-ajax-handler.php';
     }
@@ -89,6 +90,9 @@ class KashiwazakiSeoTypeBuilder {
 
         // Parent Selectorは管理画面とフロントエンドの両方で必要
         KSTB_Parent_Selector::get_instance()->init();
+
+        // 階層的CPTの旧スラッグ保存（管理画面・REST API・WP-CLI全てで動作）
+        KSTB_Old_Slug_Tracker::get_instance()->init();
 
         // アーカイブページの表示制御（最優先で実行）
         if (!is_admin()) {

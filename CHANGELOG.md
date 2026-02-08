@@ -5,6 +5,13 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.20] - 2026-02-08
+
+### Added
+- 階層的カスタム投稿タイプの旧スラッグ保存機能（`KSTB_Old_Slug_Tracker` クラス）
+- WordPress コアが除外する hierarchical CPT でスラッグ変更時に `_wp_old_slug` を保存
+- 旧URLから新URLへの301リダイレクトが階層的CPTでも機能するよう対応
+
 ## [1.0.19] - 2026-01-22
 
 ### Added
@@ -292,6 +299,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.20]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.19...v1.0.20
+[1.0.19]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.18...v1.0.19
+[1.0.18]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.17...v1.0.18
 [1.0.17]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.16...v1.0.17
 [1.0.16]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.15...v1.0.16
 [1.0.15]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.14...v1.0.15
