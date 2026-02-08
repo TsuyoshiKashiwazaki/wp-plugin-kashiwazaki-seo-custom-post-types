@@ -76,6 +76,10 @@
             // 親ディレクトリの選択をリセット
             $('select[name="parent_directory"]').val('');
 
+            // archive_include_childrenをリセット
+            $('#archive_include_children').prop('checked', false);
+            $('#archive_include_children_selector').hide();
+
             // 記事移動タブを新規追加モードに設定
             KSTB.setPostMoverMode('new');
 
@@ -203,9 +207,12 @@
                 $('#archive_page_id').val('');
             }
 
+            // archive_include_childrenの設定
+            $('#archive_include_children').prop('checked', data.archive_include_children == 1);
+
             // スラッグトップページ表示設定のトリガー
             $('input[name="slug_top_display"]:checked').trigger('change');
-            
+
             // 親ディレクトリの設定
             var parentDir = data.parent_directory || '';
             if (parentDir) {
@@ -754,6 +761,11 @@
                 $('#custom_page_selector').show();
             } else {
                 $('#custom_page_selector').hide();
+            }
+            if ($(this).val() === 'archive') {
+                $('#archive_include_children_selector').show();
+            } else {
+                $('#archive_include_children_selector').hide();
             }
         });
 

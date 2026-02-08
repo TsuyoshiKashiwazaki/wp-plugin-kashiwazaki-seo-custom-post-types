@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.20
+Stable tag: 1.0.21
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,13 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.21 =
+* Add: アーカイブ一覧に子階層の投稿タイプの記事を含める機能を追加
+* Add: 管理画面に「子階層の投稿タイプの記事も含める」チェックボックスを追加
+* Fix: 子投稿タイプ含有時のページネーション不具合を修正
+* Fix: 子投稿タイプ含有時のblock_old_urls()による誤404を修正
+* Fix: final_redirect_defense()が子投稿タイプ配列を上書きする問題を修正
 
 = 1.0.20 =
 * Add: 階層的カスタム投稿タイプの旧スラッグ保存機能を追加
@@ -198,6 +205,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.21 =
+アーカイブ一覧に子階層の投稿タイプの記事を含める機能を追加しました。
 
 = 1.0.20 =
 階層的カスタム投稿タイプでスラッグ変更時に旧URLから自動で301リダイレクトされるようになりました。

@@ -31,6 +31,28 @@ class KSTB_Archive_Controller {
     }
 
     /**
+     * 子階層の投稿タイプスラッグを再帰的に取得
+     */
+    private function get_child_post_type_slugs($parent_slug, $visited = array()) {
+        if (in_array($parent_slug, $visited)) {
+            return array(); // 循環参照防止
+        }
+        $visited[] = $parent_slug;
+        $post_types = $this->get_post_types();
+        $children = array();
+        foreach ($post_types as $pt) {
+            if (empty($pt->parent_directory)) continue;
+            if (trim($pt->parent_directory, '/') === $parent_slug) {
+                $children[] = $pt->slug;
+                // 孫も再帰的に取得
+                $children = array_merge($children,
+                    $this->get_child_post_type_slugs($pt->slug, $visited));
+            }
+        }
+        return array_unique($children);
+    }
+
+    /**
      * 現在のユーザーがアクセス可能な post_status の配列を取得
      *
      * @return array 許可される post_status の配列
@@ -1076,6 +1098,36 @@ class KSTB_Archive_Controller {
 
             $query->set('post_type', $post_type_slugs);
             return;
+        }
+
+        // アーカイブ一覧に子投稿タイプの記事を含める
+        if ($query->is_post_type_archive()) {
+            $qpt = $query->get('post_type');
+            $slug = is_array($qpt) ? reset($qpt) : $qpt;
+            if ($slug) {
+                $pt_data = KSTB_Database::get_post_type_by_slug($slug);
+                if ($pt_data && $pt_data->has_archive
+                    && $pt_data->archive_display_type === 'post_list'
+                    && !empty($pt_data->archive_include_children)) {
+                    $child_slugs = $this->get_child_post_type_slugs($slug);
+                    if (!empty($child_slugs)) {
+                        $original_slug = $slug;
+                        $all_types = array_merge(array($slug), $child_slugs);
+                        $query->set('post_type', $all_types);
+                        // テンプレート読み込み直前にpost_typeを元の文字列に戻す
+                        // （テーマがpost_typeを文字列として扱うため配列だとレイアウトが崩れる）
+                        // the_postsで戻すとページネーション判定に影響するため、template_includeで戻す
+                        add_filter('template_include', function($template) use ($original_slug) {
+                            global $wp_query;
+                            $qpt = $wp_query->get('post_type');
+                            if (is_array($qpt) && reset($qpt) === $original_slug) {
+                                $wp_query->set('post_type', $original_slug);
+                            }
+                            return $template;
+                        }, -99999);
+                    }
+                }
+            }
         }
 
         // 現在のURLを取得
