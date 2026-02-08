@@ -994,6 +994,16 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                             アーカイブ一覧を表示
                                         </label>
                                         <p class="description" style="margin-left: 24px;">/スラッグ名/ で投稿一覧を表示します</p>
+                                        <div id="archive_include_children_selector" style="display: none; margin-left: 24px; margin-top: 8px;">
+                                            <label>
+                                                <input type="checkbox" name="archive_include_children" id="archive_include_children" value="1">
+                                                子階層の投稿タイプの記事も含める
+                                            </label>
+                                            <p class="description" style="margin-left: 24px;">
+                                                このカスタム投稿タイプを親ディレクトリに設定している他のカスタム投稿タイプの記事も、
+                                                アーカイブ一覧に含めます。（孫階層も再帰的に含みます）
+                                            </p>
+                                        </div>
                                     </div>
                                     <div style="margin-bottom: 10px;">
                                         <label>

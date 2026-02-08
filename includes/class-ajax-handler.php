@@ -221,6 +221,11 @@ class KSTB_Ajax_Handler {
             $archive_page_id = isset($_POST['archive_page_id']) && $_POST['archive_page_id'] !== '' ? intval($_POST['archive_page_id']) : null;
         }
 
+        $archive_include_children = 0;
+        if ($slug_top_display === 'archive') {
+            $archive_include_children = isset($_POST['archive_include_children']) ? 1 : 0;
+        }
+
         $data = array(
             'slug' => $slug,
             'url_slug' => $url_slug,
@@ -236,6 +241,7 @@ class KSTB_Ajax_Handler {
             'has_archive' => $has_archive,
             'archive_display_type' => $archive_display_type,
             'archive_page_id' => $archive_page_id,
+            'archive_include_children' => $archive_include_children,
             'parent_directory' => isset($_POST['parent_directory']) ? sanitize_text_field($_POST['parent_directory']) : '',
             'hierarchical' => isset($_POST['hierarchical']) ? (bool) $_POST['hierarchical'] : false,
             'allow_shortlink' => isset($_POST['allow_shortlink']) ? 1 : 0,

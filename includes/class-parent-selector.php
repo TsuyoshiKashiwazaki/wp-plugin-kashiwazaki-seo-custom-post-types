@@ -1934,9 +1934,16 @@ class KSTB_Parent_Selector {
 
         // カスタム投稿タイプのシングルまたはアーカイブページの場合
         if (is_singular() || is_post_type_archive()) {
-            $post_type = get_post_type();
-            if (!$post_type) {
-                $post_type = get_query_var('post_type');
+            if (is_post_type_archive()) {
+                // アーカイブページでは、クエリの投稿タイプを使用
+                // （子投稿タイプ含む場合、get_post_type()は子の型を返す可能性がある）
+                $qpt = get_query_var('post_type');
+                $post_type = is_array($qpt) ? reset($qpt) : $qpt;
+            } else {
+                $post_type = get_post_type();
+                if (!$post_type) {
+                    $post_type = get_query_var('post_type');
+                }
             }
 
             if ($post_type) {
@@ -2735,6 +2742,20 @@ class KSTB_Parent_Selector {
             }
             
             if ($archive_settings['display_type'] === 'post_list') {
+                // メインクエリが既にcontrol_query()で子投稿タイプを含む配列に
+                // 設定済みかチェック（archive_include_children機能）
+                $current_pt = $wp_query->get('post_type');
+                if (is_array($current_pt)) {
+                    $first_pt = reset($current_pt);
+                    $check_slug = is_array($post_type_slug) ? reset($post_type_slug) : $post_type_slug;
+                    if ($first_pt === $check_slug) {
+                        // control_query()で設定済みの配列を維持し、再クエリをスキップ
+                        $wp_query->rewind_posts();
+                        status_header(200);
+                        return;
+                    }
+                }
+
                 // 投稿一覧を表示する場合
                 $wp_query->is_archive = true;
                 $wp_query->is_post_type_archive = true;
@@ -2768,7 +2789,7 @@ class KSTB_Parent_Selector {
                 $wp_query->max_num_pages = $archive_query->max_num_pages;
                 $wp_query->current_post = -1;
                 $wp_query->set('paged', $paged);
-                
+
             // error_log("KSTB FINAL DEFENSE: Displaying post list for archive {$post_type_slug}");
             }
 
@@ -2880,6 +2901,14 @@ class KSTB_Parent_Selector {
                         }
                         
                         if ($archive_settings['display_type'] === 'post_list') {
+                            // メインクエリが既にcontrol_query()で子投稿タイプを含む配列に
+                            // 設定済みかチェック（archive_include_children機能）
+                            $current_pt = $wp_query->get('post_type');
+                            if (is_array($current_pt) && in_array($post_type_slug, $current_pt)) {
+                                // control_query()で設定済みの配列を維持し、再クエリをスキップ
+                                return;
+                            }
+
                             // 投稿一覧を表示する場合
                             $wp_query->is_archive = true;
                             $wp_query->is_post_type_archive = true;
@@ -2913,7 +2942,7 @@ class KSTB_Parent_Selector {
                             $wp_query->max_num_pages = $archive_query->max_num_pages;
                             $wp_query->current_post = -1;
                             $wp_query->set('paged', $paged);
-                            
+
             // error_log("KSTB FINAL DEFENSE: Displaying post list for archive {$post_type_slug}");
                         }
 

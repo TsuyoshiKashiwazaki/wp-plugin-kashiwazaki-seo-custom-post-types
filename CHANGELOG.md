@@ -5,6 +5,19 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.21] - 2026-02-08
+
+### Added
+- アーカイブ一覧に子階層の投稿タイプの記事を含める機能を追加
+- 管理画面に「子階層の投稿タイプの記事も含める」チェックボックスを追加
+- `archive_include_children` DBカラムおよびAJAX保存処理を追加
+- 子投稿タイプを再帰的に取得する `get_child_post_type_slugs()` メソッドを追加
+
+### Fixed
+- 子投稿タイプ含有時に `block_old_urls()` が誤って404を返す問題を修正
+- 子投稿タイプ含有時のページネーション不具合を修正（post_type復元タイミングを `template_include` に変更）
+- `final_redirect_defense()` が `control_query()` で設定済みの子投稿タイプ配列を上書きする問題を修正
+
 ## [1.0.20] - 2026-02-08
 
 ### Added
@@ -299,6 +312,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.21]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.20...v1.0.21
 [1.0.20]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.19...v1.0.20
 [1.0.19]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.18...v1.0.19
 [1.0.18]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.17...v1.0.18

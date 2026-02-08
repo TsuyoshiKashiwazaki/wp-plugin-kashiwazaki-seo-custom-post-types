@@ -35,3 +35,7 @@ Thumbs.db
 # Claude specific
 .claude/
 CLAUDE.md
+
+# Temp/spec files
+*-clean.php
+指示書/
