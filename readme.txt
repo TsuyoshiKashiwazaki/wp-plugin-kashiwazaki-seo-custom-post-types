@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.21
+Stable tag: 1.0.22
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,11 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.22 =
+* Fix: 非公開・下書き投稿が未ログインユーザーに表示される脆弱性を修正
+* Fix: クエリ文字列URL（?p=ID）による重複コンテンツ問題を修正（正規URLへ301リダイレクト）
+* Add: is_post_viewable() メソッド追加（投稿ステータスと権限に基づく表示制御）
 
 = 1.0.21 =
 * Add: アーカイブ一覧に子階層の投稿タイプの記事を含める機能を追加
@@ -205,6 +210,9 @@ https://tsuyoshikashiwazaki.jp/
 * 初回リリース
 
 == Upgrade Notice ==
+
+= 1.0.22 =
+非公開投稿の表示制御とクエリ文字列URLの重複コンテンツ問題を修正しました。セキュリティ上、アップデートを推奨します。
 
 = 1.0.21 =
 アーカイブ一覧に子階層の投稿タイプの記事を含める機能を追加しました。

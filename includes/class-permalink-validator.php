@@ -108,6 +108,30 @@ class KSTB_Permalink_Validator {
         $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         $current_path = rtrim($current_path, '/') . '/';
 
+        // クエリ文字列でのアクセス（?p=ID や ?post_type=xxx&p=ID）を正規URLに301リダイレクト
+        if (!empty($_GET['p']) || !empty($_GET['page_id'])) {
+            // プレビューは除外
+            if (empty($_GET['preview'])) {
+                $post_id = !empty($_GET['p']) ? (int) $_GET['p'] : (int) $_GET['page_id'];
+                if ($post_id > 0) {
+                    $target_post = get_post($post_id);
+                    if ($target_post && $target_post->post_status === 'publish') {
+                        $post_types = $this->get_post_types();
+                        foreach ($post_types as $post_type) {
+                            if ($target_post->post_type === $post_type->slug) {
+                                $canonical_url = get_permalink($target_post->ID);
+                                if ($canonical_url) {
+                                    wp_redirect($canonical_url, 301);
+                                    exit;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         // URLセグメントを解析
         $segments = explode('/', trim($current_path, '/'));
         if (empty($segments) || empty($segments[0])) {
