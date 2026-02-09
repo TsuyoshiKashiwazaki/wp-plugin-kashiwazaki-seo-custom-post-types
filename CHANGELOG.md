@@ -5,6 +5,15 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.22] - 2026-02-09
+
+### Fixed
+- 非公開・下書き等の投稿が未ログインユーザーに表示される脆弱性を修正（Registrarの8メソッドに `is_post_viewable()` チェックを追加）
+- クエリ文字列URL（`?post_type=xxx&p=ID`）で正規URLと同一コンテンツが表示される重複コンテンツ問題を修正（301リダイレクトを追加）
+
+### Added
+- `is_post_viewable()` メソッド - 投稿ステータスとユーザー権限に基づく表示可否判定
+
 ## [1.0.21] - 2026-02-08
 
 ### Added
@@ -312,6 +321,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.22]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.21...v1.0.22
 [1.0.21]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.20...v1.0.21
 [1.0.20]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.19...v1.0.20
 [1.0.19]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.18...v1.0.19

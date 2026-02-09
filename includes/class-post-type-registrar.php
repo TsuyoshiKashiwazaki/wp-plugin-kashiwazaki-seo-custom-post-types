@@ -15,6 +15,28 @@ class KSTB_Post_Type_Registrar {
 
     private function __construct() {}
 
+    /**
+     * 投稿が現在のユーザーに表示可能かチェック
+     *
+     * @param WP_Post|null $post 投稿オブジェクト
+     * @return bool 表示可能な場合true
+     */
+    private static function is_post_viewable($post) {
+        if (!$post) {
+            return false;
+        }
+        if ($post->post_status === 'publish') {
+            return true;
+        }
+        if ($post->post_status === 'private') {
+            return current_user_can('read_private_posts') || current_user_can('read_post', $post->ID);
+        }
+        if (in_array($post->post_status, array('draft', 'pending', 'future'), true)) {
+            return current_user_can('edit_post', $post->ID);
+        }
+        return false;
+    }
+
     public function init() {
         if (self::$initialized) {
             return;
@@ -81,7 +103,7 @@ class KSTB_Post_Type_Registrar {
 
         // 正しい投稿を取得
         $correct_post = get_post($p);
-        if (!$correct_post) {
+        if (!$correct_post || !self::is_post_viewable($correct_post)) {
             return $title_parts;
         }
 
@@ -112,7 +134,7 @@ class KSTB_Post_Type_Registrar {
 
         // 正しい投稿を取得
         $correct_post = get_post($p);
-        if (!$correct_post) {
+        if (!$correct_post || !self::is_post_viewable($correct_post)) {
             return;
         }
 
@@ -151,7 +173,7 @@ class KSTB_Post_Type_Registrar {
 
         // 正しい投稿を取得
         $correct_post = get_post($p);
-        if (!$correct_post) {
+        if (!$correct_post || !self::is_post_viewable($correct_post)) {
             return $template;
         }
 
@@ -195,7 +217,7 @@ class KSTB_Post_Type_Registrar {
 
         // 正しい投稿を取得
         $correct_post = get_post($p);
-        if (!$correct_post) {
+        if (!$correct_post || !self::is_post_viewable($correct_post)) {
             return;
         }
 
@@ -241,6 +263,12 @@ class KSTB_Post_Type_Registrar {
             return;
         }
 
+        // 投稿が現在のユーザーに表示可能かチェック
+        $check_post = get_post((int) $p);
+        if (!self::is_post_viewable($check_post)) {
+            return;
+        }
+
         // 内部変数を直接クリア（query_varsだけでなく、内部処理用の変数も）
         $query->set('name', '');
         $query->set($post_type, '');
@@ -254,8 +282,6 @@ class KSTB_Post_Type_Registrar {
 
         // 静的変数に保存してposts_pre_queryで使用
         self::$hierarchical_post_id = (int) $p;
-
-        // デバッグ
     }
 
     /**
@@ -274,7 +300,7 @@ class KSTB_Post_Type_Registrar {
         // 保存された投稿IDがある場合
         if (self::$hierarchical_post_id) {
             $post = get_post(self::$hierarchical_post_id);
-            if ($post) {
+            if ($post && self::is_post_viewable($post)) {
                 // クリアしない - the_postsでも使う
                 return array($post);
             }
@@ -301,7 +327,7 @@ class KSTB_Post_Type_Registrar {
         // 保存された投稿IDがある場合
         if (self::$hierarchical_post_id) {
             $post = get_post(self::$hierarchical_post_id);
-            if ($post) {
+            if ($post && self::is_post_viewable($post)) {
 
                 // WP_Queryの内部状態も更新
                 $query->posts = array($post);
