@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.22
+Stable tag: 1.0.23
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,9 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.23 =
+* Fix: タクソノミーアーカイブのページネーション404問題を修正
 
 = 1.0.22 =
 * Fix: 非公開・下書き投稿が未ログインユーザーに表示される脆弱性を修正
