@@ -5,6 +5,13 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.23] - 2026-02-10
+
+### Fixed
+- タクソノミーアーカイブのページネーションがCPT階層検証により誤って404になる問題を修正
+  - 影響: CPTスラッグと同名のタグ/カテゴリで `page-2` 形式やフィードにアクセスすると404
+  - 修正: `validate_permalink()` でアーカイブ・検索リクエストをCPT階層検証の対象外に変更
+
 ## [1.0.22] - 2026-02-09
 
 ### Fixed
@@ -321,6 +328,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.23]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.22...v1.0.23
 [1.0.22]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.21...v1.0.22
 [1.0.21]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.20...v1.0.21
 [1.0.20]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.19...v1.0.20

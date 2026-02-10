@@ -138,6 +138,12 @@ class KSTB_Permalink_Validator {
             return;
         }
 
+        // WordPressがアーカイブまたは検索と判定したリクエストは
+        // カスタム投稿タイプの階層検証対象外
+        if ( $wp_query->is_archive() || $wp_query->is_search() ) {
+            return;
+        }
+
         // カスタム投稿タイプのパターンに部分的にマッチするかチェック
         $post_types = $this->get_post_types();
         $should_block = false;
