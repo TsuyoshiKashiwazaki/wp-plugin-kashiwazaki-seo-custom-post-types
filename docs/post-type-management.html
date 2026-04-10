@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投稿タイプ管理 - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.23</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>投稿タイプ管理</h1>
+
+<p class="lead">カスタム投稿タイプの作成・編集・削除、投稿タイプ間の記事移行、メニュー割り当て、カテゴリアイコン設定など、本プラグインの主要機能について詳しく説明します。</p>
+
+<h2>カスタム投稿タイプの作成</h2>
+
+<p>GUIからカスタム投稿タイプを作成できます。コードの記述は一切不要です。</p>
+
+<figure class="screenshot">
+    <img src="images/screenshots/02-cpt-detail.png" alt="投稿タイプ管理画面" class="lightbox-trigger">
+    <figcaption>カスタム投稿タイプの管理と設定</figcaption>
+</figure>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>管理画面の <strong>Custom Post Types</strong> ページを開き、<strong>新規投稿タイプを追加</strong> ボタンをクリックします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>投稿タイプの基本情報を入力します。</p>
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>説明</th></tr>
+</thead>
+<tbody>
+<tr><td>投稿タイプスラッグ</td><td>URLに使用される英数字の識別子（例: news, product）</td></tr>
+<tr><td>ラベル（単数形/複数形）</td><td>管理画面に表示される名称</td></tr>
+<tr><td>公開設定</td><td>フロントエンドでの表示・検索結果への含有設定</td></tr>
+<tr><td>階層構造</td><td>固定ページのような親子関係を有効にするか</td></tr>
+<tr><td>サポート機能</td><td>タイトル、エディタ、サムネイル等の有効化</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>保存</strong> ボタンをクリックすると、投稿タイプが登録され、リライトルールが自動的に更新されます。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>投稿タイプスラッグは一度設定すると変更が困難です。サイトのURL構造を事前に設計し、適切なスラッグを選択してください。適切なURL構造はSEOにおけるクローラビリティの向上に直結します。</p>
+</div>
+
+<h2>投稿タイプの編集・削除</h2>
+
+<p>作成済みの投稿タイプは、一覧画面から編集・削除できます。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>投稿タイプ一覧から、編集したい投稿タイプの <strong>編集</strong> リンクをクリックします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>ラベル、公開設定、サポート機能などを変更し、<strong>保存</strong> をクリックします。変更後、リライトルールは自動で再生成されます。</p>
+</div>
+</div>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>投稿タイプを削除しても、その投稿タイプに属する投稿データはデータベースに残ります。必要に応じて、削除前に記事移行機能で別の投稿タイプに記事を移行してください。</p>
+</div>
+
+<h2>親子階層管理</h2>
+
+<p>投稿タイプに親子関係（階層構造）を設定することで、論理的なサイトアーキテクチャを構築できます。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>投稿タイプの作成・編集画面で、<strong>親投稿タイプ</strong> を選択します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>親子関係を設定すると、URLが自動的に階層構造を反映します（例: <code>/parent-type/child-type/post-slug/</code>）。リライトルールも自動で調整されます。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>階層型投稿タイプは、検索エンジンがサイトのコンテンツ構造を理解する助けになります。関連するコンテンツを同じ階層に配置することで、トピックの関連性をクローラーに伝えることができます。</p>
+</div>
+
+<h2>投稿タイプ間の記事移行</h2>
+
+<p>投稿タイプ間で記事を一括移行できます。スラッグとタクソノミーの関連付けを維持したまま安全に移動します。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>管理画面の <strong>記事移行</strong> タブを開きます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>移行元</strong> の投稿タイプと <strong>移行先</strong> の投稿タイプを選択します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>移行対象の記事を確認し、<strong>移行を実行</strong> ボタンをクリックします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p>移行処理はAJAXで非同期に実行されます。処理中は進捗状況が表示されます。</p>
+</div>
+</div>
+
+<div class="callout callout-note">
+<p class="callout-title">メモ</p>
+<p>記事移行時、各記事のスラッグは維持されます。旧URLからのリダイレクトが必要な場合は、別途リダイレクトプラグインで対応してください。リライトルール管理により、移行後の新URL構造での404エラーは自動的に防止されます。</p>
+</div>
+
+<h2>メニュー割り当て管理</h2>
+
+<p>カスタム投稿タイプごとに、WordPress管理画面のメニュー表示位置を管理できます。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>管理画面の <strong>メニュー管理</strong> タブを開きます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>各投稿タイプに対して、管理画面メニューでの親メニュー項目を選択します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>設定を保存すると、管理画面のメニュー構造が即座に反映されます。</p>
+</div>
+</div>
+
+<h2>カテゴリアイコン設定</h2>
+
+<p>カテゴリごとにアイコンを設定し、管理画面での視認性を向上させることができます。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>管理画面の <strong>カテゴリ管理</strong> タブを開きます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>アイコンを設定したいカテゴリを選択し、利用可能なアイコン一覧から選択します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>保存</strong> をクリックすると、管理画面のカテゴリ一覧にアイコンが表示されます。</p>
+</div>
+</div>
+
+<h2>AJAXハンドラー一覧</h2>
+
+<p>本プラグインでは、20種類のAJAXハンドラーを使用してすべての管理操作を非同期で処理しています。すべてのハンドラーはnonce検証と<code>manage_options</code>権限チェックを行います。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">操作カテゴリ</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>投稿タイプ管理</td><td>作成・編集・削除・一覧取得・詳細取得</td></tr>
+<tr><td>記事移行</td><td>移行元/先の選択・記事一覧取得・移行実行・進捗確認</td></tr>
+<tr><td>メニュー管理</td><td>メニュー割り当ての取得・更新</td></tr>
+<tr><td>カテゴリ管理</td><td>カテゴリ一覧取得・アイコン設定・アイコン削除</td></tr>
+<tr><td>パーマリンク管理</td><td>リライトルール更新・パーマリンクバリデーション</td></tr>
+</tbody>
+</table>
+
+<nav class="page-nav">
+<a href="setup.html" class="prev">&laquo; インストール・初期設定</a>
+<a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.23</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

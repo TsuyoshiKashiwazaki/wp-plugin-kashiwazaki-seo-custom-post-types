@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>概要 - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.23</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>Kashiwazaki SEO Custom Post Types マニュアル</h1>
+
+<img src="images/main-visual.png" alt="Kashiwazaki SEO Custom Post Types メインビジュアル" style="width:100%;border-radius:6px;margin-bottom:24px;">
+
+<p class="lead">Kashiwazaki SEO Custom Post Types は、WordPressのカスタム投稿タイプをGUIで簡単に作成・管理するプラグインです。投稿タイプの作成・編集・削除、投稿タイプ間の記事移行、メニュー割り当て、カテゴリアイコン設定など、カスタム投稿タイプの運用に必要な機能をすべて管理画面から操作できます。</p>
+
+<p>WordPressのカスタム投稿タイプは、コンテンツを論理的に分類しURL構造を最適化するための基盤です。本プラグインはGUIでの投稿タイプ作成・管理に加え、投稿タイプ間の記事移行やメニュー割り当て管理を提供します。</p>
+
+<div class="feature-cards">
+<div class="feature-card">
+<span class="icon">&#128221;</span>
+<h4>投稿タイプ作成</h4>
+<p>GUIでカスタム投稿タイプを作成・編集・削除。パーマリンク設定も自動管理</p>
+</div>
+<div class="feature-card">
+<span class="icon">&#128260;</span>
+<h4>記事移行</h4>
+<p>投稿タイプ間で記事を一括移行。スラッグ・タクソノミーを維持したまま安全に移動</p>
+</div>
+<div class="feature-card">
+<span class="icon">&#128203;</span>
+<h4>メニュー管理</h4>
+<p>カスタム投稿タイプごとのメニュー割り当てとカテゴリアイコン設定</p>
+</div>
+</div>
+
+<h2>主な特徴</h2>
+
+<ul>
+<li><strong>カスタム投稿タイプのGUI管理</strong> - コードを書かずにカスタム投稿タイプを作成・編集・削除できます</li>
+<li><strong>親子階層管理</strong> - 投稿タイプの親子関係を設定し、リライトルールを自動管理します</li>
+<li><strong>投稿タイプ間の記事移行</strong> - スラッグとタクソノミーを維持したまま、投稿タイプ間で記事を一括移行できます</li>
+<li><strong>メニュー割り当て管理</strong> - カスタム投稿タイプごとにメニューの割り当てを管理できます</li>
+<li><strong>カテゴリアイコン設定</strong> - カテゴリごとにアイコンを設定し、管理画面での視認性を向上させます</li>
+<li><strong>パーマリンク自動管理</strong> - 投稿タイプの作成・変更時にリライトルールを自動で更新し、404エラーを防止します</li>
+<li><strong>20種類のAJAXハンドラー</strong> - すべての操作を非同期で処理し、スムーズな管理体験を提供します</li>
+</ul>
+
+<h2>SEOとGEOへの効果</h2>
+
+<p>本プラグインは管理画面専用のツールですが、サイト構造の最適化を通じて検索エンジン最適化（SEO）と生成エンジン最適化（GEO）に貢献します。</p>
+
+<ul>
+<li><strong>適切なURL構造の構築</strong> - カスタム投稿タイプによる論理的なURL構造は、検索エンジンのクローラビリティを向上させます</li>
+<li><strong>階層型投稿タイプの活用</strong> - 親子関係を持つ投稿タイプにより、サイト全体の論理的なアーキテクチャを構築できます</li>
+<li><strong>リライトルールの自動管理</strong> - サイト構造変更時のリライトルール管理により、リストラクチャリング中の404エラーを防止します</li>
+<li><strong>AI対応のコンテンツ整理</strong> - 論理的なコンテンツ分類は、AIがサイトのトピックを正確に理解する助けになります</li>
+</ul>
+
+<h2>技術仕様</h2>
+
+<ul>
+<li><strong>データ保存:</strong> wp_options (kstb_categories_migrated, kstb_last_flush_time等)</li>
+<li><strong>カスタムテーブル:</strong> なし</li>
+<li><strong>外部通信:</strong> なし</li>
+<li><strong>Cron:</strong> なし</li>
+<li><strong>メール:</strong> なし</li>
+<li><strong>セキュリティ:</strong> nonce検証、manage_options権限、sanitize_text_field</li>
+</ul>
+
+<h2>動作要件</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>要件</th></tr>
+</thead>
+<tbody>
+<tr><td>WordPress</td><td>5.0 以上</td></tr>
+<tr><td>PHP</td><td>7.0 以上</td></tr>
+<tr><td>外部依存</td><td>なし（外部HTTP通信・Cron・メール送信いずれも不使用）</td></tr>
+</tbody>
+</table>
+
+<nav class="page-nav">
+<span></span>
+<a href="setup.html" class="next">インストール・初期設定 &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.23</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>トラブルシューティング - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.23</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>トラブルシューティング</h1>
+
+<p class="lead">Kashiwazaki SEO Custom Post Types の使用中に発生する可能性のある問題と、その解決方法をまとめています。</p>
+
+<h2>カスタム投稿タイプが表示されない</h2>
+
+<h3>症状</h3>
+<p>プラグインで投稿タイプを作成したが、管理画面のメニューやフロントエンドに表示されない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>プラグインの有効化を確認</strong> - WordPress管理画面の <strong>プラグイン</strong> ページで、「Kashiwazaki SEO Custom Post Types」が有効になっているか確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>公開設定を確認</strong> - 投稿タイプの設定で「公開」が有効になっているか確認してください。非公開に設定されている場合、フロントエンドには表示されません。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>パーマリンク設定を更新</strong> - WordPress管理画面の <strong>設定 &gt; パーマリンク設定</strong> ページを開き、何も変更せずに <strong>変更を保存</strong> をクリックしてリライトルールを再生成してください。</p>
+</div>
+</div>
+
+<h2>投稿タイプのURLで404エラーが発生する</h2>
+
+<h3>症状</h3>
+<p>カスタム投稿タイプの記事にアクセスすると404エラーが表示される。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>リライトルールを更新</strong> - 管理画面の <strong>設定 &gt; パーマリンク設定</strong> ページを開き、<strong>変更を保存</strong> をクリックしてリライトルールをフラッシュしてください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>スラッグの競合を確認</strong> - 投稿タイプのスラッグが、既存の固定ページやカテゴリのスラッグと重複していないか確認してください。重複している場合、URLの解決に失敗します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>.htaccessを確認</strong> - サーバーの <code>.htaccess</code> ファイルが正しく設定されているか確認してください。WordPressのリライトルールが上書きされていないか確認します。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>本プラグインはリライトルールを自動管理しますが、サーバー設定やキャッシュプラグインの影響で即座に反映されない場合があります。キャッシュをクリアした上で再確認してください。</p>
+</div>
+
+<h2>記事移行で問題が発生する</h2>
+
+<h3>症状</h3>
+<p>投稿タイプ間の記事移行が途中で止まる、またはエラーが表示される。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>PHP実行時間の制限を確認</strong> - 大量の記事を移行する場合、PHPの <code>max_execution_time</code> が短いと処理がタイムアウトします。サーバーの設定を確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>移行元・移行先の投稿タイプを確認</strong> - 移行元と移行先の投稿タイプが正しく登録されているか確認してください。無効な投稿タイプを指定するとエラーが発生します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>ブラウザのコンソールを確認</strong> - ブラウザの開発者ツール（F12）を開き、コンソールタブでJavaScriptエラーが発生していないか確認してください。AJAX通信のエラー詳細も確認できます。</p>
+</div>
+</div>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>記事移行を実行する前に、必ずデータベースのバックアップを取得してください。移行処理は元に戻すことができません。</p>
+</div>
+
+<h2>メニュー割り当てが反映されない</h2>
+
+<h3>症状</h3>
+<p>投稿タイプのメニュー割り当てを変更しても、管理画面のメニューに反映されない。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>ページを再読み込み</strong> - 管理画面をリロード（F5）して、メニューの変更が反映されるか確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>権限を確認</strong> - メニュー割り当ての変更には <code>manage_options</code> 権限（管理者権限）が必要です。管理者アカウントでログインしているか確認してください。</p>
+</div>
+</div>
+
+<h2>AJAX操作でエラーが発生する</h2>
+
+<h3>症状</h3>
+<p>投稿タイプの作成・編集・削除など、管理画面の操作でエラーメッセージが表示される。</p>
+
+<h3>解決方法</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>nonceの有効期限を確認</strong> - 管理画面を長時間開いたままにすると、セキュリティトークン（nonce）が期限切れになります。ページを再読み込みして再度操作してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>他のプラグインとの競合を確認</strong> - 他のプラグインがAJAXハンドラーと競合している可能性があります。一時的に他のプラグインを無効化して確認してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>デバッグモードを有効化</strong> - <code>wp-config.php</code> に <code>define('WP_DEBUG', true);</code> を設定し、エラーログを確認してください。</p>
+</div>
+</div>
+
+<h2>よくある質問</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">質問</th><th>回答</th></tr>
+</thead>
+<tbody>
+<tr><td>データベースに新しいテーブルは作られますか？</td><td>いいえ。設定データはwp_optionsテーブル（kstb_categories_migrated, kstb_last_flush_time等）に保存されます。カスタムテーブルは作成しません。</td></tr>
+<tr><td>外部サービスと通信しますか？</td><td>いいえ。外部HTTP通信、Cronジョブ、メール送信のいずれも行いません。</td></tr>
+<tr><td>フロントエンドに何か出力しますか？</td><td>いいえ。本プラグインは管理画面専用のツールです。JSON-LD、metaタグ、HTMLなどのフロントエンド出力は一切行いません。</td></tr>
+<tr><td>他のSEOプラグインと併用できますか？</td><td>はい。本プラグインはカスタム投稿タイプの管理のみを行うため、他のSEOプラグインと競合しません。</td></tr>
+<tr><td>マルチサイトに対応していますか？</td><td>各サイトごとにプラグインを有効化・設定する必要があります。</td></tr>
+<tr><td>アンインストール時にデータは削除されますか？</td><td>プラグインをアンインストール（削除）すると、wp_optionsに保存された設定データは削除されます。投稿データ自体はデータベースに残ります。</td></tr>
+<tr><td>投稿タイプのスラッグは変更できますか？</td><td>既存の投稿タイプのスラッグ変更は、URLの変更を伴うため推奨しません。記事移行機能で新しい投稿タイプに記事を移すことを検討してください。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>問題が解決しない場合は、WordPressのデバッグモード（<code>WP_DEBUG</code>）を有効にして、エラーログを確認してください。エラーメッセージの内容が問題解決の手がかりになります。</p>
+</div>
+
+<nav class="page-nav">
+<a href="post-type-management.html" class="prev">&laquo; 投稿タイプ管理</a>
+<span></span>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.23</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

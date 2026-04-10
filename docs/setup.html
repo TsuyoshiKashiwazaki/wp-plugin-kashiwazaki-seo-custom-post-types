@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>インストール・初期設定 - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.23</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+</nav>
+
+<main class="content">
+
+<h1>インストール・初期設定</h1>
+
+<p class="lead">Kashiwazaki SEO Custom Post Types のインストールから初期設定までの手順を説明します。外部依存がないため、プラグインを有効化するだけですぐにカスタム投稿タイプの管理を開始できます。</p>
+
+<h2>インストール方法</h2>
+
+<h3>方法1: WordPress管理画面からインストール</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>WordPress管理画面にログインし、左メニューから <strong>プラグイン &gt; 新規追加</strong> を選択します。</p>
+</div>
+</div>
+
+<figure class="screenshot">
+    <img src="images/screenshots/00-menu-location.png" alt="管理画面メニューの位置" class="lightbox-trigger">
+    <figcaption>管理画面の左メニューにプラグインが追加されます</figcaption>
+</figure>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>検索ボックスに「Kashiwazaki SEO Custom Post Types」と入力し、表示されたプラグインの <strong>今すぐインストール</strong> ボタンをクリックします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>インストール完了後、<strong>有効化</strong> ボタンをクリックします。</p>
+</div>
+</div>
+
+<h3>方法2: ZIPファイルからインストール</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>プラグインのZIPファイルをダウンロードします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>WordPress管理画面の <strong>プラグイン &gt; 新規追加 &gt; プラグインのアップロード</strong> からZIPファイルを選択し、<strong>今すぐインストール</strong> をクリックします。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>インストール完了後、<strong>有効化</strong> ボタンをクリックします。</p>
+</div>
+</div>
+
+<h2>初期設定</h2>
+
+<p>プラグインを有効化すると、WordPress管理画面の左メニューに「Kashiwazaki SEO Custom Post Types」の管理ページが追加されます。</p>
+
+<h3>設定手順</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p>WordPress管理画面の左メニューから <strong>Custom Post Types</strong> を選択して管理画面を開きます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>新規投稿タイプを追加</strong> ボタンをクリックし、投稿タイプ名（スラッグ）、ラベル、公開設定などを入力します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>必要に応じて、親投稿タイプの設定や階層構造を設定します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p>設定を保存すると、リライトルールが自動的に更新され、新しい投稿タイプがすぐに利用可能になります。</p>
+</div>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">ヒント</p>
+<p>プラグインは有効化時にデータベースの初期化を自動で行います。カスタムテーブルは作成せず、wp_optionsテーブルのみを使用するため、特別なデータベース設定は不要です。</p>
+</div>
+
+<h2>動作要件の確認</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>要件</th></tr>
+</thead>
+<tbody>
+<tr><td>WordPress</td><td>5.0 以上</td></tr>
+<tr><td>PHP</td><td>7.0 以上</td></tr>
+<tr><td>外部依存</td><td>なし</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-note">
+<p class="callout-title">メモ</p>
+<p>本プラグインは管理画面専用のツールです。フロントエンドへのHTML出力、JSON-LD出力、metaタグ出力は一切行いません。外部HTTP通信、Cronジョブ、メール送信も使用しないため、サーバー環境に特別な要件はありません。</p>
+</div>
+
+<h2>アンインストール</h2>
+
+<p>プラグインを無効化・削除する前に、以下の点にご注意ください。</p>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>プラグインを無効化すると、本プラグインで登録したカスタム投稿タイプはWordPressに認識されなくなります。投稿データ自体はデータベースに残りますが、管理画面やフロントエンドからアクセスできなくなります。再度有効化すれば、投稿データは元通り表示されます。</p>
+</div>
+
+<nav class="page-nav">
+<a href="index.html" class="prev">&laquo; 概要</a>
+<a href="post-type-management.html" class="next">投稿タイプ管理 &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.23</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>
