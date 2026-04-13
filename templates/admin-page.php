@@ -485,7 +485,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
     if (!empty($missing_in_wp)) :
     ?>
         <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 4px;">
-            <strong>⚠️ メニューに表示されていないカスタム投稿タイプ:</strong> <?php echo implode(', ', $missing_in_wp); ?><br>
+            <strong>⚠️ メニューに表示されていないカスタム投稿タイプ:</strong> <?php echo esc_html(implode(', ', $missing_in_wp)); ?><br>
             <small>「すべて強制登録」ボタンをクリックして修正してください。</small>
         </div>
     <?php endif; ?>

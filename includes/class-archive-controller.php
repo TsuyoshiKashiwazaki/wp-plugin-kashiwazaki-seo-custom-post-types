@@ -123,9 +123,6 @@ class KSTB_Archive_Controller {
         // get_queried_objectフィルターで強制修正
         add_filter('get_queried_object', array($this, 'filter_queried_object'), 1);
 
-        // WP_Post_Type関連のエラーを抑制
-        add_action('init', array($this, 'suppress_post_type_errors'), 1);
-
         // pre_get_postsでクエリを制御（最後に実行）
         add_action('pre_get_posts', array($this, 'control_query'), 999);
 
@@ -952,24 +949,6 @@ class KSTB_Archive_Controller {
         // queried_objectを設定
         $wp_query->queried_object = $current_post;
         $wp_query->queried_object_id = $current_post->ID;
-    }
-
-    /**
-     * WP_Post_Type関連のエラーを抑制
-     */
-    public function suppress_post_type_errors() {
-        if (!is_admin()) {
-            set_error_handler(function($errno, $errstr, $errfile, $errline) {
-                // WP_Post_Typeの未定義プロパティエラーを抑制
-                if (strpos($errstr, 'WP_Post_Type') !== false &&
-                    (strpos($errstr, '$ID') !== false ||
-                     strpos($errstr, '$post_title') !== false ||
-                     strpos($errstr, '$post_name') !== false)) {
-                    return true; // エラーを抑制
-                }
-                return false; // 他のエラーは通常通り処理
-            }, E_WARNING | E_NOTICE);
-        }
     }
 
     /**
