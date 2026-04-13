@@ -86,9 +86,6 @@ class KSTB_Parent_Selector {
         // add_action('wp_footer', array($this, 'output_debug_comments'), 999);
         // add_action('wp_head', array($this, 'output_debug_comments'), 999);
 
-        // 強制的にパーマリンクをフラッシュ（開発用）
-        add_action('admin_init', array($this, 'force_flush_rules_if_needed'));
-
         // 階層URL修正後のリライトルールフラッシュ
         add_action('init', array($this, 'maybe_flush_rewrite_rules_for_hierarchy'), 999);
 
@@ -131,9 +128,6 @@ class KSTB_Parent_Selector {
      * 親ページ選択メタボックスのHTMLを出力
      */
     public function render_parent_selector_metabox($post) {
-        // デバッグ用（開発時のみ表示、後で削除可能）
-        error_log('KSTB: render_parent_selector_metabox called for post ID ' . $post->ID);
-
         // ナンス追加
         wp_nonce_field('kstb_parent_selector_nonce', 'kstb_parent_selector_nonce');
 
@@ -1348,22 +1342,6 @@ class KSTB_Parent_Selector {
             // error_log("KSTB Enhanced: Added rewrite rules for {$post_type->slug} with slug '{$slug}'");
                 }
             }
-        }
-    }
-
-    /**
-     * 必要に応じてリライトルールを強制フラッシュ
-     */
-    public function force_flush_rules_if_needed() {
-        // 開発中は毎回フラッシュ（本番では削除推奨）
-        $last_flush = get_option('kstb_last_flush_time', 0);
-        $current_time = time();
-
-        // 1時間ごとにフラッシュ（開発用）
-        if ($current_time - $last_flush > 3600) {
-            flush_rewrite_rules(true);
-            update_option('kstb_last_flush_time', $current_time);
-            // error_log("KSTB: Force flushed rewrite rules at " . date('Y-m-d H:i:s'));
         }
     }
 

@@ -5,6 +5,20 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.24] - 2026-04-13
+
+### Fixed
+- 管理画面テンプレートで `$missing_in_wp` 配列の出力に `esc_html()` を追加（XSS 対策の防御的修正）
+- CPT 編集画面のメタボックスレンダリング時に毎回出力されていたデバッグ用 `error_log` を削除（`debug.log` 肥大化の解消）
+- `force_flush_rules_if_needed()` メソッドを削除（開発用コードで権限チェックなしに `admin_init` で 1 時間毎の hard flush を誘発していた）
+- フロントエンドで `KSTB_Archive_Controller::init()` が `init_hooks()` と `init()` の両方から呼ばれていた二重初期化を解消
+- 到達不能だった `suppress_post_type_errors()` メソッドおよびその登録フックを削除（`set_error_handler()` のグローバル上書きが他プラグインの監視ツールを妨害する問題の解消）
+
+### Removed
+- `force_flush_rules_if_needed()` メソッド（class-parent-selector.php）
+- `suppress_post_type_errors()` メソッド（class-archive-controller.php）
+- `kstb_last_flush_time` オプション参照（コードからの参照を削除、既存のオプション値は自動クリーンアップされないため注意）
+
 ## [1.0.23] - 2026-02-10
 
 ### Fixed

@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.23
+Stable tag: 1.0.24
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,13 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.24 =
+* Fix: 管理画面テンプレートの `$missing_in_wp` 出力に esc_html() を追加
+* Fix: デバッグ用 error_log（メタボックス表示毎に出力）を削除
+* Fix: 権限チェックなしの `force_flush_rules_if_needed()` メソッドを削除
+* Fix: Archive Controller の二重初期化を解消
+* Fix: 到達不能な `suppress_post_type_errors()` メソッドと登録フックを削除
 
 = 1.0.23 =
 * Fix: タクソノミーアーカイブのページネーション404問題を修正
