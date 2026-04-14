@@ -556,6 +556,10 @@ class KSTB_Post_Type_Registrar {
             $url_slug = $post_type->url_slug;
             $internal_slug = $post_type->slug;
 
+            // v1.0.25 HIGH-1 関連: 個別投稿ルールは標準形式 (post_type/name) を使う。
+            //   旧実装は 'index.php?{internal_slug}=$matches[1]' で query_var に依存していたため、
+            //   query_var=false (HIGH-1 で UI から設定可能になった) と組み合わせると単一投稿 URL が
+            //   解決できなくなる回帰リスクがあった。
             // 親ディレクトリがある場合はそれも含める
             if (!empty($post_type->parent_directory)) {
                 $full_path = $this->build_full_path($post_type->slug);
@@ -564,7 +568,7 @@ class KSTB_Post_Type_Registrar {
                 // 長いURLスラッグを短い内部名にマップ（個別投稿）
                 add_rewrite_rule(
                     '^' . $prefix . $url_slug . '/([^/]+)/?$',
-                    'index.php?' . $internal_slug . '=$matches[1]',
+                    'index.php?post_type=' . $internal_slug . '&name=$matches[1]',
                     'top'
                 );
                 // アーカイブページ
@@ -583,7 +587,7 @@ class KSTB_Post_Type_Registrar {
                 // 長いURLスラッグを短い内部名にマップ（個別投稿）
                 add_rewrite_rule(
                     '^' . $url_slug . '/([^/]+)/?$',
-                    'index.php?' . $internal_slug . '=$matches[1]',
+                    'index.php?post_type=' . $internal_slug . '&name=$matches[1]',
                     'top'
                 );
                 // アーカイブページ
@@ -618,14 +622,15 @@ class KSTB_Post_Type_Registrar {
         }
 
         // WordPress標準に従った引数設定
+        // public/publicly_queryable/show_ui/query_var/show_in_menu は DB 値を反映する（v1.0.25 HIGH-1 修正）
         $args = array(
             'label' => $post_type->label,
             'labels' => $labels,
-            'public' => true,
-            'publicly_queryable' => true,  // 個別投稿ページは表示可能にする
-            'show_ui' => true,
-            'show_in_menu' => $show_in_menu_value,  // 親メニューまたはメニュー位置
-            'query_var' => true,
+            'public' => (bool) $post_type->public,
+            'publicly_queryable' => (bool) $post_type->publicly_queryable,
+            'show_ui' => (bool) $post_type->show_ui,
+            'show_in_menu' => ((bool) $post_type->show_in_menu) ? $show_in_menu_value : false,
+            'query_var' => (bool) $post_type->query_var,
             'rewrite' => $rewrite,
             'capability_type' => 'post',
             'has_archive' => $has_archive,
@@ -633,7 +638,7 @@ class KSTB_Post_Type_Registrar {
             'menu_position' => null,  // show_in_menuで位置を制御するためnullにする
             'menu_icon' => $post_type->menu_icon ?: 'dashicons-admin-post',
             'supports' => $supports,
-            'show_in_rest' => true,
+            'show_in_rest' => (bool) $post_type->show_in_rest,
             'rest_base' => $post_type->slug,
             'rest_controller_class' => 'WP_REST_Posts_Controller',
             'rest_namespace' => 'wp/v2',

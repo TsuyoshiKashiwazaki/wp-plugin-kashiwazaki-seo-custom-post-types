@@ -4,15 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>概要 - Kashiwazaki SEO Custom Post Types マニュアル</title>
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.24</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
-<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
 </nav>
 
 <main class="content">
@@ -21,60 +28,104 @@
 
 <img src="images/main-visual.png" alt="Kashiwazaki SEO Custom Post Types メインビジュアル" style="width:100%;border-radius:6px;margin-bottom:24px;">
 
-<p class="lead">Kashiwazaki SEO Custom Post Types は、WordPressのカスタム投稿タイプをGUIで簡単に作成・管理するプラグインです。投稿タイプの作成・編集・削除、投稿タイプ間の記事移行、メニュー割り当て、カテゴリアイコン設定など、カスタム投稿タイプの運用に必要な機能をすべて管理画面から操作できます。</p>
+<p class="lead">Kashiwazaki SEO Custom Post Types は、WordPress のカスタム投稿タイプを GUI から作成・管理し、<strong>テーマ単位で意味的に整理された URL 構造</strong>と<strong>サイト内コンテンツの階層化</strong>を実装するためのプラグインです。コードを書かずに、複数のカスタム投稿タイプ・階層 URL（<code>/親テーマ/サブトピック/個別記事/</code>）・親子関係・アーカイブ表示・管理画面メニュー分類までを一括で構築できます。</p>
 
-<p>WordPressのカスタム投稿タイプは、コンテンツを論理的に分類しURL構造を最適化するための基盤です。本プラグインはGUIでの投稿タイプ作成・管理に加え、投稿タイプ間の記事移行やメニュー割り当て管理を提供します。</p>
+<p>WordPress 標準のカスタム投稿タイプ機能では、URL のスラッグは内部識別子と同一かつ 20 文字制限があり、複数の CPT を意味的に階層化したり、長い SEO キーワードを URL に含めたりすることが困難です。本プラグインは、内部スラッグと公開 URL スラッグを分離し（最大 64 文字対応）、親ディレクトリを再帰的に解決することで、サイト構造そのものを「テーマ → サブトピック → 個別記事」の階層として設計できるようにします。これは、特定のテーマについて自サイトの情報密度を意図的に高めていく情報設計（柏崎剛が提唱する <a href="https://www.tsuyoshikashiwazaki.jp/blog/semantic-saturation/" target="_blank" rel="noopener">構造的セマンティック・サチュレーション</a>: 1 つのメインテーマに対して意味的な飽和状態を作り出すコンテンツ戦略）の技術的基盤として設計されています。</p>
+
+<h2>主要機能</h2>
 
 <div class="feature-cards">
 <div class="feature-card">
+<span class="icon">&#127760;</span>
+<h4>階層 URL 構造の構築</h4>
+<p>親ディレクトリと公開 URL スラッグを分離し、<code>/parent-theme/subtopic/article/</code> のような意味階層を持つ URL を GUI から設計。</p>
+</div>
+<div class="feature-card">
 <span class="icon">&#128221;</span>
-<h4>投稿タイプ作成</h4>
-<p>GUIでカスタム投稿タイプを作成・編集・削除。パーマリンク設定も自動管理</p>
+<h4>カスタム投稿タイプ管理</h4>
+<p>GUI で投稿タイプの作成・編集・削除・記事移行までを完結。25 種類以上のラベルを 1 項目から自動生成。</p>
 </div>
 <div class="feature-card">
-<span class="icon">&#128260;</span>
-<h4>記事移行</h4>
-<p>投稿タイプ間で記事を一括移行。スラッグ・タクソノミーを維持したまま安全に移動</p>
-</div>
-<div class="feature-card">
-<span class="icon">&#128203;</span>
-<h4>メニュー管理</h4>
-<p>カスタム投稿タイプごとのメニュー割り当てとカテゴリアイコン設定</p>
+<span class="icon">&#128193;</span>
+<h4>管理メニュー分類</h4>
+<p>カスタム投稿タイプをカテゴリーフォルダに分類し、管理画面サイドメニューを整理。21 種類のフォルダ系アイコンから選択可能。</p>
 </div>
 </div>
 
-<h2>主な特徴</h2>
+<h2>設計思想：構造的セマンティック・サチュレーションの実装基盤</h2>
+
+<p>本プラグインは「構造的セマンティック・サチュレーション」と呼ばれる情報設計思想（上記リンクを参照）を WordPress の URL/投稿タイプ管理レベルで実装しやすくすることを目的に開発されました。</p>
+
+<p>従来のトピッククラスター手法が「広く浅く」テーマを横展開するのに対し、セマンティック・サチュレーション型の情報設計は「縦方向の深掘り」と「テーマ全体の意味空間の網羅」を志向します。本プラグインは、<strong>サイトのディレクトリ構造そのものをテーマの意味階層として表現</strong>するための仕組み（親ディレクトリ、階層 URL、親ページ選択、子階層を含むアーカイブ）を提供します。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">補足: プラグインの位置づけ</p>
+<p>本プラグインは投稿タイプ管理と URL 構造の設計を支援するツールです。検索順位の上昇、AI による引用、E-E-A-T 評価獲得を保証するものではありません。情報設計の方針、本文の品質、内部リンク設計、構造化データ出力（テーマや SEO プラグイン側で対応）、外部評価などが組み合わさって初めて成果に結びつきます。</p>
+</div>
+
+<h2>SEO における強み</h2>
+
+<p>本プラグインは検索エンジン最適化（SEO）の観点で、以下のような機能的な貢献を行います。各項目は本プラグインのコードに実装されている機能に基づきます。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">機能</th><th>SEO 観点での意味</th></tr>
+</thead>
+<tbody>
+<tr><td>親ディレクトリと階層 URL（<code>parent_directory</code>）</td><td>サイト内のテーマ包含関係を URL パスとして物理的に表現できる。クローラーがサイト構造を解釈する際の手がかりになりやすい。</td></tr>
+<tr><td>公開 URL スラッグ（<code>url_slug</code>、最大 64 文字）と内部スラッグの分離</td><td>WordPress 標準の 20 文字制限を超える長い意味的キーワードを URL に含められる。内部 ID は短く、URL はキーワード重視という両立が可能。</td></tr>
+<tr><td>旧スラッグ追跡（階層的 CPT 対応）</td><td>WordPress コアが省略している階層的カスタム投稿タイプの <code>_wp_old_slug</code> 保存を補完。スラッグ変更時の旧 URL → 新 URL の 301 リダイレクトを成立させる。</td></tr>
+<tr><td>パーマリンク検証（不正な親経由を 404）</td><td>意図しない親パスでアクセスされた URL を 404 として返し、重複コンテンツの発生を抑える。</td></tr>
+<tr><td>Canonical Redirect の制御</td><td>WordPress 標準の正規化リダイレクトが本プラグインの階層 URL を壊すことを防ぐ。</td></tr>
+<tr><td>子階層を含むアーカイブ（<code>archive_include_children</code>）</td><td>親階層のアーカイブを「テーマに関するハブページ」として運用できる。網羅性を視覚化しやすい。</td></tr>
+</tbody>
+</table>
+
+<h2>GEO（生成エンジン最適化 / LLMO）における強み</h2>
+
+<p>ChatGPT、Gemini、Perplexity 等の生成 AI 検索（GEO / LLMO）における引用構造に対しても、サイトの情報構造を整理する形で機能的に貢献します。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">機能</th><th>GEO / LLMO 観点での意味</th></tr>
+</thead>
+<tbody>
+<tr><td>テーマ単位の URL 階層</td><td>1 つのテーマに関連する情報が同一ディレクトリ配下に集約されるため、AI がサブトピックを横断して参照する際に同一サイトのコンテンツが選ばれやすい構造を作りやすい。</td></tr>
+<tr><td>固定ページと CPT を跨いだ親子関係（<code>_kstb_parent_page</code> メタ）</td><td>解説記事・用語集・事例・FAQ など異なる種類のコンテンツを 1 つのテーマツリーに統合できる。AI が情報を辿る際の論理的な経路を提供しやすい。</td></tr>
+<tr><td>子階層を含む網羅的アーカイブ</td><td>テーマ全体のコンテンツ一覧を生成 AI が把握しやすい形でサイト内に存在させられる。</td></tr>
+<tr><td>URL の安定性（旧スラッグ追跡 + canonical 制御）</td><td>過去に AI が学習・参照した URL を維持・リダイレクト可能。引用された URL の到達性を保てる。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">本プラグインで実装されない機能（補完が必要）</p>
+<p>本プラグインは構造化データ（JSON-LD の <code>BreadcrumbList</code> や <code>Article</code> 等）を出力しません。SEO/GEO の効果を最大化するには、構造化データ出力に対応したテーマや、SEO 系プラグインを組み合わせて補完してください。本プラグインが提供するのはあくまで「URL 構造と投稿タイプ管理」の基盤です。</p>
+</div>
+
+<h2>セマンティック・サチュレーション型情報設計と本プラグインの対応</h2>
+
+<table>
+<thead>
+<tr><th style="width:38%;">情報設計の要素</th><th>本プラグインで実現できる手段</th></tr>
+</thead>
+<tbody>
+<tr><td>テーマの意味空間を階層分解する</td><td><code>parent_directory</code> による親ディレクトリ指定、階層的 CPT、親ページ選択メタボックスの組み合わせで、テーマ → サブトピック → 個別記事のツリーを URL 上に構築。</td></tr>
+<tr><td>サブトピックを縦方向に深掘りする</td><td>固定ページや別の CPT を親に指定できる柔軟な親子関係により、コンテンツ種別を超えた縦方向の階層を構築可能。</td></tr>
+<tr><td>テーマ全体を網羅するハブを置く</td><td><code>archive_include_children</code> オプションで、親テーマのアーカイブが配下のサブトピック記事を自動的に含める。</td></tr>
+<tr><td>変更時の URL 到達性を維持する</td><td>階層的 CPT の旧スラッグ追跡（WordPress コアが省略している処理を補完）と canonical 制御により、URL 変更時の旧 URL への到達性を維持しやすくする。</td></tr>
+<tr><td>管理運用の整理</td><td>カスタム投稿タイプをカテゴリーフォルダに分類し、テーマ単位で管理画面サイドメニューを整理可能。</td></tr>
+</tbody>
+</table>
+
+<h2>目次</h2>
 
 <ul>
-<li><strong>カスタム投稿タイプのGUI管理</strong> - コードを書かずにカスタム投稿タイプを作成・編集・削除できます</li>
-<li><strong>親子階層管理</strong> - 投稿タイプの親子関係を設定し、リライトルールを自動管理します</li>
-<li><strong>投稿タイプ間の記事移行</strong> - スラッグとタクソノミーを維持したまま、投稿タイプ間で記事を一括移行できます</li>
-<li><strong>メニュー割り当て管理</strong> - カスタム投稿タイプごとにメニューの割り当てを管理できます</li>
-<li><strong>カテゴリアイコン設定</strong> - カテゴリごとにアイコンを設定し、管理画面での視認性を向上させます</li>
-<li><strong>パーマリンク自動管理</strong> - 投稿タイプの作成・変更時にリライトルールを自動で更新し、404エラーを防止します</li>
-<li><strong>20種類のAJAXハンドラー</strong> - すべての操作を非同期で処理し、スムーズな管理体験を提供します</li>
-</ul>
-
-<h2>SEOとGEOへの効果</h2>
-
-<p>本プラグインは管理画面専用のツールですが、サイト構造の最適化を通じて検索エンジン最適化（SEO）と生成エンジン最適化（GEO）に貢献します。</p>
-
-<ul>
-<li><strong>適切なURL構造の構築</strong> - カスタム投稿タイプによる論理的なURL構造は、検索エンジンのクローラビリティを向上させます</li>
-<li><strong>階層型投稿タイプの活用</strong> - 親子関係を持つ投稿タイプにより、サイト全体の論理的なアーキテクチャを構築できます</li>
-<li><strong>リライトルールの自動管理</strong> - サイト構造変更時のリライトルール管理により、リストラクチャリング中の404エラーを防止します</li>
-<li><strong>AI対応のコンテンツ整理</strong> - 論理的なコンテンツ分類は、AIがサイトのトピックを正確に理解する助けになります</li>
-</ul>
-
-<h2>技術仕様</h2>
-
-<ul>
-<li><strong>データ保存:</strong> wp_options (kstb_categories_migrated 等)</li>
-<li><strong>カスタムテーブル:</strong> なし</li>
-<li><strong>外部通信:</strong> なし</li>
-<li><strong>Cron:</strong> なし</li>
-<li><strong>メール:</strong> なし</li>
-<li><strong>セキュリティ:</strong> nonce検証、manage_options権限、sanitize_text_field</li>
+<li><a href="index.html">概要</a> - プラグインの全体像、設計思想、SEO/GEO における強み</li>
+<li><a href="setup.html">インストール・初期設定</a> - インストール手順と管理画面の入口、初期確認項目</li>
+<li><a href="post-type-management.html">投稿タイプ管理</a> - GUI による投稿タイプの作成・編集・削除、25 種以上のラベル自動生成、内部スラッグと公開 URL スラッグの分離、サポート機能、タクソノミー、記事移行</li>
+<li><a href="hierarchical-urls.html">階層 URL 設計</a> - 親ディレクトリ、親ページ選択、階層 URL の解決ロジック、アーカイブ表示制御の 4 モード、子階層を含むアーカイブ、旧スラッグ追跡、パーマリンク検証</li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a> - 管理画面サイドメニューのカテゴリー分類、21 種のフォルダ系アイコン、メニュー位置・表示モード、親メニューページの自動生成</li>
+<li><a href="troubleshooting.html">トラブルシューティング</a> - URL が 404 になる、メニューが表示されない、パーマリンクが反映されない等の問題と対処、内部アーキテクチャ図</li>
 </ul>
 
 <h2>動作要件</h2>
@@ -85,8 +136,9 @@
 </thead>
 <tbody>
 <tr><td>WordPress</td><td>5.0 以上</td></tr>
-<tr><td>PHP</td><td>7.0 以上</td></tr>
-<tr><td>外部依存</td><td>なし（外部HTTP通信・Cron・メール送信いずれも不使用）</td></tr>
+<tr><td>PHP</td><td>7.0 以上（推奨 7.4 以上）</td></tr>
+<tr><td>必要な PHP 拡張</td><td>DOMDocument（管理画面の説明書タブで docs HTML を読み込むため）</td></tr>
+<tr><td>外部依存</td><td>なし。外部 HTTP 通信、Cron ジョブ、メール送信のいずれも行わない</td></tr>
 </tbody>
 </table>
 
@@ -95,7 +147,7 @@
 <a href="setup.html" class="next">インストール・初期設定 &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.24</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
 
 </main>
 

@@ -4,226 +4,585 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>投稿タイプ管理 - Kashiwazaki SEO Custom Post Types マニュアル</title>
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.24</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
-<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
 </nav>
 
 <main class="content">
 
 <h1>投稿タイプ管理</h1>
 
-<p class="lead">カスタム投稿タイプの作成・編集・削除、投稿タイプ間の記事移行、メニュー割り当て、カテゴリアイコン設定など、本プラグインの主要機能について詳しく説明します。</p>
+<p class="lead">カスタム投稿タイプを GUI から作成・編集・削除するためのフォームは 6 つのタブに分かれています。このページでは各タブのすべての入力項目について、動作・UI・デフォルト値・実装・SEO/GEO 観点での使い方を網羅的に解説します。</p>
 
-<h2>カスタム投稿タイプの作成</h2>
+<h2>作成フォームの開き方</h2>
 
-<p>GUIからカスタム投稿タイプを作成できます。コードの記述は一切不要です。</p>
+<p>管理画面の <strong>「カスタム投稿タイプ一覧」</strong> タブで <strong>「+ 新規追加」</strong> ボタンをクリックすると、投稿タイプ作成フォームが開きます。既存の投稿タイプを編集する場合は、一覧の各行にある <strong>「編集」</strong> リンクをクリックします。</p>
 
 <figure class="screenshot">
-    <img src="images/screenshots/02-cpt-detail.png" alt="投稿タイプ管理画面" class="lightbox-trigger">
-    <figcaption>カスタム投稿タイプの管理と設定</figcaption>
+<img src="images/screenshots/02-cpt-detail.png" alt="カスタム投稿タイプ作成フォーム全体" class="lightbox-trigger">
+<figcaption>カスタム投稿タイプの作成・編集フォーム全体。上部に 6 つのタブが並び、下部に「保存」「キャンセル」ボタン。</figcaption>
 </figure>
 
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>管理画面の <strong>Custom Post Types</strong> ページを開き、<strong>新規投稿タイプを追加</strong> ボタンをクリックします。</p>
+<h2>フォームタブの構成</h2>
+
+<div class="feature-cards">
+<div class="feature-card">
+<h4>① 基本設定</h4>
+<p>スラッグ、ラベル、メニューアイコンの必須 3 項目</p>
+</div>
+<div class="feature-card">
+<h4>② ラベル（自動生成）</h4>
+<p>基本ラベルから自動生成された 10 項目のプレビュー</p>
+</div>
+<div class="feature-card">
+<h4>③ 詳細設定</h4>
+<p>公開設定、表示制御、階層、親ディレクトリ、アーカイブ</p>
 </div>
 </div>
 
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p>投稿タイプの基本情報を入力します。</p>
+<div class="feature-cards">
+<div class="feature-card">
+<h4>④ サポート機能</h4>
+<p>タイトル・エディター等 WordPress 標準機能の選択</p>
+</div>
+<div class="feature-card">
+<h4>⑤ タクソノミー</h4>
+<p>カテゴリー・タグ・独自タクソノミーの関連付け</p>
+</div>
+<div class="feature-card">
+<h4>⑥ 記事移動</h4>
+<p>既存投稿を別タイプに一括マイグレーション（編集時のみ）</p>
+</div>
+</div>
+
+<hr>
+
+<h2>① 基本設定タブ</h2>
+
+<p>カスタム投稿タイプの根幹となる 3 項目（スラッグ、ラベル、メニューアイコン）を設定します。スラッグとラベルは必須、メニューアイコンは任意です。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/04-basic-url-slug.png" alt="基本設定タブ" class="lightbox-trigger">
+<figcaption>基本設定タブ。スラッグ（公開 URL）とラベルを入力する。20 文字を超えると警告表示が出るが、本プラグインは 64 文字まで正常動作する。</figcaption>
+</figure>
+
+<h3>スラッグ（公開 URL）</h3>
+
 <table>
 <thead>
-<tr><th style="width:35%;">項目</th><th>説明</th></tr>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
 </thead>
 <tbody>
-<tr><td>投稿タイプスラッグ</td><td>URLに使用される英数字の識別子（例: news, product）</td></tr>
-<tr><td>ラベル（単数形/複数形）</td><td>管理画面に表示される名称</td></tr>
-<tr><td>公開設定</td><td>フロントエンドでの表示・検索結果への含有設定</td></tr>
-<tr><td>階層構造</td><td>固定ページのような親子関係を有効にするか</td></tr>
-<tr><td>サポート機能</td><td>タイトル、エディタ、サムネイル等の有効化</td></tr>
+<tr><td>必須</td><td>はい</td></tr>
+<tr><td>UI 上の名前</td><td>スラッグ</td></tr>
+<tr><td>内部 DB カラム</td><td><code>url_slug</code> (varchar 64)</td></tr>
+<tr><td>入力可能文字</td><td>半角英数字、ハイフン（-）、アンダースコア（_）</td></tr>
+<tr><td>最大長</td><td>64 文字</td></tr>
+<tr><td>デフォルト値</td><td>なし（必ず入力が必要）</td></tr>
+<tr><td>警告表示</td><td>20 文字を超えると黄色の警告メッセージが表示される。ただしこれは互換性の注意喚起であり、本プラグインは 64 文字まで正常動作する</td></tr>
+<tr><td>内部システム名の生成</td><td>入力した URL スラッグから、自動的に内部スラッグ（最大 20 文字、システム識別子）が生成される。ユーザーが直接入力する必要はない</td></tr>
 </tbody>
 </table>
-</div>
-</div>
 
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p><strong>保存</strong> ボタンをクリックすると、投稿タイプが登録され、リライトルールが自動的に更新されます。</p>
-</div>
-</div>
+<p>このスラッグは実際に URL に使われる文字列です。例えば <code>seo-latest-news-archive</code> と入力すると、URL は <code>https://example.com/seo-latest-news-archive/</code> の形式になります（親ディレクトリ未設定の場合）。</p>
 
 <div class="callout callout-tip">
-<p class="callout-title">ヒント</p>
-<p>投稿タイプスラッグは一度設定すると変更が困難です。サイトのURL構造を事前に設計し、適切なスラッグを選択してください。適切なURL構造はSEOにおけるクローラビリティの向上に直結します。</p>
+<p class="callout-title">SEO キーワードを URL に含めるヒント</p>
+<p>検索エンジンは URL 内のキーワードもサイト理解の手がかりにします。短い内部 ID（<code>news</code> など）ではなく、具体的なキーワード（<code>seo-latest-news-and-trends-2026</code> など）を入れると、検索結果でのクリック率（CTR）向上に役立ちます。</p>
 </div>
 
-<h2>投稿タイプの編集・削除</h2>
+<h3>ラベル</h3>
 
-<p>作成済みの投稿タイプは、一覧画面から編集・削除できます。</p>
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>必須</td><td>はい</td></tr>
+<tr><td>UI 上の名前</td><td>ラベル</td></tr>
+<tr><td>内部 DB カラム</td><td><code>label</code> (varchar 100)</td></tr>
+<tr><td>入力可能文字</td><td>日本語を含むすべての文字列</td></tr>
+<tr><td>デフォルト値</td><td>なし（必ず入力が必要）</td></tr>
+<tr><td>用途</td><td>WordPress 管理画面のサイドメニュー、投稿一覧ページの見出し、管理バーなど、あらゆる表示場所のベース名になる</td></tr>
+<tr><td>自動生成されるラベル</td><td>この 1 項目から、25 種類以上の派生ラベルが自動的に生成される（次のタブで詳細確認）</td></tr>
+</tbody>
+</table>
 
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>投稿タイプ一覧から、編集したい投稿タイプの <strong>編集</strong> リンクをクリックします。</p>
-</div>
+<p>例: ラベルに「ニュース」と入力すると、「新規ニュース追加」「すべてのニュース」「ニュースを検索」などが自動的に生成されます。</p>
+
+<h3>メニューアイコン</h3>
+
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>必須</td><td>いいえ</td></tr>
+<tr><td>UI 上の名前</td><td>メニューアイコン</td></tr>
+<tr><td>内部 DB カラム</td><td><code>menu_icon</code> (varchar 100)</td></tr>
+<tr><td>入力方式</td><td>WordPress 標準 Dashicons のドロップダウン選択（プレビュー付き）</td></tr>
+<tr><td>デフォルト値</td><td>未選択の場合は <code>dashicons-admin-post</code>（投稿と同じアイコン）が使用される</td></tr>
+<tr><td>プレビュー</td><td>選択すると右側に実際のアイコンが表示される</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<h2>② ラベル（自動生成）タブ</h2>
+
+<p>基本設定タブで入力した「ラベル」から自動生成された各ラベルがリアルタイムプレビュー形式で表示されます。<strong>このタブは読み取り専用のプレビューです</strong>。通常は編集する必要はありません。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/05-label-auto-generation.png" alt="ラベル自動生成タブ" class="lightbox-trigger">
+<figcaption>ラベルタブ。基本設定の「ラベル」から派生した項目がプレビュー表示される。ラベル入力後にこのタブを開くと、各項目に自動生成された値が確認できる。</figcaption>
+</figure>
+
+<h3>プレビュー項目（10 項目）</h3>
+
+<p>UI にプレビュー表示される主な項目は以下の 10 種類です。実際にはバックエンドでさらに多くのラベル（計 25 種以上）が自動生成され、<code>register_post_type()</code> の <code>labels</code> 引数に渡されます。</p>
+
+<table>
+<thead>
+<tr><th style="width:25%;">UI 表示名</th><th>WordPress 内部キー</th><th>ラベル=「ニュース」の場合の自動生成例</th></tr>
+</thead>
+<tbody>
+<tr><td>複数形の名前</td><td><code>name</code></td><td>ニュース</td></tr>
+<tr><td>単数形の名前</td><td><code>singular_name</code></td><td>ニュース</td></tr>
+<tr><td>メニュー名</td><td><code>menu_name</code></td><td>ニュース（親メニューありの場合は「└ ニュース」）</td></tr>
+<tr><td>新規追加</td><td><code>add_new</code></td><td>新規追加</td></tr>
+<tr><td>新規追加ページ</td><td><code>add_new_item</code></td><td>新規ニュースを追加</td></tr>
+<tr><td>編集</td><td><code>edit_item</code></td><td>ニュースを編集</td></tr>
+<tr><td>表示</td><td><code>view_item</code></td><td>ニュースを表示</td></tr>
+<tr><td>すべて表示</td><td><code>all_items</code></td><td>すべてのニュース</td></tr>
+<tr><td>検索</td><td><code>search_items</code></td><td>ニュースを検索</td></tr>
+<tr><td>見つかりません</td><td><code>not_found</code></td><td>ニュースが見つかりません</td></tr>
+</tbody>
+</table>
+
+<h3>UI に表示されないが自動生成されるラベル</h3>
+
+<p>以下のラベルは UI のプレビューには表示されませんが、バックエンドで自動生成され <code>register_post_type()</code> に渡されます。</p>
+
+<table>
+<thead>
+<tr><th style="width:40%;">WordPress 内部キー</th><th>自動生成例（ラベル=「ニュース」の場合）</th></tr>
+</thead>
+<tbody>
+<tr><td><code>name_admin_bar</code></td><td>ニュース（管理バーで使用）</td></tr>
+<tr><td><code>new_item</code></td><td>新規ニュース</td></tr>
+<tr><td><code>view_items</code></td><td>ニュースを表示</td></tr>
+<tr><td><code>parent_item_colon</code></td><td>親ニュース:</td></tr>
+<tr><td><code>not_found_in_trash</code></td><td>ゴミ箱にニュースが見つかりません</td></tr>
+<tr><td><code>featured_image</code></td><td>アイキャッチ画像</td></tr>
+<tr><td><code>set_featured_image</code></td><td>アイキャッチ画像を設定</td></tr>
+<tr><td><code>remove_featured_image</code></td><td>アイキャッチ画像を削除</td></tr>
+<tr><td><code>use_featured_image</code></td><td>アイキャッチ画像として使用</td></tr>
+<tr><td><code>archives</code></td><td>ニュースアーカイブ</td></tr>
+<tr><td><code>insert_into_item</code></td><td>ニュースに挿入</td></tr>
+<tr><td><code>uploaded_to_this_item</code></td><td>このニュースにアップロード</td></tr>
+<tr><td><code>filter_items_list</code></td><td>ニュースリストをフィルター</td></tr>
+<tr><td><code>items_list_navigation</code></td><td>ニュースリストナビゲーション</td></tr>
+<tr><td><code>items_list</code></td><td>ニュースリスト</td></tr>
+<tr><td><code>item_published</code></td><td>ニュースを公開しました。</td></tr>
+<tr><td><code>item_published_privately</code></td><td>ニュースを非公開で公開しました。</td></tr>
+<tr><td><code>item_reverted_to_draft</code></td><td>ニュースを下書きに戻しました。</td></tr>
+<tr><td><code>item_scheduled</code></td><td>ニュースを予約投稿しました。</td></tr>
+<tr><td><code>item_updated</code></td><td>ニュースを更新しました。</td></tr>
+<tr><td><code>item_link</code></td><td>ニュースリンク</td></tr>
+<tr><td><code>item_link_description</code></td><td>ニュースへのリンク。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-note">
+<p class="callout-title">補足</p>
+<p>v1.0.25 の管理フォームではラベルの個別上書き UI は提供していません。自動生成されたラベルをそのまま使う運用を前提としています。プラグインのコード上は <code>labels</code> を JSON として DB に保存しており、将来的な個別編集機能の拡張余地は残されています。</p>
 </div>
 
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p>ラベル、公開設定、サポート機能などを変更し、<strong>保存</strong> をクリックします。変更後、リライトルールは自動で再生成されます。</p>
+<hr>
+
+<h2>③ 詳細設定タブ</h2>
+
+<p>投稿タイプの公開設定、階層構造、URL 設計、アーカイブ動作など、SEO/GEO 的に最も重要な項目が集約されたタブです。6 つのセクションに分かれています。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/06-hierarchy-archive-settings.png" alt="詳細設定タブ" class="lightbox-trigger">
+<figcaption>詳細設定タブ。公開設定、表示制御、階層、短縮 URL、スラッグトップページ、親ディレクトリを一括管理する。</figcaption>
+</figure>
+
+<h3>公開設定（public）</h3>
+
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>UI 表示</td><td>「公開」チェックボックス 1 個</td></tr>
+<tr><td>DB カラム</td><td><code>public</code> (tinyint(1))</td></tr>
+<tr><td>デフォルト</td><td>ON（チェック済み）</td></tr>
+<tr><td>OFF にしたときの動作</td><td>フロントエンドから URL アクセスできなくなる。管理画面のみで使用する非公開 CPT になる。検索結果にも表示されない</td></tr>
+<tr><td>v1.0.25 修正</td><td>以前はこの設定が無視されていたが、v1.0.25 で DB 値が正しく <code>register_post_type()</code> に反映されるようになった（HIGH-1 修正）</td></tr>
+</tbody>
+</table>
+
+<h3>表示設定（show_ui / show_in_menu / publicly_queryable / query_var）</h3>
+
+<p>4 つのチェックボックスでより細かい表示動作を制御します。すべてデフォルトは ON です。</p>
+
+<table>
+<thead>
+<tr><th style="width:30%;">項目</th><th>説明</th></tr>
+</thead>
+<tbody>
+<tr><td>管理画面に表示（<code>show_ui</code>）</td><td>投稿の追加・編集画面を表示するか。OFF にすると管理画面から編集できなくなるが、投稿データ自体は残る</td></tr>
+<tr><td>メニューに表示（<code>show_in_menu</code>）</td><td>管理画面の左サイドメニューに項目を表示するか。OFF にするとメニューから非表示になるが、URL を直接叩けば編集画面に入れる</td></tr>
+<tr><td>パブリッククエリ可能（<code>publicly_queryable</code>）</td><td>フロントエンドで URL アクセスを許可するか。OFF にすると <code>/{url_slug}/</code> へのアクセスは 404 になる</td></tr>
+<tr><td>クエリ変数を使用（<code>query_var</code>）</td><td><code>?post_type=xxx</code> 形式のクエリ変数で投稿を取得可能にするか。OFF にすると WordPress 標準のクエリ URL は使えなくなるが、本プラグインの階層 URL は <code>post_type</code> / <code>name</code> 標準変数で動作するため影響しない（v1.0.25 修正済）</td></tr>
+</tbody>
+</table>
+
+<h3>階層（hierarchical）</h3>
+
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>UI 表示</td><td>「階層化（親子関係を有効化）」チェックボックス 1 個</td></tr>
+<tr><td>DB カラム</td><td><code>hierarchical</code> (tinyint(1))</td></tr>
+<tr><td>デフォルト</td><td>OFF</td></tr>
+<tr><td>ON にすると有効になる機能</td><td>
+<ul style="margin:6px 0;">
+<li>同じ投稿タイプ内の投稿を親に指定できる（WordPress コア標準の <code>post_parent</code> が機能する）</li>
+<li>サポート機能に <code>page-attributes</code> が自動追加され、WordPress 標準の「ページ属性」メタボックスに親投稿選択 UI が出る</li>
+<li>スラッグ変更時に旧スラッグが <code>_wp_old_slug</code> に記録される（v1.0.20 以降。WordPress コアが階層的 CPT でのみ動作させていた処理を本プラグインが補完）</li>
+</ul>
+</td></tr>
+<tr><td>常に有効な機能（<code>hierarchical</code> の ON/OFF に関係なし）</td><td>
+<ul style="margin:6px 0;">
+<li>投稿編集画面に「親ページ選択 & スラッグ編集」メタボックスが表示される（<code>KSTB_Parent_Selector</code> が本プラグインで管理している全 CPT に無条件で追加）</li>
+<li>このメタボックスから固定ページや他の CPT を親ディレクトリに指定可能（<code>_kstb_parent_page</code> メタ使用、階層 URL 構築に使われる）</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
+
+<h3>短縮 URL（allow_shortlink）</h3>
+
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>UI 表示</td><td>「短縮 URL 形式（?p=ID）を許可」チェックボックス 1 個</td></tr>
+<tr><td>DB カラム</td><td><code>allow_shortlink</code> (tinyint(1))</td></tr>
+<tr><td>デフォルト</td><td>OFF</td></tr>
+<tr><td>ON の動作</td><td><code>?post_type=xxx&amp;p=ID</code> 形式のクエリ URL でのアクセスを許可する</td></tr>
+<tr><td>OFF の動作</td><td>同クエリ URL でアクセスすると、正規のパーマリンク URL（例: <code>/blog/post-slug/</code>）へ 301 リダイレクトされる</td></tr>
+<tr><td>SEO 推奨</td><td>SEO の観点では OFF 推奨（重複 URL を排除できる）</td></tr>
+</tbody>
+</table>
+
+<h3>スラッグトップページ（archive_display_type）</h3>
+
+<p>アーカイブ URL（<code>/{url_slug}/</code>）にアクセスされたときの動作を 4 つのラジオボタンから選択します。</p>
+
+<table>
+<thead>
+<tr><th style="width:25%;">ラジオオプション</th><th>内部値</th><th>動作</th></tr>
+</thead>
+<tbody>
+<tr><td>指定なし（デフォルト）</td><td><code>default</code></td><td>has_archive=OFF のとき、同名スラッグの固定ページ・通常投稿・他カスタム投稿があればそれを表示する（フォールスルー）。該当する投稿が無ければ 404。「同名ページに素通しさせたい」用途で使う</td></tr>
+<tr><td>表示しない</td><td><code>none</code></td><td><strong>強制的に 404 を返す</strong>。同名スラッグの固定ページが存在してもフォールスルーしない。「このスラッグへのアクセスを完全に拒否したい」用途で使う</td></tr>
+<tr><td>アーカイブ一覧を表示</td><td><code>post_list</code></td><td>強制的に投稿一覧のアーカイブテンプレートを表示。「子階層の投稿タイプの記事も含める」という追加チェックボックスがこのモードで表示される</td></tr>
+<tr><td>固定ページを表示</td><td><code>custom_page</code></td><td>指定した固定ページをアーカイブ URL で表示。ハブページ戦略に最適。固定ページ選択ドロップダウンがこのモードで表示される</td></tr>
+</tbody>
+</table>
+
+<h4>子階層の投稿タイプの記事も含める（archive_include_children）</h4>
+
+<p>「アーカイブ一覧を表示」モード選択時のみ表示されるサブオプションです。ON にすると、この投稿タイプを親ディレクトリに設定している他のカスタム投稿タイプの記事も、このアーカイブ一覧に含めて表示します。孫階層も再帰的に含まれます。</p>
+
+<div class="callout callout-tip">
+<p class="callout-title">ハブページ戦略</p>
+<p>「固定ページを表示」モードでは、アーカイブ URL に解説ページやランディングページを割り当てつつ、配下のサブトピック記事は階層 URL で展開できます。これはテーマの情報網羅性を構築するための有力な手段です。詳細は<a href="hierarchical-urls.html">階層 URL 設計</a>ページを参照してください。</p>
 </div>
+
+<h3>親ディレクトリ（parent_directory）</h3>
+
+<table>
+<thead>
+<tr><th style="width:25%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>UI 表示</td><td>ドロップダウン選択（固定ページ / カスタム投稿タイプの 2 グループ）</td></tr>
+<tr><td>DB カラム</td><td><code>parent_directory</code> (varchar 100)</td></tr>
+<tr><td>デフォルト</td><td>「— 親ディレクトリなし —」（未選択）</td></tr>
+<tr><td>選択肢</td><td>
+<strong>固定ページグループ</strong>: サイト上のすべての固定ページがパス付きで表示される（例:「SEO (/seo/)」）<br>
+<strong>カスタム投稿タイプグループ</strong>: 他のカスタム投稿タイプが表示される
+</td></tr>
+<tr><td>結果の URL 構造</td><td>選択した親の下にこのカスタム投稿タイプの URL が配置される（例: 「会社情報 (/company/)」選択 → <code>/company/{url_slug}/{post_slug}/</code>）</td></tr>
+</tbody>
+</table>
+
+<p>親ディレクトリは多段階層を再帰的に解決します。親ページが更に親ページを持つ場合、<code>build_full_path()</code> が完全パスを構築します。詳細は<a href="hierarchical-urls.html">階層 URL 設計</a>ページを参照してください。</p>
+
+<hr>
+
+<h2>④ サポート機能タブ</h2>
+
+<p>この投稿タイプで使用する WordPress 標準機能を選択します。各機能はチェックボックス形式で、デフォルトでは「タイトル」と「エディター」のみが選択されています。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/08-supports.png" alt="サポート機能タブ" class="lightbox-trigger">
+<figcaption>サポート機能タブ。投稿タイプが使用する WordPress 標準機能をチェックボックスで選択する。</figcaption>
+</figure>
+
+<table>
+<thead>
+<tr><th style="width:30%;">機能</th><th>説明</th></tr>
+</thead>
+<tbody>
+<tr><td>タイトル（<code>title</code>）</td><td>投稿タイトル入力欄。通常は ON 推奨。デフォルト ON</td></tr>
+<tr><td>エディター（<code>editor</code>）</td><td>本文エディター（クラシック/ブロック）。通常は ON 推奨。デフォルト ON</td></tr>
+<tr><td>アイキャッチ画像（<code>thumbnail</code>）</td><td>アイキャッチ画像のサポート。テーマ側で <code>add_theme_support('post-thumbnails')</code> が必要</td></tr>
+<tr><td>抜粋（<code>excerpt</code>）</td><td>手動入力の抜粋。一覧表示で要約を表示したい場合に有効化</td></tr>
+<tr><td>投稿者（<code>author</code>）</td><td>投稿者選択欄。複数投稿者を区別したい場合に有効化</td></tr>
+<tr><td>コメント（<code>comments</code>）</td><td>コメント機能</td></tr>
+<tr><td>トラックバック（<code>trackbacks</code>）</td><td>トラックバック機能</td></tr>
+<tr><td>カスタムフィールド（<code>custom-fields</code>）</td><td>カスタムフィールド入力 UI。ACF などのプラグインを使う場合は不要なことが多い</td></tr>
+<tr><td>ページ属性（<code>page-attributes</code>）</td><td>ページ属性（親ページ・順序）。「階層化」を ON にすると自動追加される</td></tr>
+<tr><td>投稿フォーマット（<code>post-formats</code>）</td><td>投稿フォーマット（ギャラリー、画像、動画など）。テーマ側の対応が必要</td></tr>
+<tr><td>リビジョン（<code>revisions</code>）</td><td>リビジョン機能（編集履歴）</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-note">
+<p class="callout-title">補足</p>
+<p>サポート機能の選択は DB の <code>supports</code> カラムに JSON 配列として保存されます。保存後は <code>register_post_type()</code> の <code>supports</code> 引数に配列として渡され、WordPress の投稿編集画面のメタボックス表示を制御します。</p>
 </div>
+
+<hr>
+
+<h2>⑤ タクソノミータブ</h2>
+
+<p>この投稿タイプに関連付けるタクソノミー（分類）を選択します。WordPress 標準の <code>category</code>（カテゴリー）と <code>post_tag</code>（タグ）に加え、他のプラグインで定義された公開タクソノミーも一覧に表示されます。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/09-taxonomies.png" alt="タクソノミータブ" class="lightbox-trigger">
+<figcaption>タクソノミータブ。WordPress 標準のカテゴリー・タグ、および他プラグイン定義の公開タクソノミーを選択して関連付ける。</figcaption>
+</figure>
+
+<h3>表示される選択肢</h3>
+
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>カテゴリー（<code>category</code>）</td><td>WordPress 標準の階層タクソノミー。親子関係あり。親カテゴリーを持てる</td></tr>
+<tr><td>タグ（<code>post_tag</code>）</td><td>WordPress 標準の非階層タクソノミー。フラット。親子関係なし</td></tr>
+<tr><td>その他の公開タクソノミー</td><td>他プラグインが <code>register_taxonomy()</code> で定義した <code>public=true</code> のタクソノミー</td></tr>
+<tr><td>除外される内部タクソノミー</td><td><code>post_format</code>（投稿フォーマット）、<code>nav_menu</code>（ナビメニュー）、<code>link_category</code>（リンクカテゴリー）は選択肢から除外される</td></tr>
+</tbody>
+</table>
+
+<h3>保存の仕組み</h3>
+
+<p>チェックしたタクソノミーは DB の <code>taxonomies</code> カラムに JSON 配列として保存され、投稿タイプ登録時に <code>register_taxonomy_for_object_type()</code> を通じて関連付けられます。この関連付けにより、投稿編集画面にチェックしたタクソノミーのメタボックスが表示されるようになります。</p>
 
 <div class="callout callout-warning">
-<p class="callout-title">注意</p>
-<p>投稿タイプを削除しても、その投稿タイプに属する投稿データはデータベースに残ります。必要に応じて、削除前に記事移行機能で別の投稿タイプに記事を移行してください。</p>
+<p class="callout-title">注意: タクソノミーの作成機能は提供していない</p>
+<p>本プラグインは「既存のタクソノミーを投稿タイプに関連付ける」機能のみ提供します。新しいタクソノミーを作成するには、別途タクソノミー管理プラグイン（Custom Post Type UI など）の併用を検討してください。</p>
 </div>
 
-<h2>親子階層管理</h2>
+<hr>
 
-<p>投稿タイプに親子関係（階層構造）を設定することで、論理的なサイトアーキテクチャを構築できます。</p>
+<h2>⑥ 記事移動タブ</h2>
+
+<p>既存の投稿タイプを編集モードで開いたときにのみ機能する、投稿タイプ間の記事マイグレーションツールです。スラッグやタクソノミーの関連付けを維持したまま、投稿を別の投稿タイプに一括移動できます。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">新規作成モードでは利用できません</p>
+<p>新規作成時に「記事移動」タブを開くと、「既存の投稿タイプを編集する際に使用してください」という案内が表示されます。先に投稿タイプを保存してから、再度編集モードで開いてください。</p>
+</div>
+
+<h3>操作手順</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p>投稿タイプの作成・編集画面で、<strong>親投稿タイプ</strong> を選択します。</p>
+<p><strong>移動元の投稿タイプを選択</strong> - 画面上部のドロップダウンから、記事を移動元となる投稿タイプを選択します。「すべて」を選べば複数の投稿タイプから横断的に選択できます。選択可能な投稿タイプは WordPress 標準の <code>post</code>（投稿）、<code>page</code>（固定ページ）および全てのカスタム投稿タイプです。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p>親子関係を設定すると、URLが自動的に階層構造を反映します（例: <code>/parent-type/child-type/post-slug/</code>）。リライトルールも自動で調整されます。</p>
-</div>
-</div>
-
-<div class="callout callout-tip">
-<p class="callout-title">ヒント</p>
-<p>階層型投稿タイプは、検索エンジンがサイトのコンテンツ構造を理解する助けになります。関連するコンテンツを同じ階層に配置することで、トピックの関連性をクローラーに伝えることができます。</p>
-</div>
-
-<h2>投稿タイプ間の記事移行</h2>
-
-<p>投稿タイプ間で記事を一括移行できます。スラッグとタクソノミーの関連付けを維持したまま安全に移動します。</p>
-
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>管理画面の <strong>記事移行</strong> タブを開きます。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p><strong>移行元</strong> の投稿タイプと <strong>移行先</strong> の投稿タイプを選択します。</p>
+<p><strong>移動元のカテゴリー/タクソノミーでフィルタ</strong> - 投稿タイプを選択すると、そのタイプに関連付けられているタクソノミー（カテゴリー、タグ等）が自動的に読み込まれます。特定のカテゴリーに属する記事だけを移動したい場合、ここで絞り込めます。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">3</span>
 <div class="step-body">
-<p>移行対象の記事を確認し、<strong>移行を実行</strong> ボタンをクリックします。</p>
+<p><strong>記事一覧を読み込む</strong> - 「記事を読み込む」ボタンをクリックすると、AJAX で記事一覧が取得・表示されます。タイトル、投稿タイプ（「すべて」選択時）、ステータス、日付、作成者の 5 列が表示されます。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">4</span>
 <div class="step-body">
-<p>移行処理はAJAXで非同期に実行されます。処理中は進捗状況が表示されます。</p>
-</div>
-</div>
-
-<div class="callout callout-note">
-<p class="callout-title">メモ</p>
-<p>記事移行時、各記事のスラッグは維持されます。旧URLからのリダイレクトが必要な場合は、別途リダイレクトプラグインで対応してください。リライトルール管理により、移行後の新URL構造での404エラーは自動的に防止されます。</p>
-</div>
-
-<h2>メニュー割り当て管理</h2>
-
-<p>カスタム投稿タイプごとに、WordPress管理画面のメニュー表示位置を管理できます。</p>
-
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>管理画面の <strong>メニュー管理</strong> タブを開きます。</p>
+<p><strong>移動する記事を選択</strong> - 各行のチェックボックスで移動する記事を個別に選択します。「すべて選択」「すべて解除」ボタンで一括操作も可能です。</p>
 </div>
 </div>
 
 <div class="step">
-<span class="step-number">2</span>
+<span class="step-number">5</span>
 <div class="step-body">
-<p>各投稿タイプに対して、管理画面メニューでの親メニュー項目を選択します。</p>
+<p><strong>移動を実行</strong> - 「〇〇へ選択した記事を移動」ボタン（移動先は編集中の投稿タイプ自身）をクリックすると、AJAX で非同期に記事の <code>post_type</code> が変更され、完了状態が表示されます。</p>
 </div>
 </div>
 
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p>設定を保存すると、管理画面のメニュー構造が即座に反映されます。</p>
-</div>
-</div>
-
-<h2>カテゴリアイコン設定</h2>
-
-<p>カテゴリごとにアイコンを設定し、管理画面での視認性を向上させることができます。</p>
-
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>管理画面の <strong>カテゴリ管理</strong> タブを開きます。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p>アイコンを設定したいカテゴリを選択し、利用可能なアイコン一覧から選択します。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p><strong>保存</strong> をクリックすると、管理画面のカテゴリ一覧にアイコンが表示されます。</p>
-</div>
-</div>
-
-<h2>AJAXハンドラー一覧</h2>
-
-<p>本プラグインでは、20種類のAJAXハンドラーを使用してすべての管理操作を非同期で処理しています。すべてのハンドラーはnonce検証と<code>manage_options</code>権限チェックを行います。</p>
+<h3>移動時に保持される情報と変化する情報</h3>
 
 <table>
 <thead>
-<tr><th style="width:35%;">操作カテゴリ</th><th>内容</th></tr>
+<tr><th style="width:35%;">項目</th><th>動作</th></tr>
 </thead>
 <tbody>
-<tr><td>投稿タイプ管理</td><td>作成・編集・削除・一覧取得・詳細取得</td></tr>
-<tr><td>記事移行</td><td>移行元/先の選択・記事一覧取得・移行実行・進捗確認</td></tr>
-<tr><td>メニュー管理</td><td>メニュー割り当ての取得・更新</td></tr>
-<tr><td>カテゴリ管理</td><td>カテゴリ一覧取得・アイコン設定・アイコン削除</td></tr>
-<tr><td>パーマリンク管理</td><td>リライトルール更新・パーマリンクバリデーション</td></tr>
+<tr><td>タイトル（post_title）</td><td>変化なし</td></tr>
+<tr><td>本文（post_content）</td><td>変化なし</td></tr>
+<tr><td>スラッグ（post_name）</td><td>変化なし（同一スラッグをそのまま使用）</td></tr>
+<tr><td>投稿ステータス</td><td>変化なし（公開/下書き/予約投稿/非公開など）</td></tr>
+<tr><td>投稿日時</td><td>変化なし</td></tr>
+<tr><td>投稿者</td><td>変化なし</td></tr>
+<tr><td>メタデータ（post_meta）</td><td>変化なし</td></tr>
+<tr><td>タクソノミー関連付け</td><td>移動先の投稿タイプで同じタクソノミーが有効な場合は維持される。無効な場合は関連が切れる</td></tr>
+<tr><td>投稿タイプ（post_type）</td><td>変更される（移動先のタイプに書き換わる）</td></tr>
+<tr><td>URL</td><td>変更される（移動先の URL 構造に従う。親ディレクトリや url_slug が異なれば URL が変わる）</td></tr>
 </tbody>
 </table>
 
+<div class="callout callout-warning">
+<p class="callout-title">URL が変わることへの注意</p>
+<p>記事移動を実行すると、投稿の URL は移動先の投稿タイプの URL 構造に従って変わります。外部からのリンクや旧 URL でのアクセスは 404 になります。SEO への影響を最小化するためには、以下のいずれかの対策を検討してください：<br>
+（1）本プラグインの旧スラッグ追跡機能が該当するケース（同じ投稿タイプ内でのスラッグ変更）であれば 301 リダイレクトが自動成立しますが、投稿タイプそのものが変わる場合は該当しません。<br>
+（2）リダイレクト系プラグイン（Redirection など）で旧 URL → 新 URL のマッピングを手動追加してください。<br>
+（3）影響範囲が限定的なら、事前にリスクを把握した上で実行してください。</p>
+</div>
+
+<hr>
+
+<h2>保存・キャンセル</h2>
+
+<p>フォーム下部の <strong>「保存」</strong> ボタンをクリックすると、AJAX で <code>wp_ajax_kstb_save_post_type</code> エンドポイントに送信されます。保存成功後は以下が実行されます:</p>
+
+<ol>
+<li>DB の <code>wp_kstb_post_types</code> に新規挿入 or 更新</li>
+<li>内部キャッシュ <code>clear_cache()</code> を実行</li>
+<li><code>force_reregister_post_type()</code> で WordPress に即時再登録</li>
+<li><code>flush_rewrite_rules()</code> を 1 回実行してリライトルールを再生成（v1.0.25 で重複 flush 解消済）</li>
+<li>成功メッセージ表示</li>
+</ol>
+
+<p>キャンセル（<strong>「キャンセル」</strong> ボタン、または右上の「×」ボタン）をクリックすると、変更を破棄してフォームを閉じます。</p>
+
+<hr>
+
+<h2>カスタム投稿タイプ一覧の操作</h2>
+
+<figure class="screenshot">
+<img src="images/screenshots/03-cpt-list-columns.png" alt="カスタム投稿タイプ一覧" class="lightbox-trigger">
+<figcaption>「カスタム投稿タイプ一覧」タブ。既存の投稿タイプがテーブル形式で表示される。</figcaption>
+</figure>
+
+<p>一覧画面の各行には以下の列があります。</p>
+
+<table>
+<thead>
+<tr><th style="width:20%;">列</th><th>内容</th></tr>
+</thead>
+<tbody>
+<tr><td>ラベル</td><td>日本語ラベル</td></tr>
+<tr><td>投稿数</td><td>公開記事の件数（クリックで投稿一覧に遷移）</td></tr>
+<tr><td>パス</td><td>完全パス（親ディレクトリを含む）</td></tr>
+<tr><td>スラッグ</td><td>URL スラッグ（アーカイブ URL 付き）</td></tr>
+<tr><td>公開</td><td>public 設定の ON/OFF アイコン</td></tr>
+<tr><td>REST API</td><td>show_in_rest 設定の ON/OFF アイコン</td></tr>
+<tr><td>操作</td><td>編集・削除・再登録ボタン</td></tr>
+</tbody>
+</table>
+
+<h3>各操作ボタンの動作</h3>
+
+<table>
+<thead>
+<tr><th style="width:20%;">ボタン</th><th>AJAX エンドポイント</th><th>動作</th></tr>
+</thead>
+<tbody>
+<tr><td>編集</td><td>-</td><td>フォームを編集モードで開く。内部名 (slug) には直接の入力欄がないが、公開 URL スラッグ (url_slug) を変更すると hidden の内部名も自動再生成されて保存時に DB の <code>slug</code> カラムも更新されるため、「内部名を保持したい場合は url_slug を変更しない」点に注意。詳細は <a href="troubleshooting.html">トラブルシューティング</a>の FAQ 参照</td></tr>
+<tr><td>削除</td><td><code>wp_ajax_kstb_delete_post_type</code></td><td>投稿タイプの定義を削除。投稿データ自体は DB に残る。v1.0.25 からは削除時に <code>unregister_post_type()</code> を呼んでから <code>flush_rewrite_rules()</code> するため、通常のパーマリンクルートのゴーストは残らない（ただし独自 <code>add_rewrite_rule()</code> 由来のカスタムルールは現行バージョンでは残り得る、v1.1.0 で対応予定）</td></tr>
+<tr><td>再登録</td><td><code>wp_ajax_kstb_reregister_post_type</code></td><td>WordPress への登録を強制的に再実行。設定変更後に URL やメニューが反映されない場合に使用</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">削除時の注意</p>
+<p>投稿タイプを削除しても、その投稿タイプに属する投稿データは <code>wp_posts</code> テーブルに残ります。同じスラッグで投稿タイプを再作成すれば、投稿データは再び表示されます。完全に削除したい場合は、削除前に「記事移動」機能で別の投稿タイプに記事を移動するか、WordPress の管理画面から個別に投稿を削除してください。</p>
+</div>
+
+<hr>
+
+<h2>強制再登録（自動修復）</h2>
+
+<p>プラグインの読み込み順序や他プラグインとの相互作用により、稀にカスタム投稿タイプが正常に登録されないことがあります。本プラグインは初期化時に登録状態を自動チェックし、未登録の投稿タイプを検出すると <code>KSTB_Post_Type_Force_Register::force_register_all()</code> によって強制的に再登録します（自動修復）。</p>
+
+<p>手動で強制再登録するには、以下の方法があります:</p>
+
+<ul>
+<li>投稿タイプ一覧の各行にある <strong>「再登録」</strong> ボタンをクリック</li>
+<li><strong>設定 &gt; パーマリンク設定</strong> で「変更を保存」をクリック（リライトルールのフラッシュが発生）</li>
+</ul>
+
+<h2>WordPress 予約語との衝突回避</h2>
+
+<p>WordPress には <code>media</code>、<code>link</code>、<code>theme</code>、<code>plugin</code> などの予約語があり、これらを投稿タイプの内部スラッグに使うと標準機能と衝突して動作不良の原因になります。本プラグインは内部スラッグに予約語が指定された場合、自動的にプレフィックス変換などの回避処理を行い衝突を防ぎます。</p>
+
+<p>主な予約語: <code>media</code>, <code>link</code>, <code>links</code>, <code>theme</code>, <code>themes</code>, <code>plugin</code>, <code>plugins</code>, <code>user</code>, <code>users</code>, <code>option</code>, <code>options</code>, <code>comment</code>, <code>comments</code>, <code>admin</code>, <code>site</code>, <code>sites</code>, <code>network</code>, <code>dashboard</code>, <code>upload</code>, <code>edit</code>, <code>profile</code>, <code>tools</code>, <code>import</code>, <code>export</code>, <code>settings</code>, <code>update</code>, <code>menu</code>, <code>term</code>, <code>widget</code>, <code>widgets</code>。</p>
+
+<h2>REST API 対応</h2>
+
+<p>本プラグインで作成したカスタム投稿タイプは、デフォルトで REST API（<code>/wp-json/wp/v2/{slug}</code>）に対応します。これにより以下が可能になります:</p>
+
+<ul>
+<li>ブロックエディタ（Gutenberg）の自動動作</li>
+<li>外部システムからの投稿取得・作成（API 経由）</li>
+<li>フロントエンド SPA フレームワーク（React/Vue 等）との連携</li>
+</ul>
+
+<p>REST API 対応の可否は DB カラム <code>show_in_rest</code> の値に従います。現行バージョン（v1.0.25）の管理フォームは作成時に ON 固定ですが、必要に応じて直接 DB 値を編集することで切り替えできます。</p>
+
 <nav class="page-nav">
 <a href="setup.html" class="prev">&laquo; インストール・初期設定</a>
-<a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+<a href="hierarchical-urls.html" class="next">階層URL設計 &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.24</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
 
 </main>
 

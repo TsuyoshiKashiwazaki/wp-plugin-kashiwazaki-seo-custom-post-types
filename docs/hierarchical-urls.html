@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>階層URL設計 - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
+</nav>
+
+<main class="content">
+
+<h1>階層 URL 設計</h1>
+
+<p class="lead">本プラグインの中核機能。親ディレクトリ、親ページ選択、階層 URL の解決ロジック、アーカイブ表示制御の 4 モード、子階層を含むアーカイブ、旧スラッグ追跡、パーマリンク検証までを一括解説します。テーマ → サブトピック → 個別記事という意味的階層をサイト構造として設計するための機能群です。</p>
+
+<h2>なぜ階層 URL が SEO と GEO で意味を持つのか</h2>
+
+<p>WordPress 標準のカスタム投稿タイプは <code>/{slug}/{post_name}/</code> という単純な 2 階層構造しか持てません。これではサイト内のテーマの包含関係（「SEO というテーマの中の、技術的施策の中の、内部リンク戦略について」のような階層）を URL で表現できません。</p>
+
+<p>ただし、SEO（検索エンジン最適化）と GEO（生成エンジン最適化 / AI 検索最適化）では、URL 階層の意味する役割が少し異なります。</p>
+
+<table>
+<thead>
+<tr><th style="width:20%;">観点</th><th>URL 階層の機能的な貢献</th></tr>
+</thead>
+<tbody>
+<tr><td>SEO（検索エンジン / ユーザー）</td><td>検索エンジンのクローラーがサイト構造を把握する手がかり、ユーザーがパンくずやアドレスバーからコンテンツの位置関係を理解する助けになる。直接的な順位要因ではないが、内部リンク構造や重複排除などと組み合わせて評価される。</td></tr>
+<tr><td>GEO / LLMO（AI 検索）</td><td>AI がサブトピックを横断して引用する際に、同じサイト配下の関連コンテンツを辿りやすくなる。過去に参照された URL の到達性を維持する仕組み（canonical 制御、旧スラッグ追跡）と組み合わせることで、AI が引用した URL に継続してアクセスできる状態を保ちやすい。</td></tr>
+</tbody>
+</table>
+
+<p>本プラグインは、<strong>親ディレクトリ</strong>と<strong>公開 URL スラッグ</strong>を組み合わせることで、以下のような意味階層を持つ URL を構築できます。</p>
+
+<table>
+<thead>
+<tr><th style="width:38%;">URL の例</th><th>意味</th></tr>
+</thead>
+<tbody>
+<tr><td><code>/seo/</code></td><td>SEO というメインテーマのトップ（固定ページ or アーカイブ）</td></tr>
+<tr><td><code>/seo/internal-link-strategy/</code></td><td>SEO 配下のサブトピック「内部リンク戦略」のアーカイブ（スラッグトップページ設定に従う）</td></tr>
+<tr><td><code>/seo/internal-link-strategy/anchor-text-optimization/</code></td><td>「内部リンク戦略」配下の個別記事「アンカーテキスト最適化」</td></tr>
+</tbody>
+</table>
+
+<p>このような URL 階層は、検索エンジンとサイト訪問者の両方に対して、コンテンツの論理的な包含関係を視覚的に伝えます。構造的セマンティック・サチュレーション型の情報設計（特定のテーマについて意味空間を網羅していくアプローチ。詳細は<a href="index.html">概要ページ</a>参照）を WordPress 上で実装する際の基盤となります。</p>
+
+<h2>内部スラッグと公開 URL スラッグの分離</h2>
+
+<p>本プラグインの最重要設計のひとつが、<strong>内部スラッグ（slug）</strong>と<strong>公開 URL スラッグ（url_slug）</strong>の分離です。</p>
+
+<table>
+<thead>
+<tr><th style="width:25%;">識別子</th><th>役割</th><th>制限</th></tr>
+</thead>
+<tbody>
+<tr><td>内部スラッグ <code>slug</code></td><td>WordPress のシステム内部識別子。<code>register_post_type()</code> の第1引数。<code>$wp_post_types</code> グローバルのキー。データベース上の <code>post_type</code> フィールドの値。</td><td>半角英数字、最大 20 文字（WordPress コアの制限）</td></tr>
+<tr><td>公開 URL スラッグ <code>url_slug</code></td><td>実際のフロントエンド URL に表示される文字列。SEO キーワードを含む長い文字列を使える。</td><td>半角英数字・ハイフン・アンダースコア、最大 64 文字（本プラグイン独自の拡張）</td></tr>
+</tbody>
+</table>
+
+<p>例えば、「SEO 関連の最新ニュース記事」を扱う投稿タイプを作る場合:</p>
+
+<ul>
+<li>内部スラッグ: <code>seo_news</code>（短く、システム的、20 文字以内）</li>
+<li>公開 URL スラッグ: <code>seo-latest-news-and-trends</code>（長く、SEO キーワード重視、64 文字まで）</li>
+<li>結果の URL: <code>/seo-latest-news-and-trends/article-slug/</code></li>
+</ul>
+
+<p>このとき本プラグインは、内部的に <code>register_post_type('seo_news', ...)</code> として WordPress に登録しつつ、<code>add_rewrite_rule()</code> でカスタムリライトルールを追加し、URL <code>/seo-latest-news-and-trends/...</code> へのアクセスを <code>?post_type=seo_news&amp;name=...</code> に変換します。</p>
+
+<div class="callout callout-tip">
+<p class="callout-title">SEO キーワードを URL に含める価値</p>
+<p>検索エンジンのクローラーやユーザーは、URL に含まれるキーワードをページ内容理解の手がかりにする場合があります。WordPress 標準の 20 文字制限では「seo-news」程度しか入りませんが、本プラグインの 64 文字対応では「seo-latest-news-and-trends-2026」のような具体的なキーワードを URL に含められます。これが CTR やクロール効率に寄与する可能性はありますが、断定できる効果ではなく、本文品質やメタデータなど他の要素との組み合わせで評価されます。</p>
+</div>
+
+<h2>親ディレクトリの設定（parent_directory）</h2>
+
+<p>カスタム投稿タイプの「詳細設定」タブで <strong>「親ディレクトリ」</strong> 欄に親となる固定ページや別の CPT のスラッグを指定すると、その配下の URL 構造になります。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/06-hierarchy-archive-settings.png" alt="詳細設定タブ：親ディレクトリと階層・アーカイブ設定" class="lightbox-trigger">
+<figcaption>詳細設定タブ。親ディレクトリ、階層構造、スラッグトップページ、アーカイブの表示モード、子階層を含む設定などを一括管理する。</figcaption>
+</figure>
+
+<table>
+<thead>
+<tr><th style="width:38%;">親ディレクトリ設定</th><th>結果の URL 構造</th></tr>
+</thead>
+<tbody>
+<tr><td>未設定</td><td><code>/{url_slug}/{post_name}/</code></td></tr>
+<tr><td><code>seo</code> を指定</td><td><code>/seo/{url_slug}/{post_name}/</code></td></tr>
+<tr><td><code>blog/category/seo</code> を指定（多段）</td><td><code>/blog/category/seo/{url_slug}/{post_name}/</code></td></tr>
+</tbody>
+</table>
+
+<h3>build_full_path() による多段パス解決</h3>
+
+<p>親ディレクトリが他のカスタム投稿タイプを指している場合（CPT → CPT 親子関係）、<code>build_full_path()</code> が再帰的に CPT の親子チェーンをたどって完全なパスを構築します。</p>
+
+<p>一方、親ディレクトリに固定ページを指定した場合は、WordPress の <code>get_page_uri()</code> で得られる固定ページのフルパス（例: <code>/parent-page/child-page/</code>）が <code>parent_directory</code> カラムにそのまま保存され、CPT 側の再帰解決は走りません（固定ページの階層は WordPress コアが管理しているため）。</p>
+
+<p>いずれの場合でも、WordPress コアの canonical redirect は本プラグインの対象 CPT に対して無効化され、構築した階層 URL がそのまま正規 URL として使われます。</p>
+
+<h2>親ページ選択メタボックス</h2>
+
+<p>投稿の編集画面を開くと、右サイドバーに <strong>「親ページ選択 &amp; スラッグ編集」</strong> メタボックスが表示されます。ここで個別の投稿に対して親ページを指定できます。</p>
+
+<h3>2 種類の親子関係</h3>
+
+<table>
+<thead>
+<tr><th style="width:30%;">親子関係の種類</th><th>使い方</th></tr>
+</thead>
+<tbody>
+<tr><td>同じ投稿タイプ内の親子（<code>post_parent</code>）</td><td>投稿タイプの「階層構造」を ON にすると有効。固定ページのように、同型投稿同士で親子関係を持てる。WordPress 標準の階層機能を使用。</td></tr>
+<tr><td>異なる投稿タイプとの親子（<code>_kstb_parent_page</code> メタ）</td><td>固定ページや別の CPT を親にできる。本プラグイン独自の仕組み。例: 固定ページ「SEO」を親にして、カスタム投稿タイプ「事例紹介」を配置する。</td></tr>
+</tbody>
+</table>
+
+<h3>親ページの検索（AJAX インクリメンタル）</h3>
+
+<p>親ページ選択メタボックス内の検索欄に 2 文字以上を入力すると、AJAX で固定ページや投稿が即座に検索され、候補が表示されます。タイトルでフィルタリング可能です。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">v1.0.25 の改善</p>
+<p>v1.0.25 で、親ページ選択時の <code>post_name</code> / <code>post_parent</code> の更新が <code>$wpdb->update()</code> 直接書き込みから <code>wp_update_post()</code> 経由に変更されました。これにより WordPress 標準のスラッグ一意化、親子循環チェック、<code>save_post</code> / <code>post_updated</code> フックが正しく実行されるようになり、自分自身を親にしたり子孫を親にする不正な状態が防止されるようになりました。</p>
+</div>
+
+<h2>階層 URL のリクエスト解決ロジック</h2>
+
+<p>フロントエンドで <code>/seo/internal-link-strategy/anchor-text-optimization/</code> のような階層 URL にアクセスがあったとき、本プラグインは以下の流れで処理します。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>カスタムリライトルールのマッチ</strong> - <code>register_single_post_type()</code> 内で登録された <code>add_rewrite_rule()</code> により、URL <code>^seo/internal-link-strategy/([^/]+)/?$</code> が <code>?post_type={internal_slug}&amp;name=$matches[1]</code> に変換される。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>request フィルタの解決</strong> - <code>KSTB_Post_Type_Registrar::resolve_hierarchical_request()</code> が WordPress の <code>request</code> フィルタで階層 URL を解析し、適切な投稿タイプとスラッグに変換する。階層情報の伝達に必要なクエリ変数（<code>kstb_parent_slug</code> など）は、リライトルール側で別途追加されている。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>パーマリンク検証</strong> - <code>KSTB_Permalink_Validator</code> がアクセスされた URL が当該投稿の正しい canonical URL かをチェック。不正な親パス経由なら 404 を返す（重複コンテンツの防止）。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p><strong>canonical redirect の無効化</strong> - WordPress 標準の正規化リダイレクトは本プラグインの階層 URL を意図せず短い形式に redirect しようとするため、対象 CPT に対しては無効化される。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">5</span>
+<div class="step-body">
+<p><strong>get_permalink() の出力書き換え</strong> - <code>post_type_link</code> フィルタ（<code>KSTB_Post_Type_Registrar::hierarchical_post_type_link()</code> メソッド）により、テンプレート内の <code>get_permalink()</code> が階層 URL を返すよう書き換えられる。</p>
+</div>
+</div>
+
+<h2>アーカイブ表示制御の 4 モード</h2>
+
+<p>「詳細設定」タブの <strong>「スラッグトップページ」</strong> 設定で、投稿タイプアーカイブの URL（<code>/{url_slug}/</code>）にアクセスされたときの動作を 4 モードから選択できます。</p>
+
+<table>
+<thead>
+<tr><th style="width:25%;">モード</th><th>動作</th><th>使い分け</th></tr>
+</thead>
+<tbody>
+<tr><td><code>default</code><br>（指定なし）</td><td>アーカイブ URL に一致するパスの固定ページや通常投稿があればそれを表示、なければ 404。WordPress 標準のアーカイブテンプレートを強制表示するわけではない。</td><td>WordPress 標準の挙動を保ちたい場合、あるいは同名の固定ページを fallback として使いたい場合。</td></tr>
+<tr><td><code>post_list</code><br>（投稿リスト）</td><td>投稿タイプの記事一覧を強制的にアーカイブテンプレートで表示。</td><td>常に投稿一覧を表示したい場合。最も一般的な選択。</td></tr>
+<tr><td><code>custom_page</code><br>（固定ページ）</td><td>指定した固定ページの内容をアーカイブ URL で表示。アーカイブ自体は記事一覧ではなく、テーマのハブページとして使える。</td><td>テーマ全体の解説ページや LP として使いたい場合。SEO/GEO のハブページ戦略に有効。</td></tr>
+<tr><td><code>none</code><br>（表示しない）</td><td>アーカイブを完全に無効化。アーカイブ URL にアクセスすると強制 404（固定ページ fallback もしない）。</td><td>カスタム投稿タイプのアーカイブを使わず、完全にアクセス不能にしたい場合。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<p class="callout-title">テーマ・ハブページ戦略のヒント</p>
+<p><code>custom_page</code> モードでは、アーカイブ URL（<code>/seo/</code> 等）に「SEO 全体の概要を解説する固定ページ」を割り当てつつ、配下のサブトピック CPT 記事は <code>/seo/internal-link-strategy/...</code> のように展開できます。「テーマトップ → サブトピック → 個別記事」という構造的セマンティック・サチュレーション型の情報設計を URL 構造として表現するための選択肢のひとつになります。</p>
+</div>
+
+<h2>子階層を含むアーカイブ（archive_include_children）</h2>
+
+<p>「アーカイブを含む」設定で <strong>「子階層の投稿タイプの記事も含める」</strong> をチェックすると、親階層のアーカイブが配下のサブトピック CPT の記事を自動的に含めて表示します。</p>
+
+<p>例: 「SEO」アーカイブを開くと、「SEO/internal-link-strategy/」「SEO/keyword-research/」など配下のすべての CPT 記事が一覧表示されます。これにより、親階層のアーカイブが「テーマに関するコンテンツのハブ」として機能します。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">技術的な仕組み</p>
+<p><code>KSTB_Archive_Controller::get_child_post_type_slugs()</code> が再帰的に子階層 CPT を収集し、投稿タイプアーカイブ（<code>is_post_type_archive()</code>）のメインクエリで <code>post_type</code> を配列に置き換えます。対応範囲は投稿タイプアーカイブのメインクエリが中心で、検索結果やフィードへ自動的に反映される機能は実装されていません（それらで子階層 CPT を含めたい場合は別途実装が必要です）。この機能は <code>archive_display_type</code> が <code>post_list</code> のときのみ有効です（v1.0.21 以降）。</p>
+</div>
+
+<h2>旧スラッグ追跡（301 リダイレクト対応）</h2>
+
+<p>WordPress コアは、階層構造を持つ投稿タイプ（hierarchical=true）に対して <code>_wp_old_slug</code> メタ（旧スラッグの履歴）を保存しません。これは固定ページとカスタム投稿タイプの階層的な扱いの違いに起因する、コアの仕様上の制限です。</p>
+
+<p>本プラグインの <code>KSTB_Old_Slug_Tracker</code> は、この欠落を補完し、階層的 CPT の <strong>個別投稿のスラッグ（<code>post_name</code>）</strong> が変更されたときに <code>_wp_old_slug</code> を自動保存します。これにより、WordPress 標準の <code>wp_old_slug_redirect()</code> が動作し、旧 URL から新 URL への 301 リダイレクトが成立するようになります。</p>
+
+<div class="callout callout-warning">
+<p class="callout-title">補足: 対応範囲の限定</p>
+<p>この旧スラッグ追跡は「個別投稿の post_name 変更」のみに反応します。投稿タイプ自体の <code>url_slug</code>（公開 URL スラッグ）の変更や、<code>parent_directory</code>（親ディレクトリ）の変更によって URL 構造が変わる場合は、この機能だけでは旧 URL からの到達性は担保されません。その場合は Redirection などの別リダイレクトプラグインや <code>.htaccess</code> での対応が必要です。</p>
+</div>
+
+<div class="callout callout-tip">
+<p class="callout-title">個別投稿スラッグ変更時の URL 到達性</p>
+<p>個別投稿のスラッグを変更した際、この旧スラッグ追跡機能により、旧 URL は 301 リダイレクトで新 URL に転送されます。過去の URL の到達性を維持する助けになる機能です（検索エンジンの再評価や順位への影響は検索エンジンの判断によります）。</p>
+</div>
+
+<h2>パーマリンク検証（不正な親経由を 404）</h2>
+
+<p>例えば、本来 <code>/seo/internal-link-strategy/article/</code> でアクセスされるべき記事に対し、誰かが <code>/blog/internal-link-strategy/article/</code> という不正な親パスでアクセスしてきた場合、本プラグインの <code>KSTB_Permalink_Validator</code> は 404 を返します。これは以下の目的があります。</p>
+
+<ul>
+<li><strong>重複コンテンツの防止</strong> - 同じ記事が複数の URL で表示されると、検索エンジンが評価を分散させてしまう。</li>
+<li><strong>意図的なリダイレクトループの回避</strong> - WordPress 標準の canonical redirect が誤って動作するケースを防ぐ。</li>
+<li><strong>URL 構造の一貫性の維持</strong> - 親ディレクトリの設定通りの URL のみを正規 URL として扱う。</li>
+</ul>
+
+<h2>セマンティック・サチュレーション型情報設計との対応</h2>
+
+<p>本プラグインの階層 URL 機能群を組み合わせると、特定のテーマについて意味空間を網羅する情報設計を以下のように実装できます。</p>
+
+<table>
+<thead>
+<tr><th style="width:30%;">設計の段階</th><th>具体的な操作</th></tr>
+</thead>
+<tbody>
+<tr><td>① テーマトップを置く</td><td>固定ページで「SEO」を作成し、URL を <code>/seo/</code> にする。テーマの全体像と目次を記述。</td></tr>
+<tr><td>② サブトピックを CPT として作る</td><td>カスタム投稿タイプ「内部リンク戦略」を作成。親ディレクトリに <code>seo</code> を指定し、URL スラッグを <code>internal-link-strategy</code> にする。</td></tr>
+<tr><td>③ アーカイブをハブ化する</td><td>サブトピックの「スラッグトップページ」を <code>custom_page</code> モードにし、サブトピック解説ページを割り当てる。あるいは <code>post_list</code> + <code>archive_include_children</code> で配下記事を一覧化する。</td></tr>
+<tr><td>④ 個別記事を縦深掘り</td><td>サブトピック配下に個別記事（<code>/seo/internal-link-strategy/anchor-text/</code> など）を作成。サブトピックでの潜在ニーズまで網羅。</td></tr>
+<tr><td>⑤ 親テーマアーカイブで網羅性を可視化</td><td>「SEO」テーマトップで、配下のサブトピック CPT 記事を <code>archive_include_children</code> で集約表示。テーマ全体のコンテンツ網羅性を可視化。</td></tr>
+<tr><td>⑥ URL の到達性を維持</td><td>個別投稿の post_name 変更時は旧スラッグ追跡で自動 301 リダイレクトが働く。ただし url_slug（公開 URL スラッグ）や parent_directory の変更で URL 構造自体が変わる場合は、Redirection など別のリダイレクト手段で補う必要がある。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">構造化データは別途必要</p>
+<p>本プラグインは <code>BreadcrumbList</code> や <code>Article</code> などの JSON-LD 構造化データを出力しません。階層 URL とパンくずリストの構造化データを検索エンジンに明示的に伝えるには、対応するテーマや SEO プラグイン（Yoast SEO、Rank Math、SEO SIMPLE PACK など）の併用が推奨されます。</p>
+</div>
+
+<nav class="page-nav">
+<a href="post-type-management.html" class="prev">&laquo; 投稿タイプ管理</a>
+<a href="menu-and-category.html" class="next">メニュー・カテゴリー &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

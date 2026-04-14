@@ -24,81 +24,45 @@ class KSTB_Post_Type_Force_Register {
 
     /**
      * 投稿タイプオブジェクトを強制的に登録
+     *
+     * v1.0.25 HIGH-2 修正:
+     *   旧実装は通常登録 (KSTB_Post_Type_Registrar::register_single_post_type) と異なる引数を生成しており、
+     *   url_slug / parent_directory / build_full_path / カスタム rewrite rule / 親メニュー設定が反映されず
+     *   階層 URL を破壊していた。v1.0.25 で通常登録パスへ統合する。
+     *
+     * v1.0.25 MEDIUM-5 修正:
+     *   ここでは flush_rewrite_rules() を呼ばない。flush は呼び出し元 (AJAX 層 / 自動修復処理) で実施する。
+     *
+     * @param object $post_type DB 行オブジェクト
+     * @return true|WP_Error
      */
     public static function force_register($post_type) {
-        $labels = json_decode($post_type->labels, true);
-        $supports = json_decode($post_type->supports, true);
-
-        if (empty($labels) || !is_array($labels)) {
-            $labels = array();
+        if (empty($post_type) || empty($post_type->slug)) {
+            return new WP_Error('invalid_post_type', 'Invalid post type object');
         }
 
-        // 必須ラベルの補完
-        if (empty($labels['name'])) $labels['name'] = $post_type->label;
-        if (empty($labels['singular_name'])) $labels['singular_name'] = $post_type->label;
-        if (empty($labels['menu_name'])) $labels['menu_name'] = $post_type->label;
-        if (empty($labels['name_admin_bar'])) $labels['name_admin_bar'] = $post_type->label;
-        if (empty($labels['add_new'])) $labels['add_new'] = __('新規追加', 'kashiwazaki-seo-type-builder');
-        if (empty($labels['add_new_item'])) $labels['add_new_item'] = sprintf(__('新規%sを追加', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['new_item'])) $labels['new_item'] = sprintf(__('新規%s', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['edit_item'])) $labels['edit_item'] = sprintf(__('%sを編集', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['view_item'])) $labels['view_item'] = sprintf(__('%sを表示', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['all_items'])) $labels['all_items'] = sprintf(__('すべての%s', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['search_items'])) $labels['search_items'] = sprintf(__('%sを検索', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['not_found'])) $labels['not_found'] = sprintf(__('%sが見つかりません', 'kashiwazaki-seo-type-builder'), $post_type->label);
-        if (empty($labels['not_found_in_trash'])) $labels['not_found_in_trash'] = sprintf(__('ゴミ箱に%sが見つかりません', 'kashiwazaki-seo-type-builder'), $post_type->label);
-
-        if (empty($supports) || !is_array($supports)) {
-            $supports = array('title', 'editor');
-        }
-
-        $args = array(
-            'label' => $post_type->label,
-            'labels' => $labels,
-            'public' => true, // 強制的にtrue
-            'publicly_queryable' => true,
-            'show_ui' => true,
-            'show_in_menu' => true,
-            'query_var' => true,
-            'rewrite' => array('slug' => $post_type->slug),
-            'capability_type' => 'post',
-            'has_archive' => (bool) $post_type->has_archive,
-            'hierarchical' => (bool) $post_type->hierarchical,
-            'menu_position' => $post_type->menu_position ? (int) $post_type->menu_position : 5,
-            'menu_icon' => $post_type->menu_icon ? $post_type->menu_icon : 'dashicons-admin-post',
-            'supports' => $supports,
-            'show_in_rest' => true,
-            'rest_base' => $post_type->rest_base ? $post_type->rest_base : $post_type->slug
-        );
-
-        // 既存の投稿タイプを削除してから再登録
+        // 既存の登録があれば unregister（permastruct / query var / hooks 等を正規にクリーンアップ）
         if (post_type_exists($post_type->slug)) {
             unregister_post_type($post_type->slug);
         }
 
-        $result = register_post_type($post_type->slug, $args);
+        // 通常登録ロジックに統合 ($force=true で post_type_exists ガードをスキップ)
+        $registrar = KSTB_Post_Type_Registrar::get_instance();
+        $registrar->register_single_post_type($post_type, true);
 
-        if (is_wp_error($result)) {
-            return $result;
+        // register_single_post_type() は void のため、登録成功は post_type_exists() で判定する
+        if (!post_type_exists($post_type->slug)) {
+            return new WP_Error('register_failed', sprintf('Failed to register post type: %s', $post_type->slug));
         }
-
-        // タクソノミーも登録
-        if ($post_type->taxonomies) {
-            $taxonomies = json_decode($post_type->taxonomies, true);
-            if (is_array($taxonomies)) {
-                foreach ($taxonomies as $taxonomy) {
-                    register_taxonomy_for_object_type($taxonomy, $post_type->slug);
-                }
-            }
-        }
-
-        flush_rewrite_rules();
 
         return true;
     }
 
     /**
      * すべての投稿タイプを強制的に再登録
+     *
+     * v1.0.25 MEDIUM-5: 全件再登録後に flush を 1 回だけ呼び出す。
+     * 旧実装は force_register 内で毎回 flush していた (N 回 flush)。
      */
     public static function force_register_all() {
         $post_types = KSTB_Database::get_all_post_types();
@@ -110,5 +74,7 @@ class KSTB_Post_Type_Force_Register {
         foreach ($post_types as $post_type) {
             self::force_register($post_type);
         }
+
+        flush_rewrite_rules();
     }
 }

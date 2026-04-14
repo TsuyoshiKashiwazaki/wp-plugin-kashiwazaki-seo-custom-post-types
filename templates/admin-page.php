@@ -602,6 +602,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                 </td>
                                 <td class="column-actions">
                                     <button type="button" class="button kstb-edit-button" data-id="<?php echo esc_attr($post_type->id); ?>">編集</button>
+                                    <button type="button" class="button kstb-reregister-button" data-id="<?php echo esc_attr($post_type->id); ?>" data-slug="<?php echo esc_attr($post_type->slug); ?>" title="WordPress への登録を強制的に再実行します">再登録</button>
                                     <button type="button" class="button kstb-delete-button" data-id="<?php echo esc_attr($post_type->id); ?>">削除</button>
                                 </td>
                             </tr>
@@ -728,46 +729,29 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                 </div>
 
                 <!-- 説明書タブ -->
+                <!-- v1.0.25: docs/post-type-management.html を単一の真実源とし、admin から動的に読み込む -->
                 <div id="kstb-main-tab-guide" class="kstb-main-tab-content">
                     <h3 style="margin-top: 10px;">💡 カスタム投稿タイプの作成ガイド</h3>
-
-                    <h4>📝 必須項目</h4>
-                    <ul style="margin-left: 20px;">
-                        <li><strong>スラッグ</strong> <span class="required">* 必須</span> - URL に使用される一意の識別子（半角英数字とハイフン）</li>
-                        <li><strong>ラベル</strong> <span class="required">* 必須</span> - 管理画面で表示される名前</li>
-                    </ul>
-                    <p style="margin-left: 20px;"><em>その他の項目はすべて任意です（デフォルト値が設定されています）</em></p>
-
-                    <h4>🔧 主な設定項目</h4>
-                    <ul style="margin-left: 20px;">
-                        <li><strong>親ディレクトリ</strong> - 階層URL構造を作成（例：<code>/親ディレクトリ/スラッグ/</code>）</li>
-                        <li><strong>アーカイブページ</strong> - 投稿一覧ページの表示を制御</li>
-                        <li><strong>スラッグトップページ</strong> - アーカイブ無効時の表示内容を選択</li>
-                        <li><strong>階層化</strong> - 投稿に親子関係を持たせる（固定ページと同様）</li>
-                    </ul>
-
-                    <h4>📋 ラベルの自動生成</h4>
-                    <p style="margin-left: 20px;">
-                        「ラベル」タブの各項目は、基本設定の「ラベル」から自動的に生成されます。<br>
-                        通常は編集する必要はありませんが、より細かくカスタマイズしたい場合に使用できます。
-                    </p>
-
-                    <h4>🔄 記事移動機能について</h4>
-                    <p style="margin-left: 20px;">
-                        「記事移動」タブは、既存の投稿タイプを編集する際に表示されます。<br>
-                        他の投稿タイプから記事を一括移動できますが、<strong>URLが変更される</strong>ため慎重に実行してください。
-                    </p>
-
-                    <h4>⚙️ 高度な設定</h4>
-                    <ul style="margin-left: 20px;">
-                        <li><strong>サポート機能</strong> - タイトル、エディター、アイキャッチ画像などの機能を選択</li>
-                        <li><strong>タクソノミー</strong> - カテゴリーやタグとの関連付け</li>
-                        <li><strong>メニュー位置</strong> - 管理画面メニューの表示順序（5〜100、デフォルト：25）</li>
-                    </ul>
-
-                    <p style="margin: 15px 20px 5px 20px; font-size: 13px; color: #666;">
-                        詳しい使い方は <a href="https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types" target="_blank">GitHub リポジトリ</a> をご覧ください。
-                    </p>
+                    <?php
+                    $docs_content = KSTB_Admin::get_instance()->get_docs_content('post-type-management.html');
+                    if (!empty($docs_content)) {
+                        // docs/ から正常に読み込めた場合: そのまま出力 (HTML はプラグイン同梱の既知ソース)
+                        echo $docs_content;
+                        ?>
+                        <p style="margin: 15px 0 5px 0; font-size: 13px; color: #666;">
+                            詳しい使い方は <a href="<?php echo esc_url(KSTB_PLUGIN_URL . 'docs/index.html'); ?>" target="_blank" rel="noopener">完全版マニュアル</a> をご覧ください。
+                        </p>
+                        <?php
+                    } else {
+                        // フォールバック: docs/ が読み込めない場合は最小限のガイドとリンクを表示
+                        ?>
+                        <p>カスタム投稿タイプの作成方法・各設定項目の説明は、同梱マニュアルをご覧ください。</p>
+                        <p style="margin: 15px 0 5px 0;">
+                            <a href="<?php echo esc_url(KSTB_PLUGIN_URL . 'docs/post-type-management.html'); ?>" class="button button-primary" target="_blank" rel="noopener">📘 投稿タイプ管理マニュアルを開く</a>
+                        </p>
+                        <?php
+                    }
+                    ?>
                 </div>
             </div>
         </div>
@@ -954,9 +938,9 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                                 <td>
                                     <label><input type="checkbox" name="hierarchical" value="1"> 階層化（親子関係を有効化）</label>
                                     <p class="description">
-                                        <strong>親子関係を持たせる場合にチェック</strong><br>
-                                        チェックすると、編集画面で親ページを選択できるようになります。<br>
-                                        固定ページ、投稿ページ、カスタム投稿ページから親を選択可能です。
+                                        <strong>同じ投稿タイプ内で親子関係を持たせる場合にチェック</strong><br>
+                                        ON にすると WordPress 標準の「ページ属性」メタボックスが有効になり、同じ投稿タイプ内の投稿を親として選択可能になります（<code>post_parent</code> が使われます）。<br>
+                                        <strong>※ 親ディレクトリ (固定ページや他 CPT を親にする階層 URL 構築) の設定は、このチェックとは独立した「親ページ選択 &amp; スラッグ編集」メタボックスから行います。このメタボックスは hierarchical の ON/OFF に関係なく常に表示されます。</strong>
                                     </p>
                                 </td>
                             </tr>

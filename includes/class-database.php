@@ -8,6 +8,19 @@ class KSTB_Database {
     private static $table_name = 'kstb_post_types';
     private static $categories_table_name = 'kstb_menu_categories';
 
+    // v1.0.25 MEDIUM-1: CRUD 後に外部から無効化可能なクラスプロパティキャッシュ
+    private static $all_post_types_cache = null;
+    private static $slug_cache = array();
+
+    /**
+     * クラスプロパティキャッシュを全てクリア
+     * insert/update/delete 後に呼ぶ
+     */
+    public static function clear_cache() {
+        self::$all_post_types_cache = null;
+        self::$slug_cache = array();
+    }
+
     public static function get_table_name() {
         global $wpdb;
         return $wpdb->prefix . self::$table_name;
@@ -351,11 +364,9 @@ class KSTB_Database {
     }
 
     public static function get_all_post_types() {
-        // キャッシュから取得を試みる
-        static $cache = null;
-
-        if ($cache !== null) {
-            return $cache;
+        // v1.0.25 MEDIUM-1: クラスプロパティキャッシュ（clear_cache() で無効化可能）
+        if (self::$all_post_types_cache !== null) {
+            return self::$all_post_types_cache;
         }
 
         global $wpdb;
@@ -374,8 +385,7 @@ class KSTB_Database {
             }
         }
 
-        // 結果をキャッシュ
-        $cache = $results;
+        self::$all_post_types_cache = $results;
 
         return $results;
     }
@@ -399,11 +409,9 @@ class KSTB_Database {
     }
 
     public static function get_post_type_by_slug($slug) {
-        // キャッシュから取得を試みる
-        static $cache = array();
-
-        if (isset($cache[$slug])) {
-            return $cache[$slug];
+        // v1.0.25 MEDIUM-1: クラスプロパティキャッシュ（clear_cache() で無効化可能）
+        if (array_key_exists($slug, self::$slug_cache)) {
+            return self::$slug_cache[$slug];
         }
 
         global $wpdb;
@@ -420,8 +428,7 @@ class KSTB_Database {
             $result->label = ucfirst($result->slug);
         }
 
-        // 結果をキャッシュ
-        $cache[$slug] = $result;
+        self::$slug_cache[$slug] = $result;
 
         return $result;
     }
@@ -489,7 +496,10 @@ class KSTB_Database {
         );
 
         if ($result) {
-            flush_rewrite_rules();
+            self::clear_cache();
+            // v1.0.25 MEDIUM-5: flush は呼び出し元 (AJAX 層) で 1 回だけ実施する。
+            // 旧実装ではここで flush していたが、その時点ではまだ register_post_type() が
+            // 走っていないため stale 状態で flush され、AJAX 側の register/flush と二重になる。
         }
 
         return $result;
@@ -593,11 +603,9 @@ class KSTB_Database {
         );
 
         if ($result !== false) {
-            // has_archiveが変更された場合は確実にパーマリンクをフラッシュ
-            if (isset($update_data['has_archive'])) {
-                delete_option('rewrite_rules');
-            }
-            flush_rewrite_rules();
+            self::clear_cache();
+            // v1.0.25 MEDIUM-5: flush は呼び出し元 (AJAX 層) で 1 回だけ実施する。
+            // v1.0.25 MEDIUM-9: 旧実装の delete_option('rewrite_rules') は race condition を生むため削除済み。
         }
 
         return $result;
@@ -614,7 +622,9 @@ class KSTB_Database {
         );
 
         if ($result !== false && $result > 0) {
-            flush_rewrite_rules();
+            self::clear_cache();
+            // v1.0.25 MEDIUM-5: unregister_post_type / flush_rewrite_rules は呼び出し元 (AJAX 層) で実施する。
+            // NEW-1 のゴーストルール対策（unregister_post_type → flush）も AJAX 層に集約された。
         }
 
         return $result;

@@ -12,6 +12,7 @@
             $('.kstb-add-new-button').on('click', this.showNewForm);
             $('.kstb-edit-button').on('click', this.editPostType);
             $('.kstb-delete-button').on('click', this.deletePostType);
+            $('.kstb-reregister-button').on('click', this.reregisterPostType);
             $('.kstb-cancel-button').on('click', this.hideForm);
             $('.kstb-close-button').on('click', this.hideForm);
             $('#kstb-post-type-form').on('submit', this.savePostType);
@@ -144,6 +145,38 @@
                     } else {
                         KSTB.showNotice(response.data, 'error');
                     }
+                }
+            });
+        },
+
+        reregisterPostType: function () {
+            var $btn = $(this);
+            var id = $btn.data('id');
+            var slug = $btn.data('slug');
+            if (!confirm('投稿タイプ「' + slug + '」を WordPress に強制再登録しますか？\n\nunregister_post_type() → register_post_type() の順で実行し、リライトルールも再フラッシュされます。')) {
+                return;
+            }
+            $btn.prop('disabled', true).text('再登録中...');
+            $.ajax({
+                url: kstb_ajax.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'kstb_reregister_post_type',
+                    id: id,
+                    nonce: kstb_ajax.nonce
+                },
+                success: function (response) {
+                    if (response.success) {
+                        KSTB.showNotice((response.data && response.data.message) || '再登録しました', 'success');
+                    } else {
+                        KSTB.showNotice((response.data && response.data.message) || response.data || '再登録に失敗しました', 'error');
+                    }
+                },
+                error: function () {
+                    KSTB.showNotice('通信エラーが発生しました', 'error');
+                },
+                complete: function () {
+                    $btn.prop('disabled', false).text('再登録');
                 }
             });
         },
@@ -868,7 +901,7 @@
 
             var row = '<tr>' +
                 '<td style="text-align: center;">' +
-                '<span class="dashicons ' + icon + '" style="font-size: 32px; width: 32px; height: 32px; cursor: pointer;" ' +
+                '<span class="dashicons ' + icon + '" style="font-size: 20px; width: 20px; height: 20px; cursor: pointer;" ' +
                 'class="kstb-change-icon-btn" data-category="' + category.name + '" title="アイコンを変更"></span>' +
                 '</td>' +
                 '<td><strong>' + category.name + '</strong></td>' +

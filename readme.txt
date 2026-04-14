@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.24
+Stable tag: 1.0.25
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,26 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.25 =
+* Fix: public/publicly_queryable/show_ui/show_in_menu/query_var/show_in_rest の設定が無視されていた問題を修正（登録時に DB 値を反映）
+* Fix: チェックボックスを外した場合に設定が保存されないバグを修正
+* Fix: CRUD 後に静的キャッシュが無効化されず古いデータが返る問題を修正
+* Fix: delete_option('rewrite_rules') と flush_rules() の間のレースコンディションを修正
+* Fix: カスタム投稿タイプ削除時に通常 permastruct 由来のリライトルールがゴーストとして残存する問題を修正（unregister_post_type → flush_rewrite_rules 順序、rewrite rule を WordPress 標準形式に統一）。注: 独自 add_rewrite_rule() 由来のカスタムルールは v1.1.0 で対応予定
+* Fix: 強制登録ヘルパーが通常登録ロジックと乖離していた問題を修正（url_slug / parent_directory / 階層 URL が正しく反映されるように統合）
+* Fix: 投稿タイプ保存時の再登録パスが通常登録と乖離していた問題を修正（unregister_post_type() を呼ばずに $wp_post_types を unset するだけだった旧実装を改修）
+* Fix: validate_permalink() で allow_shortlink=ON 設定が無視され、短縮 URL でアクセスしても常に正規 URL へ 301 リダイレクトされていた実装バグを修正（ON 時はリダイレクトせず仕様通りに動作）
+* Fix: KSTB_Parent_Selector::clear_parent_cache() で wp_cache_flush_group() を無条件呼び出ししていた問題を修正（function_exists ガードを追加し WP 5.0+ 互換を維持。WP 6.1+ では従来通り group flush が動作）
+* Fix: 投稿タイプ保存 1 回で flush_rewrite_rules() が 3 回実行されていた問題を修正（1 回に整理）
+* Fix: 親ページ選択時に post_name / post_parent を直接 DB 更新していた問題を修正（wp_update_post 経由で WordPress 標準の slug 一意化・親子循環チェックが走るように改修）
+* Fix: $_POST / $_GET の文字列入力に wp_unslash() を適用（O'Reilly のような入力が文字化けする問題を解消）
+* Fix: 親ページ検索結果の JS で raw post_title を innerHTML に挿入していた問題を修正（textContent + createElement で DOM-based XSS を防御）
+* Add: 管理画面の CPT 一覧に「再登録」ボタンを追加（既存 AJAX エンドポイント wp_ajax_kstb_reregister_post_type を呼び出し、unregister → register → flush を 1 クリックで実行可能に）
+* Change: 管理画面の「説明書」タブを docs/post-type-management.html の動的読み込み方式に変更（マニュアルの二重管理を解消）。docs 用の CSS も admin 内で表示できるよう scope 付きで admin.css に追加
+* Change: 階層化チェックボックスの説明文を訂正（hierarchical は同一投稿タイプ内の親子関係を有効化する設定で、親ディレクトリ用メタボックスは hierarchical の ON/OFF に関係なく常に表示される旨を明記）
+* Change: メニューカテゴリーアイコンプレビューの表示サイズを 32px から 20px に変更（サイドメニューの実表示サイズと一致）
+* Docs: docs/ 配下を 6 ページ構成に全面改訂。hierarchical-urls.html / menu-and-category.html を新規追加。troubleshooting.html を全面書き直し。Claude / Codex / Gemini (gemini-3.1-pro-preview) の三者協議で実装と完全一致するよう検証済み
 
 = 1.0.24 =
 * Fix: 管理画面テンプレートの `$missing_in_wp` 出力に esc_html() を追加

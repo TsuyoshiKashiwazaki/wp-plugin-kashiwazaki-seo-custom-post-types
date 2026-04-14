@@ -4,148 +4,173 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>インストール・初期設定 - Kashiwazaki SEO Custom Post Types マニュアル</title>
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.24</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
-<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
 </nav>
 
 <main class="content">
 
 <h1>インストール・初期設定</h1>
 
-<p class="lead">Kashiwazaki SEO Custom Post Types のインストールから初期設定までの手順を説明します。外部依存がないため、プラグインを有効化するだけですぐにカスタム投稿タイプの管理を開始できます。</p>
+<p class="lead">プラグインのインストールから、管理画面への入口確認、初期データベースの作成、最初のカスタム投稿タイプを作成する準備までを、ステップバイステップで解説します。</p>
 
-<h2>インストール方法</h2>
-
-<h3>方法1: WordPress管理画面からインストール</h3>
+<h2>インストール手順</h2>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p>WordPress管理画面にログインし、左メニューから <strong>プラグイン &gt; 新規追加</strong> を選択します。</p>
+<p>プラグインファイル一式を <code>/wp-content/plugins/kashiwazaki-seo-custom-post-types/</code> ディレクトリにアップロードします。GitHub からクローンする場合はディレクトリ名が一致するよう注意してください。</p>
 </div>
 </div>
 
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>WordPress 管理画面の <strong>プラグイン</strong> メニューを開き、<strong>「Kashiwazaki SEO Custom Post Types」</strong>を有効化します。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>有効化すると、左メニューに <strong>「Kashiwazaki SEO Custom Post Types」</strong> という項目が追加されます。このメニューから管理画面にアクセスできます。</p>
 <figure class="screenshot">
-    <img src="images/screenshots/00-menu-location.png" alt="管理画面メニューの位置" class="lightbox-trigger">
-    <figcaption>管理画面の左メニューにプラグインが追加されます</figcaption>
+<img src="images/screenshots/00-menu-location.png" alt="管理メニューの位置" class="lightbox-trigger">
+<figcaption>有効化後、WordPress 管理画面の左サイドメニューにプラグイン項目が追加される。</figcaption>
 </figure>
-
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p>検索ボックスに「Kashiwazaki SEO Custom Post Types」と入力し、表示されたプラグインの <strong>今すぐインストール</strong> ボタンをクリックします。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p>インストール完了後、<strong>有効化</strong> ボタンをクリックします。</p>
-</div>
-</div>
-
-<h3>方法2: ZIPファイルからインストール</h3>
-
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>プラグインのZIPファイルをダウンロードします。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p>WordPress管理画面の <strong>プラグイン &gt; 新規追加 &gt; プラグインのアップロード</strong> からZIPファイルを選択し、<strong>今すぐインストール</strong> をクリックします。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p>インストール完了後、<strong>有効化</strong> ボタンをクリックします。</p>
-</div>
-</div>
-
-<h2>初期設定</h2>
-
-<p>プラグインを有効化すると、WordPress管理画面の左メニューに「Kashiwazaki SEO Custom Post Types」の管理ページが追加されます。</p>
-
-<h3>設定手順</h3>
-
-<div class="step">
-<span class="step-number">1</span>
-<div class="step-body">
-<p>WordPress管理画面の左メニューから <strong>Custom Post Types</strong> を選択して管理画面を開きます。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">2</span>
-<div class="step-body">
-<p><strong>新規投稿タイプを追加</strong> ボタンをクリックし、投稿タイプ名（スラッグ）、ラベル、公開設定などを入力します。</p>
-</div>
-</div>
-
-<div class="step">
-<span class="step-number">3</span>
-<div class="step-body">
-<p>必要に応じて、親投稿タイプの設定や階層構造を設定します。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">4</span>
 <div class="step-body">
-<p>設定を保存すると、リライトルールが自動的に更新され、新しい投稿タイプがすぐに利用可能になります。</p>
+<p>プラグイン有効化と同時に、データベーステーブル <code>wp_kstb_post_types</code>（投稿タイプ定義）と <code>wp_kstb_menu_categories</code>（メニューカテゴリー定義）が自動で作成されます。手動での SQL 実行は不要です。</p>
 </div>
 </div>
 
 <div class="callout callout-tip">
 <p class="callout-title">ヒント</p>
-<p>プラグインは有効化時にデータベースの初期化を自動で行います。カスタムテーブルは作成せず、wp_optionsテーブルのみを使用するため、特別なデータベース設定は不要です。</p>
+<p>メニュー項目が表示されない場合は、一度 WordPress の管理画面をリロードしてください。プラグインによっては初回起動時にキャッシュが残ることがあります。</p>
 </div>
 
-<h2>動作要件の確認</h2>
+<h2>管理画面の構成</h2>
+
+<figure class="screenshot">
+<img src="images/screenshots/01-settings-page.png" alt="プラグイン管理画面のメイン" class="lightbox-trigger">
+<figcaption>プラグインのメイン管理画面。上部にメインタブ（カスタム投稿タイプ一覧 / メニュー管理 / 説明書）、下部に投稿タイプ一覧が表示される。</figcaption>
+</figure>
+
+<p>管理画面は以下の 3 つのメインタブで構成されます。</p>
+
+<div class="feature-cards">
+<div class="feature-card">
+<h4>カスタム投稿タイプ一覧</h4>
+<p>作成済みの投稿タイプがテーブル形式で表示され、ここから新規作成・編集・削除・再登録・記事移行などの操作が可能。デフォルトで開くタブ。</p>
+</div>
+<div class="feature-card">
+<h4>メニュー管理</h4>
+<p>カスタム投稿タイプを「カテゴリー」でフォルダ化し、管理画面サイドメニューに整理表示するための設定タブ。</p>
+</div>
+<div class="feature-card">
+<h4>説明書</h4>
+<p>カスタム投稿タイプの作成ガイド。プラグインマニュアル（docs/）と同一のコンテンツを動的に読み込むことで、常に最新の解説を表示する。</p>
+</div>
+</div>
+
+<figure class="screenshot">
+<img src="images/screenshots/03-cpt-list-columns.png" alt="カスタム投稿タイプ一覧" class="lightbox-trigger">
+<figcaption>「カスタム投稿タイプ一覧」タブ。ラベル、投稿数、パス、スラッグ、公開設定、REST API、操作ボタンがテーブル形式で表示される。</figcaption>
+</figure>
+
+<figure class="screenshot">
+<img src="images/screenshots/15-guide-tab.png" alt="説明書タブ" class="lightbox-trigger">
+<figcaption>「説明書」タブ。本マニュアル（docs/post-type-management.html）の内容を動的に読み込んで管理画面内に表示する。</figcaption>
+</figure>
+
+<h2>初期確認項目</h2>
+
+<p>インストール直後に以下の項目を確認しておくと、後の作業がスムーズになります。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>パーマリンク設定の確認</strong> - <strong>設定 &gt; パーマリンク設定</strong> で「投稿名」形式（または「カスタム構造」で <code>/%postname%/</code>）が選択されていることを確認してください。デフォルトの「基本」形式（<code>?p=123</code>）では、本プラグインの階層 URL 機能は動作しません。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>権限の確認</strong> - カスタム投稿タイプの作成・編集・削除、メニュー管理、記事移行など、プラグインの設定系操作には <code>manage_options</code>（管理者権限）が必要です。投稿編集画面内の親ページ選択は <code>edit_post</code> 権限、親ページ検索 AJAX は <code>edit_posts</code> 権限で動作するため、編集者権限のユーザーでも投稿編集側の機能は利用できます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p><strong>PHP バージョンの確認</strong> - <strong>ツール &gt; サイトヘルス &gt; 情報</strong> で PHP のバージョンが 7.0 以上であることを確認してください。推奨は 7.4 以上です。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p><strong>DOMDocument 拡張の確認</strong> - 管理画面の「説明書」タブが docs/ ファイルを読み込むために PHP の DOMDocument 拡張を使用します。ほとんどの WordPress 環境ではデフォルトで有効ですが、最小構成の環境では <strong>サイトヘルス &gt; 情報 &gt; サーバー</strong> で <code>DOM</code> が有効かを確認してください。無効でもフォールバック表示されるためプラグイン本体の動作に影響はありません。</p>
+</div>
+</div>
+
+<div class="callout callout-note">
+<p class="callout-title">補足: 他プラグインとの併用について</p>
+<p>本プラグインは WordPress 標準の <code>register_post_type()</code> を内部で使用しており、他のカスタム投稿タイプ系プラグイン（Custom Post Type UI、ACF 等）と直接の衝突はありません。ただし、同じスラッグで投稿タイプを登録するとどちらが優先されるかは登録タイミング次第となります。両方で同名の投稿タイプを定義しないようにしてください。</p>
+</div>
+
+<h2>最初の投稿タイプを作成する前に</h2>
+
+<p>実際にカスタム投稿タイプを作成する前に、以下を決めておくとスムーズに設定を進められます。</p>
 
 <table>
 <thead>
-<tr><th style="width:35%;">項目</th><th>要件</th></tr>
+<tr><th style="width:35%;">決めておくべき項目</th><th>内容</th></tr>
 </thead>
 <tbody>
-<tr><td>WordPress</td><td>5.0 以上</td></tr>
-<tr><td>PHP</td><td>7.0 以上</td></tr>
-<tr><td>外部依存</td><td>なし</td></tr>
+<tr><td>公開 URL スラッグ（url_slug）</td><td>実際の URL に表示される文字列。ユーザーが入力する唯一のスラッグ項目。最大 64 文字。SEO を意識した長めのキーワードも使用可能（例: <code>seo-latest-news</code>、<code>product-catalog-2026</code>）。</td></tr>
+<tr><td>投稿タイプの内部名（slug）</td><td>ユーザーが直接入力する項目ではありません。管理フォームの hidden フィールドとして、入力された <code>url_slug</code> から自動生成されます（最大 20 文字に切り詰め）。<code>register_post_type()</code> に渡される WP 内部識別子として使われます。したがって決めておく必要があるのは <strong>url_slug だけ</strong> です。</td></tr>
+<tr><td>ラベル</td><td>管理画面で表示される日本語名。「ニュース」「商品」「スタッフ」など。このラベルから 25 種以上の関連ラベルが自動生成されます。</td></tr>
+<tr><td>親ディレクトリ（任意）</td><td>階層 URL を構築する場合、親となる固定ページや他の CPT のスラッグ。例: <code>blog</code> を指定すると <code>/blog/{url_slug}/{post_slug}/</code> の形式になる。</td></tr>
+<tr><td>公開設定</td><td>フロントエンドで表示するか、管理画面のみで使うか。非公開 CPT は URL でアクセスできなくなる。</td></tr>
+<tr><td>階層構造</td><td>投稿同士に親子関係を持たせるか（固定ページのように）。有効にすると投稿編集画面で親ページを選択可能になる。</td></tr>
 </tbody>
 </table>
 
-<div class="callout callout-note">
-<p class="callout-title">メモ</p>
-<p>本プラグインは管理画面専用のツールです。フロントエンドへのHTML出力、JSON-LD出力、metaタグ出力は一切行いません。外部HTTP通信、Cronジョブ、メール送信も使用しないため、サーバー環境に特別な要件はありません。</p>
-</div>
-
-<h2>アンインストール</h2>
-
-<p>プラグインを無効化・削除する前に、以下の点にご注意ください。</p>
-
 <div class="callout callout-warning">
-<p class="callout-title">注意</p>
-<p>プラグインを無効化すると、本プラグインで登録したカスタム投稿タイプはWordPressに認識されなくなります。投稿データ自体はデータベースに残りますが、管理画面やフロントエンドからアクセスできなくなります。再度有効化すれば、投稿データは元通り表示されます。</p>
+<p class="callout-title">注意: スラッグは後から変更困難です</p>
+<p>投稿タイプの内部スラッグ（slug）は一度決めると変更が困難です。変更する場合は、記事移行機能を使って新しい投稿タイプに記事を移動する必要があります。サイトのテーマ構造を事前に設計し、適切な命名を選んでください。</p>
 </div>
+
+<h2>次のステップ</h2>
+
+<p>以上で初期確認は完了です。次は実際にカスタム投稿タイプを作成する手順を<a href="post-type-management.html">投稿タイプ管理</a>ページで解説します。階層 URL の設計（テーマ → サブトピック → 個別記事の構造）から始めたい場合は<a href="hierarchical-urls.html">階層 URL 設計</a>ページを先に読むことを推奨します。</p>
 
 <nav class="page-nav">
 <a href="index.html" class="prev">&laquo; 概要</a>
 <a href="post-type-management.html" class="next">投稿タイプ管理 &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.24</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
 
 </main>
 

@@ -5,6 +5,97 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.25] - 2026-04-14
+
+### Fixed
+- **HIGH-1**: `public` / `publicly_queryable` / `show_ui` / `show_in_menu` / `query_var` / `show_in_rest` の設定値が無視されていた問題を修正
+  - `class-post-type-registrar.php:621-628` でハードコードされていた値を DB 値に変更
+  - `class-ajax-handler.php:234-238` のチェックボックス解析を修正（外したときに `false` として保存されるように）
+  - `class-ajax-handler.php:427` (`force_reregister_post_type`) の `show_in_rest` ハードコードを DB 値に変更
+  - `class-post-type-force-register.php:58-70` のハードコードを DB 値に変更
+- **MEDIUM-1**: 静的キャッシュが CRUD 後にクリアされず古いデータが返る問題を修正
+  - `class-database.php` の function-local `static $cache` をクラスプロパティに移行
+  - `clear_cache()` メソッドを追加
+  - `insert_post_type()` / `update_post_type()` / `delete_post_type()` で `clear_cache()` を呼び出すように変更
+- **MEDIUM-9**: `delete_option('rewrite_rules')` と `flush_rules()` の間のレースコンディションを修正
+  - `class-ajax-handler.php:444` の `delete_option` を削除（`flush_rules()` が内部で atomic に更新するため不要）
+- **NEW-1**: カスタム投稿タイプ削除時に通常の permastruct 由来のゴーストルールが残存する問題を修正
+  - `class-ajax-handler.php` の delete_post_type AJAX ハンドラで DB 削除後に `unregister_post_type()` → `flush_rewrite_rules()` の順で呼び出すように変更
+  - 加えて `class-post-type-registrar.php` の単一投稿カスタム rewrite rule を旧形式 `index.php?{internal_slug}=$matches[1]` から標準形式 `index.php?post_type={slug}&name=$matches[1]` に変更
+  - これにより WordPress コアの `WP_Post_Type::remove_rewrite_rules()` が permastruct/query_var 由来のルールを正規に削除できるようになった
+  - 注意: 本プラグインが独自の `add_rewrite_rule()` で追加するカスタムルール (階層 URL 用) はこの修正だけでは消えない場合があり、完全な対処は v1.1.0 で予定
+  - 副次効果: `query_var=false` × `url_slug !== slug` の組み合わせでも単一投稿 URL が解決可能になった (HIGH-1 と組み合わせた回帰リスクの解消)
+- **HIGH-2**: 強制登録ヘルパー (`KSTB_Post_Type_Force_Register::force_register()`) が通常登録ロジックと乖離していた問題を修正
+  - `register_single_post_type()` を呼び出す形に統合し、`url_slug` / `parent_directory` / `build_full_path()` / カスタム rewrite rule / 親メニュー設定がすべて反映されるようになった
+  - これにより `check_and_fix_missing_post_types()` の自動修復経路でも階層 URL が壊れなくなる
+- **HIGH-3**: `force_reregister_post_type()` (private) が通常登録ロジックと乖離していた問題を修正
+  - `unset($wp_post_types[$slug])` の乱暴なクリーンアップを `unregister_post_type()` に置き換え、permastruct / query var / hooks 等が正規に解除されるようになった
+  - 内部実装を `register_single_post_type()` 経由に統一
+  - slug 変更時の旧 CPT も unregister するように `save_post_type` を改修
+- **MEDIUM-5**: 1 リクエスト中に `flush_rewrite_rules()` が 3 回実行されていた問題を修正
+  - `class-database.php` の insert/update/delete から `flush_rewrite_rules()` を削除（責務を AJAX 層に集約）
+  - `force_register()` / `force_reregister_post_type()` 内の flush も削除
+  - 各 AJAX エンドポイントの末尾で 1 回だけ flush するように整理
+  - メニュー設定変更 (`update_menu_assignment` / `save_all_menu_assignments`) は rewrite rule に影響しないため flush 不要と判定
+- **MEDIUM-4**: `post_name` / `post_parent` を `$wpdb->update()` で直接更新していた問題を修正
+  - `wp_update_post()` 経由に変更し、WordPress の slug 一意化・親子循環チェック・`save_post`/`post_updated` フックが正規に走るようになった
+  - 自分自身を親にしたり子孫を親にしたりが防がれる
+  - `_kstb_parent_page` メタは `wp_update_post()` 成功後に整合性を取って更新（core が循環検出で `post_parent=0` に補正した場合はメタもクリア）
+  - WP_Error チェックと `$_POST['post_ID']` の一致確認を追加
+  - `update_post_parent_directly()` 廃止
+- **LOW-2**: `$_POST` / `$_GET` の文字列入力に `wp_unslash()` を適用
+  - WordPress が自動で付与するバックスラッシュを除去せずに `sanitize_text_field()` していたため、`O'Reilly` のような入力が `O\'Reilly` として保存される問題を修正
+  - 対象入力に `wp_unslash()` を追加（`class-ajax-handler.php`, `class-parent-selector.php`, `class-parent-menu-manager.php`）
+  - 整数値 (`intval` / `absint`) と boolean cast は対象外
+- **LOW-5**: 親ページ検索結果の JS で raw `post_title` を `innerHTML` に挿入していた問題を修正
+  - `textContent` + `createElement` ベースの DOM 構築に置換
+  - DOM-based XSS の理論的リスクを排除（`includes/class-parent-selector.php` の inline JS）
+
+- **HIGH-4**: `allow_shortlink=ON` 設定が `validate_permalink()` で無視されていた問題を修正
+  - `class-permalink-validator.php:112-138` の `validate_permalink()` で `wp_redirect(..., 301)` する直前に対象 CPT の `allow_shortlink` 判定を追加
+  - ON の場合はリダイレクトせずに break し、短縮 URL (`?post_type=xxx&p=ID` / `?p=ID`) でのアクセスを許可する仕様通りに動作するようになった
+  - 同ファイル内の `disable_canonical_redirect_for_custom_post_types()` は元々 `allow_shortlink` を尊重していたが、`template_redirect` フックで先に動く `validate_permalink()` が無条件 301 していたため事実上 ON 設定が無効化されていた
+- **HIGH-5**: `KSTB_Parent_Selector::clear_parent_cache()` が `wp_cache_flush_group()` を無条件呼び出しており、WordPress 5.0〜6.0 環境で fatal error になる可能性を修正
+  - `class-parent-selector.php:486-491` に `function_exists('wp_cache_flush_group')` ガードを追加
+  - 動作要件 WP 5.0+ を維持しつつ、WP 6.1+ では従来通り group flush が動く
+
+### Added
+- 管理画面の CPT 一覧に「再登録」ボタンを追加
+  - `templates/admin-page.php:606` に `kstb-reregister-button` を追加し、既存の AJAX エンドポイント `wp_ajax_kstb_reregister_post_type` を呼び出すようにした
+  - `assets/admin.js` に `reregisterPostType` ハンドラを追加 (confirm → AJAX → 成功/失敗/通信エラーの通知 → UI 復帰)
+  - これまでバックエンド実装のみ存在して UI ボタンが未実装だった状態を解消
+
+### Changed
+- 管理画面の「説明書」タブのコンテンツを、ハードコードされた静的 HTML から `docs/post-type-management.html` の動的読み込み方式に変更（マニュアルの二重管理を解消）
+  - `includes/class-admin.php` に `get_docs_content()` ヘルパーを追加
+  - `DOMDocument` で `<main class="content">` を抽出、`<h1>` / `<nav class="page-nav">` / `<footer>` / `<figure class="screenshot">` を除去
+  - 画像パス・内部リンクを `KSTB_PLUGIN_URL` 配下に書き換え
+  - セキュリティ: path traversal 防御 (`basename()` + `.html` 拡張子強制 + `realpath()` 末尾区切り境界判定)、`DOMDocument` 拡張ガード、`libxml_use_internal_errors` 状態復元、`LIBXML_NONET` で XXE 防御
+  - `assets/admin.css` に `#kstb-main-tab-guide` スコープで docs 用 CSS (`.lead` / `.step` / `.callout-tip|warning|note` / table) を追加し、admin 内でも docs と同等の表示品質を実現
+  - フォールバック: `DOMDocument` 不在やパース失敗時は同梱マニュアルへのリンクボタンを表示
+- `templates/admin-page.php` の階層化チェックボックスの説明文を訂正
+  - 従来「チェックすると編集画面で親ページを選択できる」と書いていたが、実装では「親ページ選択 &amp; スラッグ編集」メタボックス (`KSTB_Parent_Selector`) は hierarchical の ON/OFF に関係なく全 CPT に無条件で追加される
+  - 修正後は「hierarchical は同じ投稿タイプ内の親子関係 (`post_parent` / `page-attributes`) を有効化する設定で、親ディレクトリ設定は独立したメタボックスから行う」と明記
+- `assets/admin.js` のメニューカテゴリーアイコンプレビュー表示サイズを `font-size: 32px / width: 32px / height: 32px` から `20px` に変更
+  - サイドメニューの実表示サイズ (16〜20px 相当) と一致させ、編集 UI のプレビューが過度に大きくならないように調整
+
+### Chore
+- `.gitignore` に監査メモ (`.fix-*.md`, `3ai-prompt.md`, `.明日やること.txt`, `NIKKI.TXT`) と WSL/Windows メタデータ (`*Zone.Identifier*`) の ignore ルールを追加
+
+### Docs
+- `docs/` 配下を 6 ページ構成に全面改訂 (`index.html` / `setup.html` / `post-type-management.html` / `hierarchical-urls.html` / `menu-and-category.html` / `troubleshooting.html`)
+  - `hierarchical-urls.html` と `menu-and-category.html` は新規追加
+  - `troubleshooting.html` は全面書き直し + アーカイブ表示モード / archive_include_children / 短縮 URL / publicly_queryable&show_ui&query_var の 4 セクションを新設
+  - 全ページを Claude / Codex / Gemini (gemini-3.1-pro-preview) の三者協議で検証し、実装と完全一致するよう修正
+  - 主な訂正項目:
+    - `archive_display_type` の `default` / `none` モード説明を実装に合わせて修正 (`default` は同名ページへのフォールスルー、`none` は強制 404)
+    - `allow_shortlink` の OFF/ON 挙動表記を実装 (および本バージョンで修正した `validate_permalink()`) と一致させた
+    - `query_var=false` の影響範囲を「WP 標準の公開クエリ変数 URL のみ無効化、`WP_Query(post_type=>...)` や階層 URL ルーティングには影響しない」と訂正
+    - テーブル名のハードコード `wp_kstb_*` を `{prefix}kstb_*` 表記に統一し、`$wpdb->prefix` に依存することを注記
+    - `KSTB_Parent_Selector` / `KSTB_Ajax_Handler` の責務分離を正確に記述 (AJAX 親ページ検索は `KSTB_Ajax_Handler` 側)
+    - スキーマ自動マイグレーションのタイミングを「activate 時は `create_tables()`、init フック内で `update_database()`」と書き分け
+    - 投稿タイプ一覧の「編集」操作行の説明で、url_slug を変更すると hidden の内部 slug も再生成される点を明記
+
 ## [1.0.24] - 2026-04-13
 
 ### Fixed
@@ -342,6 +433,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.25]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.24...v1.0.25
+[1.0.24]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.23...v1.0.24
 [1.0.23]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.22...v1.0.23
 [1.0.22]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.21...v1.0.22
 [1.0.21]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.20...v1.0.21
