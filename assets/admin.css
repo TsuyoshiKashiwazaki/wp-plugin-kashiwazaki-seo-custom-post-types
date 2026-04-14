@@ -446,3 +446,121 @@
     color: #135e96;
     text-decoration: underline;
 }
+
+/* ========================================================================
+   v1.0.25: 説明書タブが docs/ から動的読み込みする HTML のスタイル
+   docs/css/style.css の該当ルールを admin スコープに移植
+   ======================================================================== */
+
+#kstb-main-tab-guide .lead {
+    font-size: 1.15rem;
+    color: #50575e;
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+#kstb-main-tab-guide .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    align-items: flex-start;
+}
+
+#kstb-main-tab-guide .step-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: #2271b1;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+#kstb-main-tab-guide .step-body,
+#kstb-main-tab-guide .step-content {
+    flex: 1;
+    padding-top: 4px;
+}
+
+#kstb-main-tab-guide .step-body p:last-child,
+#kstb-main-tab-guide .step-content p:last-child {
+    margin-bottom: 0;
+}
+
+#kstb-main-tab-guide .callout {
+    padding: 16px 20px;
+    margin: 24px 0;
+    border-left: 4px solid;
+    border-radius: 0 4px 4px 0;
+}
+
+#kstb-main-tab-guide .callout-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+#kstb-main-tab-guide .callout p:last-child {
+    margin-bottom: 0;
+}
+
+#kstb-main-tab-guide .callout-tip {
+    border-left-color: #46b450;
+    background: #f0f9f1;
+}
+
+#kstb-main-tab-guide .callout-tip .callout-title {
+    color: #2e7d32;
+}
+
+#kstb-main-tab-guide .callout-warning {
+    border-left-color: #ffb900;
+    background: #fef8e7;
+}
+
+#kstb-main-tab-guide .callout-warning .callout-title {
+    color: #8b6914;
+}
+
+#kstb-main-tab-guide .callout-note {
+    border-left-color: #2271b1;
+    background: #edf5fa;
+}
+
+#kstb-main-tab-guide .callout-note .callout-title {
+    color: #2271b1;
+}
+
+#kstb-main-tab-guide table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+}
+
+#kstb-main-tab-guide table th,
+#kstb-main-tab-guide table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+#kstb-main-tab-guide table th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+#kstb-main-tab-guide h2 {
+    font-size: 1.4em;
+    margin-top: 32px;
+    border-bottom: 1px solid #dcdcde;
+    padding-bottom: 8px;
+}
+
+#kstb-main-tab-guide h3 {
+    font-size: 1.2em;
+    margin-top: 24px;
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>メニュー・カテゴリー - Kashiwazaki SEO Custom Post Types マニュアル</title>
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+
+<button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
+
+<nav class="sidebar">
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
+</nav>
+
+<main class="content">
+
+<h1>メニュー・カテゴリー</h1>
+
+<p class="lead">複数のカスタム投稿タイプを管理画面のサイドメニューでフォルダ（カテゴリー）にまとめる機能、21 種類のフォルダ系アイコン、トップレベル / カテゴリー配下の表示モード切り替え、親メニューページの自動生成について解説します。（管理メニューの表示位置は本プラグイン内部で固定されており、UI からの切り替え項目はありません。）</p>
+
+<h2>なぜメニュー管理が必要か</h2>
+
+<p>本プラグインはサイトのテーマ単位で投稿タイプを多数作成することを想定しています（例: SEO テーマ配下に「ニュース」「事例」「用語集」「FAQ」など複数の CPT）。これらをすべて管理画面のサイドメニューにフラットに並べると、メニューが肥大化して操作性が著しく低下します。</p>
+
+<p>本プラグインの<strong>カテゴリーフォルダ機能</strong>を使うと、複数の投稿タイプを 1 つの親メニュー項目にまとめ、テーマごとに整理して表示できます。</p>
+
+<figure class="screenshot">
+<img src="images/screenshots/07-menu-category-manager.png" alt="メニュー管理タブ" class="lightbox-trigger">
+<figcaption>メニュー管理タブ。カテゴリー一覧と、各投稿タイプのメニュー割り当てを管理できる。</figcaption>
+</figure>
+
+<h2>カテゴリーの作成</h2>
+
+<p>管理画面の <strong>「メニュー管理」</strong> タブで、新しいカテゴリーを作成します。カテゴリーは <code>{prefix}kstb_menu_categories</code>（<code>{prefix}</code> はサイトの WordPress テーブル接頭辞。デフォルトは <code>wp_</code>） テーブルに保存される、本プラグイン独自のメニューグループです。</p>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>「+ 新しいカテゴリーを追加」</strong> ボタンをクリック。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p>カテゴリー名を入力（例:「SEO ブログ系フォルダ」「商品カタログ系フォルダ」「会社情報系フォルダ」）。日本語可。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">3</span>
+<div class="step-body">
+<p>入力ダイアログを確定すると、カテゴリーがカテゴリー一覧と各 CPT の割り当て先ドロップダウンに追加されます。なお、サイドメニューの親フォルダ項目は <strong>カテゴリーに 1 件以上の CPT を割り当てた時点で表示</strong> されます（空カテゴリーはサイドメニューに出ません）。新規作成時のアイコンは <code>dashicons-category</code>（デフォルト）が割り当てられ、作成後にカテゴリー一覧の <strong>「アイコン変更」</strong> から 21 種類のフォルダ系 Dashicons に切り替えできます。</p>
+</div>
+</div>
+
+<h2>21 種類のフォルダ系アイコン</h2>
+
+<p>カテゴリーアイコンは WordPress 標準の Dashicons から、フォルダ・カテゴリー系の 21 種類をプリセットとして選択できます。テーマや業種に応じて視覚的に区別しやすいアイコンを選んでください。</p>
+
+<table>
+<thead>
+<tr><th style="width:35%;">アイコン Dashicon</th><th>用途のヒント</th></tr>
+</thead>
+<tbody>
+<tr><td><code>dashicons-category</code>（カテゴリー）</td><td>汎用的なカテゴリー。デフォルト。</td></tr>
+<tr><td><code>dashicons-portfolio</code>（ポートフォリオ）</td><td>事例紹介、実績、案件などの集約。</td></tr>
+<tr><td><code>dashicons-media-archive</code>（アーカイブ）</td><td>過去記事や履歴系コンテンツ。</td></tr>
+<tr><td><code>dashicons-admin-page</code>（ページ）</td><td>固定ページ系の親フォルダ。</td></tr>
+<tr><td><code>dashicons-admin-post</code>（投稿）</td><td>記事系の親フォルダ。</td></tr>
+<tr><td><code>dashicons-admin-media</code>（メディア）</td><td>画像・動画・PDF などのメディア系。</td></tr>
+<tr><td><code>dashicons-admin-site</code>（サイト）</td><td>サイト全体に関わる情報。</td></tr>
+<tr><td><code>dashicons-admin-generic</code>（一般）</td><td>分類が定まらないもの。</td></tr>
+<tr><td><code>dashicons-admin-tools</code>（ツール）</td><td>運用ツール系。</td></tr>
+<tr><td><code>dashicons-admin-settings</code>（設定）</td><td>設定情報や管理用 CPT。</td></tr>
+<tr><td><code>dashicons-database</code>（データベース）</td><td>用語集、データ集など。</td></tr>
+<tr><td><code>dashicons-archive</code>（アーカイブ）</td><td>古い記事のアーカイブ集約。</td></tr>
+<tr><td><code>dashicons-book</code> / <code>dashicons-book-alt</code>（本 / 本2）</td><td>マニュアル、ガイドブック、ナレッジベース。</td></tr>
+<tr><td><code>dashicons-businessman</code>（ビジネス）</td><td>会社情報、スタッフ紹介。</td></tr>
+<tr><td><code>dashicons-groups</code>（グループ）</td><td>チーム、メンバー、組織。</td></tr>
+<tr><td><code>dashicons-id</code> / <code>dashicons-id-alt</code>（ID / ID2）</td><td>会員、ID 系コンテンツ。</td></tr>
+<tr><td><code>dashicons-products</code>（商品）</td><td>商品カタログ、製品紹介。</td></tr>
+<tr><td><code>dashicons-cart</code>（カート）</td><td>EC、購入関連。</td></tr>
+<tr><td><code>dashicons-store</code>（ストア）</td><td>店舗情報、ショップ。</td></tr>
+</tbody>
+</table>
+
+<h2>投稿タイプのメニュー割り当て</h2>
+
+<p>カテゴリーを作成したら、各カスタム投稿タイプを「どのカテゴリーに属するか」を設定します。「メニュー管理」タブの下半分にある <strong>「投稿タイプのメニュー設定」</strong> から、各 CPT のドロップダウンで割り当て先を選択します。</p>
+
+<table>
+<thead>
+<tr><th style="width:30%;">設定モード</th><th>動作</th></tr>
+</thead>
+<tbody>
+<tr><td>カテゴリーに割り当て</td><td>選択したカテゴリーフォルダのサブメニューとして表示される。複数の CPT を同じカテゴリーに入れて整理できる。</td></tr>
+<tr><td>トップレベルメニュー</td><td>カテゴリーに属さず、独立したトップレベルメニュー項目として表示。重要度の高い CPT 用。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<p class="callout-title">一括保存</p>
+<p>複数の CPT のメニュー割り当てをまとめて変更したい場合、各 CPT のドロップダウンを変更した後、最下部の <strong>「保存」</strong> ボタンで一括保存できます。1 件ずつ AJAX で保存するより高速です。メニュー割り当ての変更は URL リライトに影響しないため、リライトルールのフラッシュは行われません。</p>
+</div>
+
+<h2>親メニューページ（カテゴリー一覧画面）</h2>
+
+<p>カテゴリーフォルダ項目をクリックすると、本プラグインが自動生成する <strong>「親メニューページ」</strong> が表示されます。ここではそのカテゴリーに属するすべてのカスタム投稿タイプがグリッド形式で並び、それぞれの投稿数（公開・下書き）と一覧/新規追加へのリンクが表示されます。</p>
+
+<p>このページは、テーマ単位での運用ダッシュボードとして機能します。</p>
+
+<h2>サブメニューの階層表示</h2>
+
+<p>カテゴリーフォルダ配下に並ぶ CPT のサブメニュー項目は、ラベルが <code>├ 投稿タイプ名</code>（中間項目）または <code>└ 投稿タイプ名</code>（最終項目）のようにツリー記号付きで表示されます。これにより、複数の CPT が同じ親カテゴリーに属していることを視覚的に確認できます。</p>
+
+<h2>カテゴリーの編集・削除</h2>
+
+<table>
+<thead>
+<tr><th style="width:25%;">操作</th><th>動作</th></tr>
+</thead>
+<tbody>
+<tr><td>名前変更</td><td>カテゴリー名を変更。配下の CPT との関連付けは維持される。</td></tr>
+<tr><td>アイコン変更</td><td>21 種類のフォルダ系 Dashicons からアイコンを選び直す。即座に管理メニューに反映される。</td></tr>
+<tr><td>削除</td><td>カテゴリーを削除。配下の CPT は自動的に「割り当てなし」状態になり、トップレベルメニューに戻る。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">削除時の注意</p>
+<p>カテゴリーを削除すると、配下の CPT は割り当てが解除されてトップレベルメニューに戻ります。CPT 自体は削除されません。誤って削除した場合は、新しいカテゴリーを作成して再割り当てしてください。</p>
+</div>
+
+<h2>メニュー位置の制御</h2>
+
+<p>カテゴリーフォルダの管理画面サイドメニューでの表示位置は、本プラグイン内部で <code>menu_position = 25</code>（コメントの直後）に固定されています。現行バージョンでは管理 UI からの位置調整入力欄は提供していません。複数カテゴリーがある場合の登録順はプラグイン側で明示的に制御しておらず、各カテゴリーに割り当て済みの CPT を <code>label</code> 昇順（ASC）で走査して親メニューを登録するため、結果としてその走査順に依存します。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">補足: 配下 CPT の表示順序</p>
+<p>カテゴリーフォルダ配下のカスタム投稿タイプの並び順は、データベース上の <code>label</code> カラムを昇順（ASC）でソートした順になります（<code>KSTB_Database::get_all_post_types()</code> 内の <code>ORDER BY label ASC</code>）。並び順を変えたい場合は、投稿タイプのラベル文字列を変更することで調整できます。明示的な手動ドラッグ&ドロップ並び替え機能は v1.0.25 時点では提供していません。</p>
+</div>
+
+<h2>テーマ別の運用例</h2>
+
+<table>
+<thead>
+<tr><th style="width:30%;">運用シーン</th><th>カテゴリー設計の例</th></tr>
+</thead>
+<tbody>
+<tr><td>大規模 SEO サイト（複数テーマ展開）</td><td>「SEO 関連フォルダ」「広告関連フォルダ」「分析ツールフォルダ」など、テーマ単位でカテゴリー化。各カテゴリー配下に個別の CPT を集約。</td></tr>
+<tr><td>会社サイト（情報の種類別）</td><td>「会社情報フォルダ」「サービス紹介フォルダ」「採用情報フォルダ」など、コンテンツ種別ごとに分類。</td></tr>
+<tr><td>EC サイト（商品カテゴリ別）</td><td>「商品カタログフォルダ」配下に複数の CPT（商品ジャンル別の投稿タイプ）を配置。</td></tr>
+<tr><td>マニュアル・ナレッジベースサイト</td><td>「ガイドフォルダ」「FAQ フォルダ」「用語集フォルダ」を作成。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<p class="callout-title">階層 URL との組み合わせ</p>
+<p>メニューカテゴリー機能は管理画面の表示整理のための機能であり、URL 構造とは独立しています。SEO/GEO のための URL 階層を作るには、<a href="hierarchical-urls.html">階層 URL 設計</a>ページの <code>parent_directory</code> 設定を併用してください。両者を組み合わせることで、「管理画面でも URL でも整理されたサイト」を構築できます。</p>
+</div>
+
+<nav class="page-nav">
+<a href="hierarchical-urls.html" class="prev">&laquo; 階層URL設計</a>
+<a href="troubleshooting.html" class="next">トラブルシューティング &raquo;</a>
+</nav>
+
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
+
+</main>
+
+<div class="lightbox"></div>
+<script src="js/manual.js?v=1"></script>
+</body>
+</html>

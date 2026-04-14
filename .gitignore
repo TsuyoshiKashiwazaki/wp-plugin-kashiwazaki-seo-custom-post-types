@@ -39,3 +39,12 @@ CLAUDE.md
 # Temp/spec files
 *-clean.php
 指示書/
+
+# Audit notes (not committed to repo)
+.fix-*.md
+3ai-prompt.md
+.明日やること.txt
+NIKKI.TXT
+
+# WSL/Windows metadata
+*Zone.Identifier*

@@ -155,7 +155,7 @@ class KSTB_Parent_Menu_Manager {
      */
     public static function render_parent_menu_page() {
         // 現在の親メニューのスラッグを取得
-        $current_menu = isset($_GET['page']) ? sanitize_text_field($_GET['page']) : '';
+        $current_menu = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
 
         if (empty($current_menu)) {
             return;

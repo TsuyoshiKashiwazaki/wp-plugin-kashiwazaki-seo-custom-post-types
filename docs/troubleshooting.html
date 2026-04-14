@@ -4,164 +4,323 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>トラブルシューティング - Kashiwazaki SEO Custom Post Types マニュアル</title>
-<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
 
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.24</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
-<ul><li><a href="index.html">概要</a></li><li><a href="setup.html">インストール・初期設定</a></li><li><a href="post-type-management.html">投稿タイプ管理</a></li><li><a href="troubleshooting.html">トラブルシューティング</a></li></ul>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.25</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<ul>
+<li><a href="index.html">概要</a></li>
+<li><a href="setup.html">インストール・初期設定</a></li>
+<li><a href="post-type-management.html">投稿タイプ管理</a></li>
+<li><a href="hierarchical-urls.html">階層URL設計</a></li>
+<li><a href="menu-and-category.html">メニュー・カテゴリー</a></li>
+<li><a href="troubleshooting.html">トラブルシューティング</a></li>
+</ul>
 </nav>
 
 <main class="content">
 
 <h1>トラブルシューティング</h1>
 
-<p class="lead">Kashiwazaki SEO Custom Post Types の使用中に発生する可能性のある問題と、その解決方法をまとめています。</p>
+<p class="lead">よくある問題とその解決方法、プラグインの内部アーキテクチャ、動作要件・技術仕様をまとめています。</p>
 
 <h2>カスタム投稿タイプが表示されない</h2>
 
 <h3>症状</h3>
 <p>プラグインで投稿タイプを作成したが、管理画面のメニューやフロントエンドに表示されない。</p>
 
-<h3>解決方法</h3>
+<h3>原因と解決策</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p><strong>プラグインの有効化を確認</strong> - WordPress管理画面の <strong>プラグイン</strong> ページで、「Kashiwazaki SEO Custom Post Types」が有効になっているか確認してください。</p>
+<p><strong>プラグインが有効化されているか確認</strong> - WordPress 管理画面の <strong>プラグイン</strong> ページで、「Kashiwazaki SEO Custom Post Types」が有効になっているか確認してください。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p><strong>公開設定を確認</strong> - 投稿タイプの設定で「公開」が有効になっているか確認してください。非公開に設定されている場合、フロントエンドには表示されません。</p>
+<p><strong>フロントエンド表示の確認</strong> - フロントに出ない場合、投稿タイプの設定で次の 2 つを両方確認してください。<code>public</code>（公開）と <code>publicly_queryable</code>（パブリッククエリ可能）。<code>public</code> は WP コア側の表示制御の親フラグで、<code>publicly_queryable</code> は実際に URL 経由でクエリできるかを決めます。どちらかが OFF だとフロントに出ません（v1.0.25 から両者とも DB 値が意図通りに反映されるようになりました）。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">3</span>
 <div class="step-body">
-<p><strong>パーマリンク設定を更新</strong> - WordPress管理画面の <strong>設定 &gt; パーマリンク設定</strong> ページを開き、何も変更せずに <strong>変更を保存</strong> をクリックしてリライトルールを再生成してください。</p>
+<p><strong>管理画面表示の確認</strong> - 管理画面サイドメニューに出ない場合、<code>show_ui</code>（管理画面 UI を生成）と <code>show_in_menu</code>（サイドメニューに表示）を両方確認してください。<code>show_ui</code> が OFF だと編集画面 UI 自体が作られず、<code>show_in_menu</code> が OFF だと UI はあるがサイドメニュー項目が出ません。両方 ON でないと管理画面に表示されません。</p>
 </div>
 </div>
 
-<h2>投稿タイプのURLで404エラーが発生する</h2>
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p><strong>強制再登録を実行</strong> - 投稿タイプ一覧の <strong>「再登録」</strong> ボタンをクリックして、WordPress への登録を強制的に再実行してください。これにより多くの表示問題が解決します。</p>
+</div>
+</div>
+
+<h2>投稿タイプの URL で 404 エラーが発生する</h2>
 
 <h3>症状</h3>
-<p>カスタム投稿タイプの記事にアクセスすると404エラーが表示される。</p>
+<p>カスタム投稿タイプの記事にアクセスすると 404 エラーが表示される。</p>
 
-<h3>解決方法</h3>
+<h3>原因と解決策</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p><strong>リライトルールを更新</strong> - 管理画面の <strong>設定 &gt; パーマリンク設定</strong> ページを開き、<strong>変更を保存</strong> をクリックしてリライトルールをフラッシュしてください。</p>
+<p><strong>パーマリンク構造を確認</strong> - <strong>設定 &gt; パーマリンク設定</strong> で「投稿名」形式、または <code>/%postname%/</code> を含むカスタム構造が選択されていることを確認してください。デフォルトの「基本」形式（<code>?p=123</code>）では本プラグインの階層 URL 機能は動作しません。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p><strong>スラッグの競合を確認</strong> - 投稿タイプのスラッグが、既存の固定ページやカテゴリのスラッグと重複していないか確認してください。重複している場合、URLの解決に失敗します。</p>
+<p><strong>リライトルールをフラッシュ</strong> - <strong>設定 &gt; パーマリンク設定</strong> で何も変更せずに <strong>「変更を保存」</strong> をクリックしてください。本プラグインの階層 URL 用カスタムリライトルールが再生成されます。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">3</span>
 <div class="step-body">
-<p><strong>.htaccessを確認</strong> - サーバーの <code>.htaccess</code> ファイルが正しく設定されているか確認してください。WordPressのリライトルールが上書きされていないか確認します。</p>
+<p><strong>親ディレクトリの設定を確認</strong> - 階層 URL で 404 が出る場合、親ディレクトリに指定したスラッグが実際に存在する固定ページ・CPT であるか確認してください。存在しない親スラッグを指定するとルーティングが壊れます。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">4</span>
+<div class="step-body">
+<p><strong>スラッグの競合を確認</strong> - 投稿タイプのスラッグが、既存の固定ページやカテゴリのスラッグと重複していないか確認してください。本プラグインは WordPress 予約語を自動回避しますが、ユーザー作成の固定ページとの衝突は検出できません。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">5</span>
+<div class="step-body">
+<p><strong>不正な親経由のアクセスかを確認</strong> - 本プラグインの <code>KSTB_Permalink_Validator</code> は、正しい canonical URL 以外（不正な親パス経由）を意図的に 404 にします。これは重複コンテンツ防止のための仕様です。</p>
 </div>
 </div>
 
 <div class="callout callout-tip">
 <p class="callout-title">ヒント</p>
-<p>本プラグインはリライトルールを自動管理しますが、サーバー設定やキャッシュプラグインの影響で即座に反映されない場合があります。キャッシュをクリアした上で再確認してください。</p>
+<p>階層 URL の構造が想定通りか確認するには、該当投稿の編集画面で右上の「パーマリンク」表示を確認してください。親ディレクトリが正しく組み込まれた URL になっているはずです。</p>
 </div>
 
-<h2>記事移行で問題が発生する</h2>
+<h2>パーマリンクの変更が反映されない</h2>
 
 <h3>症状</h3>
-<p>投稿タイプ間の記事移行が途中で止まる、またはエラーが表示される。</p>
+<p>投稿タイプの設定を変更したのに、URL や管理メニューに反映されない。</p>
 
-<h3>解決方法</h3>
+<h3>原因と解決策</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p><strong>PHP実行時間の制限を確認</strong> - 大量の記事を移行する場合、PHPの <code>max_execution_time</code> が短いと処理がタイムアウトします。サーバーの設定を確認してください。</p>
+<p><strong>再登録ボタンで強制再読み込み</strong> - 投稿タイプ一覧から該当 CPT の <strong>「再登録」</strong> ボタンをクリック。<code>unregister_post_type()</code> → <code>register_post_type()</code> の順で再登録され、リライトルールも再フラッシュされます。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p><strong>移行元・移行先の投稿タイプを確認</strong> - 移行元と移行先の投稿タイプが正しく登録されているか確認してください。無効な投稿タイプを指定するとエラーが発生します。</p>
+<p><strong>ブラウザキャッシュをクリア</strong> - 管理画面の JavaScript/CSS がキャッシュされている可能性があります。Ctrl+Shift+R（Mac: Cmd+Shift+R）でハードリロードを試してください。</p>
+</div>
+</div>
+
+<h2>記事移動が途中で止まる</h2>
+
+<h3>症状</h3>
+<p>投稿タイプ間の記事移動処理がタイムアウトする、またはエラーが表示される。</p>
+
+<h3>原因と解決策</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>PHP の実行時間制限</strong> - 大量の記事を一度に移動する場合、PHP の <code>max_execution_time</code> がタイムアウトします。小分けして移動するか、サーバーの設定を一時的に拡大してください。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>移動元・移動先の確認</strong> - 移動元と移動先の投稿タイプが両方登録済みであることを確認してください。無効化された CPT への移動はエラーになります。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">3</span>
 <div class="step-body">
-<p><strong>ブラウザのコンソールを確認</strong> - ブラウザの開発者ツール（F12）を開き、コンソールタブでJavaScriptエラーが発生していないか確認してください。AJAX通信のエラー詳細も確認できます。</p>
+<p><strong>ブラウザのコンソールを確認</strong> - 開発者ツール（F12）の Console タブで、AJAX エラーの詳細を確認してください。権限エラー、nonce 切れ、サーバーエラーなどの情報が得られます。</p>
 </div>
-</div>
-
-<div class="callout callout-warning">
-<p class="callout-title">注意</p>
-<p>記事移行を実行する前に、必ずデータベースのバックアップを取得してください。移行処理は元に戻すことができません。</p>
 </div>
 
 <h2>メニュー割り当てが反映されない</h2>
 
 <h3>症状</h3>
-<p>投稿タイプのメニュー割り当てを変更しても、管理画面のメニューに反映されない。</p>
+<p>投稿タイプのメニュー割り当て設定を変更しても、管理画面のメニュー構造に反映されない。</p>
 
-<h3>解決方法</h3>
+<h3>原因と解決策</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p><strong>ページを再読み込み</strong> - 管理画面をリロード（F5）して、メニューの変更が反映されるか確認してください。</p>
+<p><strong>ページを再読み込み</strong> - 管理画面をリロード（F5）して、メニューの変更が反映されるか確認してください。サイドメニューは保存時に自動で再レンダリングされますが、ブラウザキャッシュが残る場合があります。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p><strong>権限を確認</strong> - メニュー割り当ての変更には <code>manage_options</code> 権限（管理者権限）が必要です。管理者アカウントでログインしているか確認してください。</p>
+<p><strong>投稿タイプを再登録</strong> - メニュー構造は投稿タイプの <code>show_in_menu</code> 引数で決定されます。設定変更後、投稿タイプを再登録してください。</p>
 </div>
 </div>
 
-<h2>AJAX操作でエラーが発生する</h2>
+<h2>AJAX 操作でエラーが発生する</h2>
 
 <h3>症状</h3>
-<p>投稿タイプの作成・編集・削除など、管理画面の操作でエラーメッセージが表示される。</p>
+<p>投稿タイプの作成・編集・削除などの管理画面操作でエラーメッセージが表示される。</p>
 
-<h3>解決方法</h3>
+<h3>原因と解決策</h3>
 
 <div class="step">
 <span class="step-number">1</span>
 <div class="step-body">
-<p><strong>nonceの有効期限を確認</strong> - 管理画面を長時間開いたままにすると、セキュリティトークン（nonce）が期限切れになります。ページを再読み込みして再度操作してください。</p>
+<p><strong>nonce の有効期限</strong> - 管理画面を長時間開いたままにすると、セキュリティトークン（nonce）が期限切れになります。ページをリロードしてから再度操作してください。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">2</span>
 <div class="step-body">
-<p><strong>他のプラグインとの競合を確認</strong> - 他のプラグインがAJAXハンドラーと競合している可能性があります。一時的に他のプラグインを無効化して確認してください。</p>
+<p><strong>他プラグインとの競合</strong> - 他のカスタム投稿タイプ系プラグイン（Custom Post Type UI、ACF 等）が同名の投稿タイプを登録していないか確認してください。本プラグインの登録が別プラグインで上書きされる場合があります。</p>
 </div>
 </div>
 
 <div class="step">
 <span class="step-number">3</span>
 <div class="step-body">
-<p><strong>デバッグモードを有効化</strong> - <code>wp-config.php</code> に <code>define('WP_DEBUG', true);</code> を設定し、エラーログを確認してください。</p>
+<p><strong>WP_DEBUG の有効化</strong> - <code>wp-config.php</code> に <code>define('WP_DEBUG', true);</code> を設定し、<code>wp-content/debug.log</code> を確認してエラー詳細を把握してください。</p>
 </div>
+</div>
+
+<h2>旧 URL からのリダイレクトが効かない</h2>
+
+<h3>症状</h3>
+<p>投稿のスラッグを変更したのに、旧 URL にアクセスしても新 URL に 301 リダイレクトされない。</p>
+
+<h3>原因と解決策</h3>
+
+<div class="step">
+<span class="step-number">1</span>
+<div class="step-body">
+<p><strong>v1.0.20 以降にアップデート</strong> - 階層的 CPT の旧スラッグ追跡機能は v1.0.20 で追加されました。それ以前のバージョンから保存した投稿では <code>_wp_old_slug</code> メタが記録されていない可能性があります。</p>
+</div>
+</div>
+
+<div class="step">
+<span class="step-number">2</span>
+<div class="step-body">
+<p><strong>階層構造の設定を確認</strong> - 本プラグインの旧スラッグ追跡は、階層的カスタム投稿タイプ（<code>hierarchical=true</code>）の WordPress コアの欠落を補完する仕組みです。<code>hierarchical=false</code> の投稿タイプでは WordPress 標準の旧スラッグ追跡が動作します。</p>
+</div>
+</div>
+
+<h2>アーカイブ表示モードが意図通りにならない</h2>
+
+<h3>症状</h3>
+<p>投稿タイプのスラッグトップ（<code>https://example.com/{slug}/</code>）にアクセスしたときに、期待した投稿一覧ではなく 404 が出る、固定ページが表示される、空ページになる、などのケース。</p>
+
+<h3>原因と解決策</h3>
+
+<p>本プラグインの <code>archive_display_type</code> には 4 つのモードがあります。実装は <code>includes/class-archive-controller.php</code> にあり、それぞれの挙動と典型的なトラブルは次の通りです。</p>
+
+<table>
+<thead>
+<tr><th style="width:18%;">モード</th><th style="width:32%;">期待される表示</th><th>意図通りにならない場合の確認ポイント</th></tr>
+</thead>
+<tbody>
+<tr><td><code>default</code>（指定なし）</td><td>has_archive=OFF のときに、同名スラッグの固定ページ・通常投稿・他カスタム投稿があればそれを表示する（フォールスルー）。該当する投稿が無ければ 404</td><td>投稿一覧アーカイブを出したい場合は <code>default</code> ではなく <code>post_list</code> を選ぶ必要があります。<code>default</code> は「特別な処理をしない」モードで、has_archive=OFF のときは同名パスの投稿検索だけを行います。</td></tr>
+<tr><td><code>post_list</code>（アーカイブ一覧を表示）</td><td>本プラグインが投稿一覧アーカイブを強制表示する</td><td><code>has_archive</code> が ON か。<code>archive_include_children</code> を ON にしているのにスラッグの下の階層子孫が出ない場合は次の節を参照。</td></tr>
+<tr><td><code>custom_page</code>（固定ページを表示）</td><td><code>archive_page_id</code> で指定した固定ページを表示</td><td>指定した固定ページが存在し公開（publish）状態か。CPT スラッグと同じスラッグの固定ページを別途作っていないか（重複すると WordPress 標準のルーティングが固定ページ側を優先することがあります）。</td></tr>
+<tr><td><code>none</code>（表示しない）</td><td><strong>強制的に 404 を返す</strong>。同名スラッグの固定ページがあってもフォールスルーしない</td><td>「none」モードは「このスラッグへのアクセスは絶対に表示させない」用途。同名スラッグの固定ページに素通しさせたい場合は <code>default</code> を選んでください（<code>default</code> は同名ページがあれば表示します）。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-tip">
+<p class="callout-title">切り分け手順</p>
+<p>(1) 投稿タイプ編集画面の <strong>アーカイブ表示モード</strong> を確認 → (2) <code>has_archive</code> の ON/OFF を確認 → (3) パーマリンク再保存 → (4) 上記モード別の確認ポイントを順に当てはめ。</p>
+</div>
+
+<h2>archive_include_children が効かない</h2>
+
+<h3>症状</h3>
+<p>階層 URL を持つ CPT の投稿一覧に、子階層配下の投稿が含まれない。</p>
+
+<h3>原因と解決策</h3>
+
+<p>本プラグインの <code>archive_include_children</code>（子階層の投稿を含む）は、<strong>すべてのケースで効くわけではありません</strong>。実装上、次の 3 条件を <strong>すべて満たす</strong> 投稿タイプアーカイブのメインクエリでのみ作用します。</p>
+
+<ul>
+<li><code>has_archive</code> = ON（アーカイブ自体が有効）</li>
+<li><code>archive_display_type</code> = <code>post_list</code>（モードが post_list）</li>
+<li><code>archive_include_children</code> = ON（DB 値で 1）</li>
+</ul>
+
+<p>個別投稿ページや、サブクエリ（<code>WP_Query</code> の手動呼び出し、ウィジェットの最近の投稿など）には適用されません。子階層が一覧に出ない場合は、まず上記 3 条件が満たされているかを確認してください。</p>
+
+<h2>短縮 URL（<code>?p=ID</code> や <code>?post_type=...</code>）の挙動が想定と違う</h2>
+
+<h3>症状</h3>
+<p>カスタム投稿タイプの記事に対する <code>?post_type=foo&amp;p=123</code> 形式や <code>?p=123</code> 形式の URL でアクセスしたとき、期待した動作にならない（リダイレクトされてほしいのに表示される、あるいはその逆）。</p>
+
+<h3>原因と解決策</h3>
+
+<p>本プラグインは <code>allow_shortlink</code> という DB カラムで CPT 単位の挙動を制御しています。デフォルトは <strong>OFF</strong>。挙動の対応関係は次の通りです（既存の<a href="post-type-management.html">投稿タイプ管理</a>ページの記述と一致）。</p>
+
+<table>
+<thead>
+<tr><th style="width:20%;">設定</th><th>動作</th></tr>
+</thead>
+<tbody>
+<tr><td><code>allow_shortlink</code> = OFF（デフォルト）</td><td><code>?post_type=foo&amp;p=123</code> 形式のクエリ URL でアクセスすると、正規パーマリンク URL（例: <code>/blog/post-slug/</code>）へ <strong>301 リダイレクト</strong> される。SEO 上は重複 URL を排除できるためこちらを推奨。</td></tr>
+<tr><td><code>allow_shortlink</code> = ON</td><td>クエリ URL 形式でのアクセスを <strong>許可</strong> する（リダイレクトしない）。短縮 URL を運用上必要とするケース向け。</td></tr>
+</tbody>
+</table>
+
+<p>意図と逆の挙動になっている場合は、CPT 編集画面の <strong>「短縮 URL 形式（?p=ID）を許可」</strong> チェックボックスを確認してください。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">補足</p>
+<p>301 リダイレクトを担うのは <code>KSTB_Permalink_Validator</code> です。リダイレクトが効かないように見える場合、リライトルールが古い可能性があるため <strong>設定 &gt; パーマリンク設定</strong> を一度開いて保存し直してください。</p>
+</div>
+
+<h2>publicly_queryable / show_ui / query_var を OFF にした場合の影響</h2>
+
+<h3>症状</h3>
+<p>これらのチェックを意図的に OFF にしたところ、フロントエンド表示や AJAX 操作が思わぬ形で動かなくなった、または管理画面に CPT が出てこない。</p>
+
+<h3>原因と解決策</h3>
+
+<p>本プラグインは v1.0.25 以降、編集フォームの設定値を WordPress に <strong>そのまま反映</strong> します。それぞれを OFF にすると次の影響があります。</p>
+
+<table>
+<thead>
+<tr><th style="width:25%;">設定</th><th>OFF にした場合の影響</th></tr>
+</thead>
+<tbody>
+<tr><td><code>publicly_queryable</code></td><td>URL クエリ経由で投稿を取得できなくなり、フロントエンドの個別ページ・アーカイブともに表示されなくなる。<code>public</code> が ON でも、<code>publicly_queryable</code> が OFF だと事実上フロントには出ません。</td></tr>
+<tr><td><code>show_ui</code></td><td>WordPress が編集画面の UI そのものを生成しなくなり、投稿一覧・編集画面・新規追加画面のいずれも開けなくなります。<code>show_in_menu</code> が ON でもメニューから飛んだ先がありません。</td></tr>
+<tr><td><code>query_var</code></td><td>WordPress 標準の公開クエリ変数 URL（例: <code>?post_type=foo</code>）が無効化されます。<code>WP_Query(['post_type' =&gt; 'foo'])</code> のような直接呼び出しや、本プラグインの階層 URL ルーティング（<code>post_type</code> / <code>name</code> 標準クエリ変数で解決）には<strong>影響しません</strong>（v1.0.25 で確認済み）。とはいえ、外部プラグインが <code>?post_type=...</code> 形式に依存している場合があるので、明示的な必要がない限り ON のまま推奨します。</td></tr>
+</tbody>
+</table>
+
+<div class="callout callout-warning">
+<p class="callout-title">注意</p>
+<p>これらの設定は通常 ON のまま運用してください。意図的に OFF にする場合は、WordPress 全体への影響を理解した上で行い、本プラグインのトラブルとして報告される事例の多くがこれらの誤設定に由来します。</p>
 </div>
 
 <h2>よくある質問</h2>
@@ -171,27 +330,86 @@
 <tr><th style="width:35%;">質問</th><th>回答</th></tr>
 </thead>
 <tbody>
-<tr><td>データベースに新しいテーブルは作られますか？</td><td>いいえ。設定データはwp_optionsテーブル（kstb_categories_migrated 等）に保存されます。カスタムテーブルは作成しません。</td></tr>
-<tr><td>外部サービスと通信しますか？</td><td>いいえ。外部HTTP通信、Cronジョブ、メール送信のいずれも行いません。</td></tr>
-<tr><td>フロントエンドに何か出力しますか？</td><td>いいえ。本プラグインは管理画面専用のツールです。JSON-LD、metaタグ、HTMLなどのフロントエンド出力は一切行いません。</td></tr>
-<tr><td>他のSEOプラグインと併用できますか？</td><td>はい。本プラグインはカスタム投稿タイプの管理のみを行うため、他のSEOプラグインと競合しません。</td></tr>
-<tr><td>マルチサイトに対応していますか？</td><td>各サイトごとにプラグインを有効化・設定する必要があります。</td></tr>
-<tr><td>アンインストール時にデータは削除されますか？</td><td>プラグインをアンインストール（削除）すると、wp_optionsに保存された設定データは削除されます。投稿データ自体はデータベースに残ります。</td></tr>
-<tr><td>投稿タイプのスラッグは変更できますか？</td><td>既存の投稿タイプのスラッグ変更は、URLの変更を伴うため推奨しません。記事移行機能で新しい投稿タイプに記事を移すことを検討してください。</td></tr>
+<tr><td>データベースに新しいテーブルは作られますか？</td><td>はい。2 つのカスタムテーブル <code>{prefix}kstb_post_types</code>（投稿タイプ定義）と <code>{prefix}kstb_menu_categories</code>（メニューカテゴリー定義）が作成されます。<code>{prefix}</code> はサイトの WordPress テーブル接頭辞（デフォルトは <code>wp_</code>、<code>$wpdb-&gt;prefix</code> の値）です。設定データの大半はこの 2 テーブルに保存されます。</td></tr>
+<tr><td>外部サービスと通信しますか？</td><td>いいえ。外部 HTTP 通信、Cron ジョブ、メール送信のいずれも行いません。完全にサーバー内で完結します。</td></tr>
+<tr><td>フロントエンドに JSON-LD 等を出力しますか？</td><td>いいえ。JSON-LD（<code>BreadcrumbList</code>、<code>Article</code> など）や meta タグの出力は行いません。構造化データはテーマや SEO プラグイン側で対応してください。ただし階層 URL を持つ CPT のページでは、正規 URL（canonical）への link 要素を <code>wp_head</code> に補助的に出力する実装があります。</td></tr>
+<tr><td>他の SEO プラグインと併用できますか？</td><td>はい。Yoast SEO、Rank Math、SEO SIMPLE PACK 等と併用できます。本プラグインはカスタム投稿タイプの管理と URL 構造を担当し、SEO プラグインはメタタグや構造化データを担当する、という役割分担が可能です。</td></tr>
+<tr><td>マルチサイトに対応していますか？</td><td>各サイトごとに有効化して設定する必要があります。ネットワーク全体の統一設定機能は現時点で提供していません。</td></tr>
+<tr><td>プラグインを削除するとデータはどうなりますか？</td><td>プラグインを無効化しても、カスタムテーブル（<code>{prefix}kstb_post_types</code>、<code>{prefix}kstb_menu_categories</code>）と投稿データ自体は保持されます。完全にアンインストールしてもデフォルトではテーブルは削除されません。必要であれば phpMyAdmin などで手動削除してください。</td></tr>
+<tr><td>投稿タイプの内部スラッグを変更できますか？</td><td>編集フォームに内部スラッグの専用入力欄はありません。ただし、url_slug（公開 URL スラッグ）を編集すると hidden の内部スラッグが連動して再生成（最大 20 文字に切り詰め）され、保存時に DB の <code>slug</code> カラムも更新されます。内部スラッグを保持したい場合は url_slug を変更しないでください。投稿タイプ自体を別名に変えたい場合は、新しい名前の CPT を作成して記事移行機能で記事を移動するのが安全です。</td></tr>
+<tr><td>ブロックエディタ（Gutenberg）に対応していますか？</td><td>はい。すべてのカスタム投稿タイプはデフォルトで REST API に対応し、ブロックエディタが使用できます。REST API 対応は <code>show_in_rest</code> の DB 値に従って決定されます（現行バージョンの管理フォームは常に ON で作成）。</td></tr>
+<tr><td>親ディレクトリの多段階層はどこまで対応？</td><td>再帰関数 <code>build_full_path()</code> が循環参照を検出しつつ多段でパスを構築するため、ロジックとしては階層数の上限はありません。ただし実装上の制約として、<code>parent_directory</code> カラムは <code>varchar(100)</code> なので 1 件あたり 100 文字までしか保存できません（途中の深い階層を含めたパス全体ではなく、その CPT に直接設定する親スラッグ文字列の長さ）。さらに、過度に深い階層（5 段以上）は URL が長くなり SEO 的にも管理的にも不利なため、2〜3 段程度を推奨します。</td></tr>
+<tr><td>他プラグインで作成した CPT を管理できますか？</td><td>できません。本プラグインは自身が作成した投稿タイプのみを管理します。他プラグインや <code>functions.php</code> で登録された CPT には影響しません。</td></tr>
 </tbody>
 </table>
 
-<div class="callout callout-warning">
-<p class="callout-title">注意</p>
-<p>問題が解決しない場合は、WordPressのデバッグモード（<code>WP_DEBUG</code>）を有効にして、エラーログを確認してください。エラーメッセージの内容が問題解決の手がかりになります。</p>
+<h2>プラグインの内部アーキテクチャ</h2>
+
+<figure class="infographic">
+<img src="images/infographics/architecture.png" alt="プラグインの内部アーキテクチャ図">
+<figcaption>図: プラグインの内部アーキテクチャ。カスタムテーブル、AJAX ハンドラー、投稿タイプ登録、親ページ選択、アーカイブ制御、パーマリンク検証の各コンポーネントの関係を示す。</figcaption>
+</figure>
+
+<p>本プラグインは以下のクラス群で構成されています。トラブルシューティングの際、エラーログに出てくるクラス名から該当機能を特定する参考にしてください。</p>
+
+<table>
+<thead>
+<tr><th style="width:40%;">クラス名</th><th>責務</th></tr>
+</thead>
+<tbody>
+<tr><td><code>KSTB_Database</code></td><td>カスタムテーブル（{prefix}kstb_post_types, {prefix}kstb_menu_categories）への CRUD、スキーマ自動マイグレーション、循環参照検出。</td></tr>
+<tr><td><code>KSTB_Post_Type_Registrar</code></td><td>投稿タイプの WordPress への登録、<code>register_single_post_type()</code>、階層 URL の <code>build_full_path()</code>、<code>resolve_hierarchical_request()</code>。</td></tr>
+<tr><td><code>KSTB_Post_Type_Force_Register</code></td><td>読み込み順序などで登録に失敗した CPT の強制再登録（自動修復）。</td></tr>
+<tr><td><code>KSTB_Archive_Controller</code></td><td>アーカイブ表示の 4 モード制御、子階層を含むアーカイブ、<code>template_control()</code>。</td></tr>
+<tr><td><code>KSTB_Parent_Selector</code></td><td>親ディレクトリの解決、親ページ選択メタボックス、リライトルール生成、<code>save_parent_page_data()</code>。</td></tr>
+<tr><td><code>KSTB_Permalink_Validator</code></td><td>正規 canonical URL 以外の不正な親経由アクセスを 404 にする検証、WordPress 標準の canonical redirect の無効化。</td></tr>
+<tr><td><code>KSTB_Old_Slug_Tracker</code></td><td>階層的 CPT の <code>_wp_old_slug</code> メタ保存（WordPress コアの欠落を補完）。</td></tr>
+<tr><td><code>KSTB_Post_Mover</code></td><td>投稿タイプ間の記事移動、タクソノミーフィルタリング、バリデーション。</td></tr>
+<tr><td><code>KSTB_Parent_Menu_Manager</code></td><td>カテゴリーフォルダによる管理メニューの分類、親メニューページの自動生成。</td></tr>
+<tr><td><code>KSTB_Admin</code></td><td>管理画面の登録、スクリプト/スタイルの読み込み、説明書タブの docs/ 動的読み込み。</td></tr>
+<tr><td><code>KSTB_Ajax_Handler</code></td><td>すべての <code>wp_ajax_kstb_*</code> エンドポイント（CPT 保存/削除/編集、カテゴリー操作、記事移動、親ページ検索など）。</td></tr>
+</tbody>
+</table>
+
+<h2>動作要件</h2>
+
+<table>
+<thead>
+<tr><th style="width:35%;">項目</th><th>要件</th></tr>
+</thead>
+<tbody>
+<tr><td>WordPress</td><td>5.0 以上（推奨: 最新版）</td></tr>
+<tr><td>PHP</td><td>7.0 以上（推奨: 7.4 以上）</td></tr>
+<tr><td>必須 PHP 拡張</td><td>DOMDocument / DOMXPath（説明書タブの docs 動的読み込みに使用。無効でもフォールバック動作）</td></tr>
+<tr><td>パーマリンク設定</td><td>「投稿名」または <code>/%postname%/</code> を含むカスタム構造（「基本」形式は不可）</td></tr>
+<tr><td>権限</td><td><code>manage_options</code>（管理者権限）</td></tr>
+<tr><td>対応ブラウザ</td><td>Chrome / Firefox / Safari / Edge の最新版</td></tr>
+<tr><td>Cron / 外部通信 / メール送信</td><td>いずれも不使用</td></tr>
+</tbody>
+</table>
+
+<h2>技術仕様</h2>
+
+<ul>
+<li><strong>データ保存</strong>: カスタムテーブル 2 つ（<code>{prefix}kstb_post_types</code>、<code>{prefix}kstb_menu_categories</code>）+ <code>wp_options</code>（フラッシュタイムスタンプ等）+ 投稿メタ（<code>_kstb_parent_page</code>、<code>_wp_old_slug</code>）</li>
+<li><strong>AJAX エンドポイント</strong>: 18 本の <code>wp_ajax_kstb_*</code> ハンドラー。すべて nonce 検証付き。権限チェックは大半が <code>manage_options</code>（設定系）だが、親ページ検索 <code>kstb_search_parent_pages</code> のみ <code>edit_posts</code> で動作する。</li>
+<li><strong>スキーマ自動マイグレーション</strong>: プラグイン有効化時に <code>KSTB_Database::create_tables()</code> がテーブルを初回作成し、以降は毎回の <code>init</code> フック内で <code>KSTB_Database::update_database()</code> が既存テーブルのカラム追加（ADD COLUMN IF NOT EXISTS 相当）を自動実行します。有効化時には <code>update_database()</code> は呼び出されません。</li>
+<li><strong>フロントエンド出力</strong>: JSON-LD / meta タグは出力しない。階層 URL を持つ CPT のページでは、正規 URL への canonical link 要素を <code>wp_head</code> に補助的に出力する（構造化データは別途補完が必要）。</li>
+<li><strong>フック登録数</strong>: <code>init</code>（優先度 5）、<code>template_redirect</code>、<code>request</code>、<code>post_type_link</code>、<code>save_post</code>、<code>admin_menu</code>、<code>admin_enqueue_scripts</code>、<code>wp_ajax_kstb_*</code> など合計 30 以上。</li>
+<li><strong>内部キャッシュ</strong>: <code>KSTB_Database</code> に静的プロパティキャッシュ。CRUD 後に自動クリア（v1.0.25 で改善）。</li>
+</ul>
+
+<div class="callout callout-note">
+<p class="callout-title">問題解決の順序</p>
+<p>問題が発生した場合、以下の順序で切り分けることを推奨します。（1）パーマリンク設定の再保存 → （2）該当投稿タイプの再登録 → （3）ブラウザキャッシュのハードリロード → （4）他プラグインの一時無効化 → （5）WP_DEBUG によるエラーログ確認。</p>
 </div>
 
 <nav class="page-nav">
-<a href="post-type-management.html" class="prev">&laquo; 投稿タイプ管理</a>
+<a href="menu-and-category.html" class="prev">&laquo; メニュー・カテゴリー</a>
 <span></span>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.24</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.25</p></footer>
 
 </main>
 

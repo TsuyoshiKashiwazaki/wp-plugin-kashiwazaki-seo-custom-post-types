@@ -53,9 +53,9 @@ class KSTB_Ajax_Handler {
         }
 
         $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-        $url_slug = isset($_POST['url_slug']) ? sanitize_key($_POST['url_slug']) : '';
-        $slug = isset($_POST['slug']) ? sanitize_key($_POST['slug']) : '';
-        $label = isset($_POST['label']) ? sanitize_text_field($_POST['label']) : '';
+        $url_slug = isset($_POST['url_slug']) ? sanitize_key(wp_unslash($_POST['url_slug'])) : '';
+        $slug = isset($_POST['slug']) ? sanitize_key(wp_unslash($_POST['slug'])) : '';
+        $label = isset($_POST['label']) ? sanitize_text_field(wp_unslash($_POST['label'])) : '';
 
         // URLスラッグは必須
         if (empty($url_slug) || empty($label)) {
@@ -156,31 +156,31 @@ class KSTB_Ajax_Handler {
 
         // 空または未設定の場合はデフォルト値を強制使用
         $labels = array(
-            'name' => !empty($_POST['labels']['name']) ? sanitize_text_field($_POST['labels']['name']) : $label,
-            'singular_name' => !empty($_POST['labels']['singular_name']) ? sanitize_text_field($_POST['labels']['singular_name']) : $label,
-            'menu_name' => !empty($_POST['labels']['menu_name']) ? sanitize_text_field($_POST['labels']['menu_name']) : $label,
-            'name_admin_bar' => !empty($_POST['labels']['name_admin_bar']) ? sanitize_text_field($_POST['labels']['name_admin_bar']) : $label,
-            'add_new' => !empty($_POST['labels']['add_new']) ? sanitize_text_field($_POST['labels']['add_new']) : '新規追加',
-            'add_new_item' => !empty($_POST['labels']['add_new_item']) ? sanitize_text_field($_POST['labels']['add_new_item']) : '新規' . $label . 'を追加',
-            'new_item' => !empty($_POST['labels']['new_item']) ? sanitize_text_field($_POST['labels']['new_item']) : '新規' . $label,
-            'edit_item' => !empty($_POST['labels']['edit_item']) ? sanitize_text_field($_POST['labels']['edit_item']) : $label . 'を編集',
-            'view_item' => !empty($_POST['labels']['view_item']) ? sanitize_text_field($_POST['labels']['view_item']) : $label . 'を表示',
-            'view_items' => !empty($_POST['labels']['view_items']) ? sanitize_text_field($_POST['labels']['view_items']) : $label . 'を表示',
-            'all_items' => !empty($_POST['labels']['all_items']) ? sanitize_text_field($_POST['labels']['all_items']) : 'すべての' . $label,
-            'search_items' => !empty($_POST['labels']['search_items']) ? sanitize_text_field($_POST['labels']['search_items']) : $label . 'を検索',
-            'parent_item_colon' => !empty($_POST['labels']['parent_item_colon']) ? sanitize_text_field($_POST['labels']['parent_item_colon']) : '親' . $label . ':',
-            'not_found' => !empty($_POST['labels']['not_found']) ? sanitize_text_field($_POST['labels']['not_found']) : $label . 'が見つかりません',
-            'not_found_in_trash' => !empty($_POST['labels']['not_found_in_trash']) ? sanitize_text_field($_POST['labels']['not_found_in_trash']) : 'ゴミ箱に' . $label . 'が見つかりません',
-            'featured_image' => !empty($_POST['labels']['featured_image']) ? sanitize_text_field($_POST['labels']['featured_image']) : 'アイキャッチ画像',
-            'set_featured_image' => !empty($_POST['labels']['set_featured_image']) ? sanitize_text_field($_POST['labels']['set_featured_image']) : 'アイキャッチ画像を設定',
-            'remove_featured_image' => !empty($_POST['labels']['remove_featured_image']) ? sanitize_text_field($_POST['labels']['remove_featured_image']) : 'アイキャッチ画像を削除',
-            'use_featured_image' => !empty($_POST['labels']['use_featured_image']) ? sanitize_text_field($_POST['labels']['use_featured_image']) : 'アイキャッチ画像として使用',
-            'archives' => !empty($_POST['labels']['archives']) ? sanitize_text_field($_POST['labels']['archives']) : $label . 'アーカイブ',
-            'insert_into_item' => !empty($_POST['labels']['insert_into_item']) ? sanitize_text_field($_POST['labels']['insert_into_item']) : $label . 'に挿入',
-            'uploaded_to_this_item' => !empty($_POST['labels']['uploaded_to_this_item']) ? sanitize_text_field($_POST['labels']['uploaded_to_this_item']) : 'この' . $label . 'にアップロード',
-            'filter_items_list' => !empty($_POST['labels']['filter_items_list']) ? sanitize_text_field($_POST['labels']['filter_items_list']) : $label . 'リストをフィルター',
-            'items_list_navigation' => !empty($_POST['labels']['items_list_navigation']) ? sanitize_text_field($_POST['labels']['items_list_navigation']) : $label . 'リストナビゲーション',
-            'items_list' => !empty($_POST['labels']['items_list']) ? sanitize_text_field($_POST['labels']['items_list']) : $label . 'リスト',
+            'name' => !empty($_POST['labels']['name']) ? sanitize_text_field(wp_unslash($_POST['labels']['name'])) : $label,
+            'singular_name' => !empty($_POST['labels']['singular_name']) ? sanitize_text_field(wp_unslash($_POST['labels']['singular_name'])) : $label,
+            'menu_name' => !empty($_POST['labels']['menu_name']) ? sanitize_text_field(wp_unslash($_POST['labels']['menu_name'])) : $label,
+            'name_admin_bar' => !empty($_POST['labels']['name_admin_bar']) ? sanitize_text_field(wp_unslash($_POST['labels']['name_admin_bar'])) : $label,
+            'add_new' => !empty($_POST['labels']['add_new']) ? sanitize_text_field(wp_unslash($_POST['labels']['add_new'])) : '新規追加',
+            'add_new_item' => !empty($_POST['labels']['add_new_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['add_new_item'])) : '新規' . $label . 'を追加',
+            'new_item' => !empty($_POST['labels']['new_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['new_item'])) : '新規' . $label,
+            'edit_item' => !empty($_POST['labels']['edit_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['edit_item'])) : $label . 'を編集',
+            'view_item' => !empty($_POST['labels']['view_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['view_item'])) : $label . 'を表示',
+            'view_items' => !empty($_POST['labels']['view_items']) ? sanitize_text_field(wp_unslash($_POST['labels']['view_items'])) : $label . 'を表示',
+            'all_items' => !empty($_POST['labels']['all_items']) ? sanitize_text_field(wp_unslash($_POST['labels']['all_items'])) : 'すべての' . $label,
+            'search_items' => !empty($_POST['labels']['search_items']) ? sanitize_text_field(wp_unslash($_POST['labels']['search_items'])) : $label . 'を検索',
+            'parent_item_colon' => !empty($_POST['labels']['parent_item_colon']) ? sanitize_text_field(wp_unslash($_POST['labels']['parent_item_colon'])) : '親' . $label . ':',
+            'not_found' => !empty($_POST['labels']['not_found']) ? sanitize_text_field(wp_unslash($_POST['labels']['not_found'])) : $label . 'が見つかりません',
+            'not_found_in_trash' => !empty($_POST['labels']['not_found_in_trash']) ? sanitize_text_field(wp_unslash($_POST['labels']['not_found_in_trash'])) : 'ゴミ箱に' . $label . 'が見つかりません',
+            'featured_image' => !empty($_POST['labels']['featured_image']) ? sanitize_text_field(wp_unslash($_POST['labels']['featured_image'])) : 'アイキャッチ画像',
+            'set_featured_image' => !empty($_POST['labels']['set_featured_image']) ? sanitize_text_field(wp_unslash($_POST['labels']['set_featured_image'])) : 'アイキャッチ画像を設定',
+            'remove_featured_image' => !empty($_POST['labels']['remove_featured_image']) ? sanitize_text_field(wp_unslash($_POST['labels']['remove_featured_image'])) : 'アイキャッチ画像を削除',
+            'use_featured_image' => !empty($_POST['labels']['use_featured_image']) ? sanitize_text_field(wp_unslash($_POST['labels']['use_featured_image'])) : 'アイキャッチ画像として使用',
+            'archives' => !empty($_POST['labels']['archives']) ? sanitize_text_field(wp_unslash($_POST['labels']['archives'])) : $label . 'アーカイブ',
+            'insert_into_item' => !empty($_POST['labels']['insert_into_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['insert_into_item'])) : $label . 'に挿入',
+            'uploaded_to_this_item' => !empty($_POST['labels']['uploaded_to_this_item']) ? sanitize_text_field(wp_unslash($_POST['labels']['uploaded_to_this_item'])) : 'この' . $label . 'にアップロード',
+            'filter_items_list' => !empty($_POST['labels']['filter_items_list']) ? sanitize_text_field(wp_unslash($_POST['labels']['filter_items_list'])) : $label . 'リストをフィルター',
+            'items_list_navigation' => !empty($_POST['labels']['items_list_navigation']) ? sanitize_text_field(wp_unslash($_POST['labels']['items_list_navigation'])) : $label . 'リストナビゲーション',
+            'items_list' => !empty($_POST['labels']['items_list']) ? sanitize_text_field(wp_unslash($_POST['labels']['items_list'])) : $label . 'リスト',
             // 投稿公開後のボタン用ラベル
             'item_published' => $label . 'を公開しました。',
             'item_published_privately' => $label . 'を非公開で公開しました。',
@@ -191,17 +191,17 @@ class KSTB_Ajax_Handler {
             'item_link_description' => $label . 'へのリンク。'
         );
 
-        $supports = isset($_POST['supports']) && is_array($_POST['supports']) ? array_map('sanitize_key', $_POST['supports']) : array('title', 'editor');
+        $supports = isset($_POST['supports']) && is_array($_POST['supports']) ? array_map('sanitize_key', wp_unslash($_POST['supports'])) : array('title', 'editor');
 
         $rewrite = array(
             'slug' => $url_slug,
             'with_front' => false
         );
 
-        $taxonomies = isset($_POST['taxonomies']) && is_array($_POST['taxonomies']) ? array_map('sanitize_key', $_POST['taxonomies']) : array();
+        $taxonomies = isset($_POST['taxonomies']) && is_array($_POST['taxonomies']) ? array_map('sanitize_key', wp_unslash($_POST['taxonomies'])) : array();
 
         // スラッグトップページの設定を処理
-        $slug_top_display = isset($_POST['slug_top_display']) ? sanitize_text_field($_POST['slug_top_display']) : 'unspecified';
+        $slug_top_display = isset($_POST['slug_top_display']) ? sanitize_text_field(wp_unslash($_POST['slug_top_display'])) : 'unspecified';
         $has_archive = false;
         $archive_display_type = 'post_list';
         $archive_page_id = null;
@@ -231,38 +231,49 @@ class KSTB_Ajax_Handler {
             'url_slug' => $url_slug,
             'label' => $label,
             'labels' => $labels,
-            'public' => isset($_POST['public']) ? (bool) $_POST['public'] : true,
-            'publicly_queryable' => isset($_POST['publicly_queryable']) ? (bool) $_POST['publicly_queryable'] : true,
-            'show_ui' => isset($_POST['show_ui']) ? (bool) $_POST['show_ui'] : true,
-            'show_in_menu' => isset($_POST['show_in_menu']) ? (bool) $_POST['show_in_menu'] : true,
-            'query_var' => isset($_POST['query_var']) ? (bool) $_POST['query_var'] : true,
+            // チェックボックス系: 未送信（チェックなし）の場合は false として扱う
+            'public' => !empty($_POST['public']) ? 1 : 0,
+            'publicly_queryable' => !empty($_POST['publicly_queryable']) ? 1 : 0,
+            'show_ui' => !empty($_POST['show_ui']) ? 1 : 0,
+            'show_in_menu' => !empty($_POST['show_in_menu']) ? 1 : 0,
+            'query_var' => !empty($_POST['query_var']) ? 1 : 0,
             'rewrite' => $rewrite,
             'capability_type' => 'post',
             'has_archive' => $has_archive,
             'archive_display_type' => $archive_display_type,
             'archive_page_id' => $archive_page_id,
             'archive_include_children' => $archive_include_children,
-            'parent_directory' => isset($_POST['parent_directory']) ? sanitize_text_field($_POST['parent_directory']) : '',
+            'parent_directory' => isset($_POST['parent_directory']) ? sanitize_text_field(wp_unslash($_POST['parent_directory'])) : '',
             'hierarchical' => isset($_POST['hierarchical']) ? (bool) $_POST['hierarchical'] : false,
             'allow_shortlink' => isset($_POST['allow_shortlink']) ? 1 : 0,
             'menu_position' => isset($_POST['menu_position']) && $_POST['menu_position'] !== '' ? intval($_POST['menu_position']) : null,
-            'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field($_POST['menu_icon']) : null,
-            'menu_parent_category' => isset($_POST['menu_parent_category']) ? sanitize_text_field($_POST['menu_parent_category']) : null,
-            'menu_parent_slug' => isset($_POST['menu_parent_slug']) ? sanitize_text_field($_POST['menu_parent_slug']) : null,
-            'menu_display_mode' => isset($_POST['menu_display_mode']) ? sanitize_text_field($_POST['menu_display_mode']) : 'category',
+            'menu_icon' => isset($_POST['menu_icon']) ? sanitize_text_field(wp_unslash($_POST['menu_icon'])) : null,
+            'menu_parent_category' => isset($_POST['menu_parent_category']) ? sanitize_text_field(wp_unslash($_POST['menu_parent_category'])) : null,
+            'menu_parent_slug' => isset($_POST['menu_parent_slug']) ? sanitize_text_field(wp_unslash($_POST['menu_parent_slug'])) : null,
+            'menu_display_mode' => isset($_POST['menu_display_mode']) ? sanitize_text_field(wp_unslash($_POST['menu_display_mode'])) : 'category',
             'supports' => $supports,
-            'show_in_rest' => true,
+            // show_in_rest: UI にトグルが無いため、DB 値を尊重する（更新時は既存値を保持、新規時は DB default=1）
             'rest_base' => $url_slug,
             'taxonomies' => $taxonomies
         );
 
         if ($id) {
+            // v1.0.25 HIGH-3: 更新前に旧 slug を取得しておく（slug 変更時の旧 CPT 解除のため）
+            $old_post_type = KSTB_Database::get_post_type($id);
+            $old_slug = $old_post_type ? $old_post_type->slug : null;
+
             $result = KSTB_Database::update_post_type($id, $data);
             if ($result !== false) {
+                // v1.0.25 HIGH-3: slug が変更された場合、旧 CPT も unregister する
+                // （これがないと旧 slug の rewrite rule が flush 時にゴーストとして残る）
+                if ($old_slug && $old_slug !== $slug && post_type_exists($old_slug)) {
+                    unregister_post_type($old_slug);
+                }
+
                 // 投稿タイプを強制的に再登録
                 $this->force_reregister_post_type($slug);
 
-                // パーマリンクルールをフラッシュ
+                // v1.0.25 MEDIUM-5: パーマリンクルールをフラッシュ（1リクエスト 1 回）
                 flush_rewrite_rules();
 
                 wp_send_json_success(array('message' => __('更新しました', 'kashiwazaki-seo-type-builder')));
@@ -275,7 +286,7 @@ class KSTB_Ajax_Handler {
                 // 投稿タイプを強制的に登録
                 $this->force_reregister_post_type($slug);
 
-                // パーマリンクルールをフラッシュ
+                // v1.0.25 MEDIUM-5: パーマリンクルールをフラッシュ（1リクエスト 1 回）
                 flush_rewrite_rules();
 
                 wp_send_json_success(array('message' => __('作成しました', 'kashiwazaki-seo-type-builder')));
@@ -315,7 +326,15 @@ class KSTB_Ajax_Handler {
         $result = KSTB_Database::delete_post_type($id);
 
         if ($result !== false) {
-            // パーマリンクをフラッシュ
+            // v1.0.25 NEW-1: ゴーストルール対策 — flush 前に CPT を unregister し、
+            // permastruct / query var / taxonomy 関連のクリーンアップを行う
+            // （これがないと削除した CPT のルールが rewrite_rules オプションに書き戻される）
+            // 注意: 独自 add_rewrite_rule() 由来のカスタムルールはこれだけでは消えない（v1.1.0 で対応予定）
+            if ($slug && post_type_exists($slug)) {
+                unregister_post_type($slug);
+            }
+
+            // v1.0.25 MEDIUM-5: flush は AJAX 層で 1 回だけ実施する
             flush_rewrite_rules();
 
             wp_send_json_success(array(
@@ -362,91 +381,33 @@ class KSTB_Ajax_Handler {
     }
 
     /**
-     * 投稿タイプを強制的に再登録してリライトルールを更新
+     * 投稿タイプを強制的に再登録
+     *
+     * v1.0.25 HIGH-3 修正:
+     *   旧実装は url_slug を slug で上書き、parent_directory を 1 階層しか辿らず、
+     *   さらに $wp_post_types[$slug] を unset するだけで unregister_post_type() を呼んでいなかった。
+     *   通常登録ロジック (KSTB_Post_Type_Registrar::register_single_post_type) に統合。
+     *
+     * v1.0.25 MEDIUM-5 修正:
+     *   このメソッド内では flush_rewrite_rules() を呼ばない。flush は呼び出し元で 1 回だけ実施する。
+     *
+     * @param string $slug
      */
     private function force_reregister_post_type($slug) {
-        global $wp_post_types, $wp_rewrite;
-        
-        // 既存の投稿タイプを削除
-        if (isset($wp_post_types[$slug])) {
-            unset($wp_post_types[$slug]);
+        // 既存の登録があれば unregister（permastruct / query var / hooks 等を正規にクリーンアップ）
+        if (post_type_exists($slug)) {
+            unregister_post_type($slug);
         }
-        
+
         // データベースから最新の設定を取得
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
         if (!$post_type) {
             return;
         }
-        
-        // 投稿タイプを再登録
-        $labels = json_decode($post_type->labels, true);
-        $supports = json_decode($post_type->supports, true);
-        
-        if (empty($labels) || !is_array($labels)) {
-            $labels = array();
-        }
-        
-        if (empty($supports) || !is_array($supports)) {
-            $supports = array('title', 'editor');
-        }
-        
-        // rewrite設定の準備
-        $rewrite = json_decode($post_type->rewrite, true);
-        if (empty($rewrite)) {
-            $rewrite = array(
-                'slug' => $post_type->slug,
-                'with_front' => false
-            );
-        } else {
-            // slug は常に投稿タイプのslugを使用
-            $rewrite['slug'] = $post_type->slug;
-        }
-        
-        // 親ディレクトリの設定を適用
-        if (!empty($post_type->parent_directory)) {
-            $parent_dir = trim($post_type->parent_directory, '/');
-            $rewrite['slug'] = $parent_dir . '/' . $post_type->slug;
-        }
-        
-        $args = array(
-            'label' => $post_type->label,
-            'labels' => $labels,
-            'public' => (bool) $post_type->public,
-            'publicly_queryable' => (bool) $post_type->publicly_queryable,
-            'show_ui' => (bool) $post_type->show_ui,
-            'show_in_menu' => (bool) $post_type->show_in_menu,
-            'query_var' => (bool) $post_type->query_var,
-            'rewrite' => $rewrite,
-            'capability_type' => 'post',
-            'has_archive' => (bool) $post_type->has_archive,
-            'hierarchical' => (bool) $post_type->hierarchical,
-            'menu_position' => (int) $post_type->menu_position ?: 25,
-            'menu_icon' => $post_type->menu_icon,
-            'supports' => $supports,
-            'show_in_rest' => true,
-            'rest_base' => $post_type->slug
-        );
-        
-        // 投稿タイプを登録
-        register_post_type($post_type->slug, $args);
-        
-        // タクソノミーも再登録
-        $taxonomies = json_decode($post_type->taxonomies, true);
-        if (!empty($taxonomies) && is_array($taxonomies)) {
-            foreach ($taxonomies as $taxonomy) {
-                if (taxonomy_exists($taxonomy)) {
-                    register_taxonomy_for_object_type($taxonomy, $post_type->slug);
-                }
-            }
-        }
-        
-        // 古いリライトルールを完全にクリア
-        delete_option('rewrite_rules');
-        
-        // リライトルールを完全に再構築
-        $wp_rewrite->init();
-        $wp_rewrite->set_permalink_structure(get_option('permalink_structure'));
-        $wp_rewrite->flush_rules(true);
+
+        // 通常登録ロジックに統合 ($force=true で post_type_exists ガードをスキップ)
+        $registrar = KSTB_Post_Type_Registrar::get_instance();
+        $registrar->register_single_post_type($post_type, true);
     }
     
     public function flush_rewrite_rules() {
@@ -497,6 +458,8 @@ class KSTB_Ajax_Handler {
         if (is_wp_error($result)) {
             wp_send_json_error(__('再登録中にエラーが発生しました: ', 'kashiwazaki-seo-type-builder') . $result->get_error_message());
         } else {
+            // v1.0.25 MEDIUM-5: force_register 自身は flush しないので、AJAX 層で 1 回だけ呼ぶ
+            flush_rewrite_rules();
             wp_send_json_success(array('message' => sprintf(__('%sを再登録しました。ページをリロードしてください。', 'kashiwazaki-seo-type-builder'), $post_type->label)));
         }
     }
@@ -552,8 +515,8 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : '';
-        $taxonomy = isset($_POST['taxonomy']) ? sanitize_key($_POST['taxonomy']) : '';
+        $post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : '';
+        $taxonomy = isset($_POST['taxonomy']) ? sanitize_key(wp_unslash($_POST['taxonomy'])) : '';
         $term_id = isset($_POST['term_id']) ? intval($_POST['term_id']) : 0;
 
         if (empty($post_type)) {
@@ -597,7 +560,7 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $post_type = isset($_POST['post_type']) ? sanitize_text_field($_POST['post_type']) : '';
+        $post_type = isset($_POST['post_type']) ? sanitize_text_field(wp_unslash($_POST['post_type'])) : '';
 
         if (empty($post_type)) {
             wp_send_json_error(__('投稿タイプが指定されていません', 'kashiwazaki-seo-type-builder'));
@@ -628,8 +591,8 @@ class KSTB_Ajax_Handler {
         }
 
         $post_ids = isset($_POST['post_ids']) ? array_map('intval', $_POST['post_ids']) : array();
-        $from_type = isset($_POST['from_type']) ? sanitize_key($_POST['from_type']) : '';
-        $to_type = isset($_POST['to_type']) ? sanitize_key($_POST['to_type']) : '';
+        $from_type = isset($_POST['from_type']) ? sanitize_key(wp_unslash($_POST['from_type'])) : '';
+        $to_type = isset($_POST['to_type']) ? sanitize_key(wp_unslash($_POST['to_type'])) : '';
 
         if (empty($post_ids)) {
             wp_send_json_error(__('移動する記事が選択されていません', 'kashiwazaki-seo-type-builder'));
@@ -680,7 +643,7 @@ class KSTB_Ajax_Handler {
         }
 
         $post_type_id = isset($_POST['post_type_id']) ? intval($_POST['post_type_id']) : 0;
-        $menu_mode = isset($_POST['menu_mode']) ? sanitize_text_field($_POST['menu_mode']) : '';
+        $menu_mode = isset($_POST['menu_mode']) ? sanitize_text_field(wp_unslash($_POST['menu_mode'])) : '';
 
         if (empty($post_type_id)) {
             wp_send_json_error(__('投稿タイプIDが指定されていません', 'kashiwazaki-seo-type-builder'));
@@ -712,6 +675,9 @@ class KSTB_Ajax_Handler {
                 $this->force_reregister_post_type($post_type->slug);
             }
 
+            // v1.0.25 MEDIUM-5: メニュー設定の変更はリライトルールに影響しないため flush 不要
+            // (admin 画面のメニュー描画は KSTB_Parent_Menu_Manager が DB から直接読む)
+
             wp_send_json_success(__('メニュー設定を更新しました', 'kashiwazaki-seo-type-builder'));
         } else {
             wp_send_json_error(__('メニュー設定の更新に失敗しました', 'kashiwazaki-seo-type-builder'));
@@ -732,8 +698,8 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $category_name = isset($_POST['category_name']) ? trim(sanitize_text_field($_POST['category_name'])) : '';
-        $icon = isset($_POST['icon']) ? sanitize_text_field($_POST['icon']) : 'dashicons-category';
+        $category_name = isset($_POST['category_name']) ? trim(sanitize_text_field(wp_unslash($_POST['category_name']))) : '';
+        $icon = isset($_POST['icon']) ? sanitize_text_field(wp_unslash($_POST['icon'])) : 'dashicons-category';
 
         if (empty($category_name)) {
             wp_send_json_error(__('カテゴリー名を入力してください', 'kashiwazaki-seo-type-builder'));
@@ -797,8 +763,8 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $old_name = isset($_POST['old_name']) ? sanitize_text_field($_POST['old_name']) : '';
-        $new_name = isset($_POST['new_name']) ? sanitize_text_field($_POST['new_name']) : '';
+        $old_name = isset($_POST['old_name']) ? sanitize_text_field(wp_unslash($_POST['old_name'])) : '';
+        $new_name = isset($_POST['new_name']) ? sanitize_text_field(wp_unslash($_POST['new_name'])) : '';
 
         if (empty($old_name) || empty($new_name)) {
             wp_send_json_error(__('カテゴリー名を入力してください', 'kashiwazaki-seo-type-builder'));
@@ -848,7 +814,7 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
+        $category_name = isset($_POST['category_name']) ? sanitize_text_field(wp_unslash($_POST['category_name'])) : '';
 
         if (empty($category_name)) {
             wp_send_json_error(__('カテゴリー名が指定されていません', 'kashiwazaki-seo-type-builder'));
@@ -943,8 +909,8 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $category_name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
-        $icon = isset($_POST['icon']) ? sanitize_text_field($_POST['icon']) : '';
+        $category_name = isset($_POST['category_name']) ? sanitize_text_field(wp_unslash($_POST['category_name'])) : '';
+        $icon = isset($_POST['icon']) ? sanitize_text_field(wp_unslash($_POST['icon'])) : '';
 
         if (empty($category_name) || empty($icon)) {
             wp_send_json_error(__('カテゴリー名とアイコンが必要です', 'kashiwazaki-seo-type-builder'));
@@ -974,7 +940,8 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $assignments = isset($_POST['assignments']) ? $_POST['assignments'] : array();
+        // v1.0.25 LOW-2: 配列代入時にも wp_unslash を適用 (内部要素も再帰的に処理される)
+        $assignments = isset($_POST['assignments']) && is_array($_POST['assignments']) ? wp_unslash($_POST['assignments']) : array();
 
         if (empty($assignments) || !is_array($assignments)) {
             wp_send_json_error(__('保存するデータがありません', 'kashiwazaki-seo-type-builder'));
@@ -1042,7 +1009,7 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $search = isset($_POST['search']) ? sanitize_text_field(wp_unslash($_POST['search'])) : '';
         $exclude_id = isset($_POST['exclude_id']) ? intval($_POST['exclude_id']) : 0;
 
         if (empty($search) || mb_strlen($search) < 2) {

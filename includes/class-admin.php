@@ -40,6 +40,123 @@ class KSTB_Admin {
         include KSTB_PLUGIN_PATH . 'templates/admin-page.php';
     }
 
+    /**
+     * docs/ 配下の HTML ファイルから <main class="content"> 部分を抽出して返す
+     *
+     * v1.0.25: マニュアルの二重管理を解消するため、admin の説明書タブから docs/ を直接読み込む。
+     * 単一の真実源 (Single Source of Truth) として docs/ を扱い、admin 側はその抽出表示に徹する。
+     *
+     * - DOMDocument で安全にパース (LIBXML_NONET でネットワーク参照を禁止)
+     * - <main class="content"> から <h1>, <nav class="page-nav">, <footer> を除去
+     * - <img> の相対パス (images/...) を plugins_url('docs/images/...') に書き換え
+     * - <a href> の内部リンク (setup.html 等) を plugins_url('docs/setup.html') に書き換え
+     * - パース失敗時は空文字を返す (呼び出し元で fallback 表示すること)
+     *
+     * @param string $filename docs/ 配下のファイル名 (例: 'post-type-management.html')
+     * @return string 抽出した HTML (失敗時は空文字)
+     */
+    public function get_docs_content($filename) {
+        // DOM 拡張が無い環境では fatal を回避して空文字を返す (呼び出し元で fallback 表示される)
+        if (!class_exists('DOMDocument') || !class_exists('DOMXPath')) {
+            return '';
+        }
+
+        // ファイル名のサニタイズ (path traversal 防止)
+        $filename = basename($filename);
+        if (!preg_match('/\.html$/', $filename)) {
+            return '';
+        }
+
+        $filepath = KSTB_PLUGIN_PATH . 'docs/' . $filename;
+        if (!file_exists($filepath) || !is_readable($filepath)) {
+            return '';
+        }
+
+        // realpath で docs/ 配下に収まることを再確認 (symlink 経由の脱出防止)
+        // 末尾区切り文字を付けて比較し、/path/docs_evil/ のような prefix 一致を防ぐ
+        $real_filepath = realpath($filepath);
+        $real_docs_dir = realpath(KSTB_PLUGIN_PATH . 'docs');
+        if ($real_filepath === false || $real_docs_dir === false) {
+            return '';
+        }
+        $real_docs_dir_with_sep = rtrim($real_docs_dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (strpos($real_filepath, $real_docs_dir_with_sep) !== 0) {
+            return '';
+        }
+
+        $html = file_get_contents($filepath);
+        if ($html === false || $html === '') {
+            return '';
+        }
+
+        // DOMDocument でパース (XML encoding 宣言で日本語文字化け回避)
+        // libxml の元エラー設定を保存して復元する
+        $previous_libxml_errors = libxml_use_internal_errors(true);
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $loaded = $dom->loadHTML(
+            '<?xml encoding="UTF-8">' . $html,
+            LIBXML_NONET | LIBXML_NOWARNING | LIBXML_NOERROR
+        );
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous_libxml_errors);
+
+        if (!$loaded) {
+            return '';
+        }
+
+        // <main class="content"> を取得 (class 完全一致ではなく contains() で堅牢化)
+        $xpath = new DOMXPath($dom);
+        $class_match = 'contains(concat(" ", normalize-space(@class), " "), " content ")';
+        $main_nodes = $xpath->query('//main[' . $class_match . ']');
+        if ($main_nodes->length === 0) {
+            return '';
+        }
+        $main = $main_nodes->item(0);
+
+        // 不要な要素を削除: <h1>, <nav class="page-nav">, <footer>, <figure class="screenshot">
+        $remove_selectors = array(
+            './/h1',
+            './/nav[contains(concat(" ", normalize-space(@class), " "), " page-nav ")]',
+            './/footer',
+            './/figure[contains(concat(" ", normalize-space(@class), " "), " screenshot ")]',
+        );
+        foreach ($remove_selectors as $selector) {
+            $nodes_to_remove = $xpath->query($selector, $main);
+            foreach ($nodes_to_remove as $node) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+
+        // <img src="images/..."> を docs URL に書き換え
+        $docs_base = KSTB_PLUGIN_URL . 'docs/';
+        $img_nodes = $xpath->query('.//img', $main);
+        foreach ($img_nodes as $img) {
+            $src = $img->getAttribute('src');
+            if ($src !== '' && strpos($src, 'http') !== 0 && strpos($src, '//') !== 0) {
+                $img->setAttribute('src', $docs_base . ltrim($src, '/'));
+            }
+        }
+
+        // <a href="*.html"> の内部リンクを docs URL に書き換え + target="_blank"
+        $link_nodes = $xpath->query('.//a[@href]', $main);
+        foreach ($link_nodes as $link) {
+            $href = $link->getAttribute('href');
+            if (preg_match('/^[a-z0-9_-]+\.html(#.*)?$/i', $href)) {
+                $link->setAttribute('href', $docs_base . $href);
+                $link->setAttribute('target', '_blank');
+                $link->setAttribute('rel', 'noopener');
+            }
+        }
+
+        // <main> の innerHTML を取得
+        $output = '';
+        foreach ($main->childNodes as $child) {
+            $output .= $dom->saveHTML($child);
+        }
+
+        return $output;
+    }
+
     public function enqueue_scripts($hook) {
         if ('toplevel_page_kashiwazaki-seo-type-builder' !== $hook) {
             return;

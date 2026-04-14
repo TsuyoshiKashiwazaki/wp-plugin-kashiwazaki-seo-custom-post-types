@@ -119,6 +119,10 @@ class KSTB_Permalink_Validator {
                         $post_types = $this->get_post_types();
                         foreach ($post_types as $post_type) {
                             if ($target_post->post_type === $post_type->slug) {
+                                // allow_shortlink が ON の場合は短縮 URL でのアクセスを許可（リダイレクトしない）
+                                if (!empty($post_type->allow_shortlink)) {
+                                    break;
+                                }
                                 $canonical_url = get_permalink($target_post->ID);
                                 if ($canonical_url) {
                                     wp_redirect($canonical_url, 301);

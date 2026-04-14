@@ -384,6 +384,13 @@ class KSTB_Parent_Selector {
             return;
         }
 
+        // v1.0.25 MEDIUM-4: $_POST['post_ID'] と $post_id の一致確認
+        // (nested save_post で別 post に対してフォーム値が誤適用されるのを防ぐ)
+        if (isset($_POST['post_ID']) && (int) $_POST['post_ID'] !== (int) $post_id) {
+            unset($processing[$post_id]);
+            return;
+        }
+
         // 権限確認
         if (!current_user_can('edit_post', $post_id)) {
             unset($processing[$post_id]);
@@ -397,41 +404,72 @@ class KSTB_Parent_Selector {
             return;
         }
 
-        // スラッグを保存
+        // v1.0.25 MEDIUM-4: post_name / post_parent の更新を集約し、wp_update_post() で 1 回だけ呼ぶ
+        // 旧実装は $wpdb->update() で WordPress の slug 一意化・親子循環チェック・post_updated/save_post 系を
+        // すべて bypass していたため、自分自身を親にしたり子孫を親にしたりが可能だった
+        // ($processing 配列で再入を防いでいるので、wp_update_post 内部の save_post フックは即 return される)
+        $post_update = array();
+
+        // スラッグを集約
         if (isset($_POST['kstb_post_slug']) && !empty($_POST['kstb_post_slug'])) {
-            $new_slug = sanitize_title($_POST['kstb_post_slug']);
+            $new_slug = sanitize_title(wp_unslash($_POST['kstb_post_slug']));
             if (!empty($new_slug)) {
-                global $wpdb;
-                $wpdb->update(
-                    $wpdb->posts,
-                    array('post_name' => $new_slug),
-                    array('ID' => $post_id),
-                    array('%s'),
-                    array('%d')
-                );
-                clean_post_cache($post_id);
+                $post_update['post_name'] = $new_slug;
             }
         }
 
-        // 親ページIDを保存
+        // 親ページIDの処理
+        // メタ更新は wp_update_post 後に行う (core の循環検出で post_parent=0 に補正された場合に
+        // メタが不整合な値を保持し続けるのを防ぐため)
         $parent_page_id = isset($_POST['kstb_parent_page']) ? intval($_POST['kstb_parent_page']) : 0;
+        $is_cross_post_type_parent = false;
 
         if (empty($parent_page_id)) {
             // 親ページをクリア
-            delete_post_meta($post_id, '_kstb_parent_page');
-            $this->update_post_parent_directly($post_id, 0);
-        } else {
-            // 親ページの存在確認（軽量）
-            if ($this->is_valid_parent($parent_page_id)) {
-                // カスタムメタフィールドに保存
-                update_post_meta($post_id, '_kstb_parent_page', $parent_page_id);
+            $post_update['post_parent'] = 0;
+        } elseif ($this->is_valid_parent($parent_page_id)) {
+            $parent_post_type = get_post_type($parent_page_id);
+            if ($parent_post_type === $post_type) {
+                // 同じ投稿タイプ → post_parent で管理 (core の循環検出に任せる)
+                $post_update['post_parent'] = $parent_page_id;
+            } else {
+                // 異なる投稿タイプ → post_parent は 0、メタで管理
+                $post_update['post_parent'] = 0;
+                $is_cross_post_type_parent = true;
+            }
+        }
 
-                // 同じ投稿タイプの場合のみ post_parent も設定
-                $parent_post_type = get_post_type($parent_page_id);
-                if ($parent_post_type === $post_type) {
-                    $this->update_post_parent_directly($post_id, $parent_page_id);
+        // 集約した更新を 1 回だけ wp_update_post で適用
+        // （これにより slug 一意化・親子循環チェック・post_updated/save_post 系が正規に走る）
+        $update_failed = false;
+        if (!empty($post_update)) {
+            $post_update['ID'] = $post_id;
+            $result = wp_update_post($post_update, true);
+            if (is_wp_error($result)) {
+                $update_failed = true;
+                if (defined('WP_DEBUG') && WP_DEBUG) {
+                    error_log(sprintf('KSTB MEDIUM-4: wp_update_post failed for post %d: %s', $post_id, $result->get_error_message()));
+                }
+            }
+        }
+
+        // メタの整合性を取る (wp_update_post 成功時のみ)
+        if (!$update_failed) {
+            if (empty($parent_page_id)) {
+                // 親なし → メタ削除
+                delete_post_meta($post_id, '_kstb_parent_page');
+            } elseif ($is_cross_post_type_parent) {
+                // cross-post-type の場合: メタが唯一の真実なので保存
+                update_post_meta($post_id, '_kstb_parent_page', $parent_page_id);
+            } else {
+                // same-post-type の場合: 実際の post_parent と照合
+                // (core が循環検出で 0 に補正した場合はメタも整合させる)
+                $actual_parent = (int) get_post_field('post_parent', $post_id);
+                if ($actual_parent === (int) $parent_page_id) {
+                    update_post_meta($post_id, '_kstb_parent_page', $parent_page_id);
                 } else {
-                    $this->update_post_parent_directly($post_id, 0);
+                    // 循環検出で拒否されたためメタもクリア
+                    delete_post_meta($post_id, '_kstb_parent_page');
                 }
             }
         }
@@ -446,7 +484,11 @@ class KSTB_Parent_Selector {
      * 親ページ選択のキャッシュをクリア
      */
     private function clear_parent_cache() {
-        wp_cache_flush_group('kstb');
+        // wp_cache_flush_group() は WordPress 6.1.0 で追加された関数。
+        // 動作要件 (WP 5.0+) を維持するため function_exists ガードを入れる。
+        if (function_exists('wp_cache_flush_group')) {
+            wp_cache_flush_group('kstb');
+        }
     }
 
     /**
@@ -548,24 +590,8 @@ class KSTB_Parent_Selector {
         return !empty($exists);
     }
 
-    /**
-     * post_parentを直接更新（wp_update_postを使わない軽量版）
-     */
-    private function update_post_parent_directly($post_id, $parent_id) {
-        global $wpdb;
-
-        // 直接データベースを更新（高速）
-        $wpdb->update(
-            $wpdb->posts,
-            array('post_parent' => $parent_id),
-            array('ID' => $post_id),
-            array('%d'),
-            array('%d')
-        );
-
-        // キャッシュをクリア
-        clean_post_cache($post_id);
-    }
+    // v1.0.25 MEDIUM-4: update_post_parent_directly() を削除
+    // post_parent / post_name の更新は save_parent_page_data 内で wp_update_post() に統合された
 
     /**
      * 管理画面用のスタイルとスクリプトを読み込み
@@ -643,6 +669,7 @@ class KSTB_Parent_Selector {
                 }
 
                 // 選択表示を更新する関数
+                // v1.0.25 LOW-5: innerHTML を textContent / createElement に置換し DOM-based XSS を防御
                 function updateSelectionDisplay(selectBox) {
                     var currentSelection = document.getElementById('kstb_current_selection');
                     var selectedLabel = document.getElementById('kstb_selected_label');
@@ -652,11 +679,18 @@ class KSTB_Parent_Selector {
                     if (selectedOption && selectedOption.value) {
                         var title = selectedOption.textContent.trim();
                         var type = selectedOption.getAttribute('data-type') || '';
-                        selectedLabel.innerHTML = title + (type ? ' <small style="color: #666;">(' + type + ')</small>' : '');
+                        // textContent + createElement で安全に DOM 構築
+                        selectedLabel.textContent = title;
+                        if (type) {
+                            var smallEl = document.createElement('small');
+                            smallEl.style.color = '#666';
+                            smallEl.textContent = ' (' + type + ')';
+                            selectedLabel.appendChild(smallEl);
+                        }
                         currentSelection.style.display = 'block';
                     } else {
                         currentSelection.style.display = 'none';
-                        selectedLabel.innerHTML = '';
+                        selectedLabel.textContent = '';
                     }
                 }
 
@@ -680,13 +714,19 @@ class KSTB_Parent_Selector {
                             // 2文字未満は検索しない
                             if (searchText.length < 2) {
                                 resultsBox.style.display = 'none';
-                                resultsBox.innerHTML = '';
+                                resultsBox.textContent = '';
                                 return;
                             }
 
                             // 300ms後にAJAX検索
                             searchTimeout = setTimeout(function() {
-                                resultsBox.innerHTML = '<div style="padding: 10px; color: #666;">検索中...</div>';
+                                // v1.0.25 LOW-5: 静的メッセージも textContent + createElement で構築
+                                resultsBox.textContent = '';
+                                var loadingDiv = document.createElement('div');
+                                loadingDiv.style.padding = '10px';
+                                loadingDiv.style.color = '#666';
+                                loadingDiv.textContent = '検索中...';
+                                resultsBox.appendChild(loadingDiv);
                                 resultsBox.style.display = 'block';
 
                                 var formData = new FormData();
@@ -702,14 +742,33 @@ class KSTB_Parent_Selector {
                                 .then(function(response) { return response.json(); })
                                 .then(function(data) {
                                     if (data.success && data.data.results.length > 0) {
-                                        var html = '';
+                                        // v1.0.25 LOW-5: innerHTML 連結を createElement + textContent に置換
+                                        // (post_title / type は AJAX 経由のサーバ由来データだが、防御的に textContent を使用)
+                                        resultsBox.textContent = '';
                                         data.data.results.forEach(function(item) {
-                                            html += '<div class="kstb-search-result-item" data-id="' + item.id + '" data-title="' + item.title.replace(/"/g, '&quot;') + '" data-type="' + item.type + '" style="padding: 8px 10px; cursor: pointer; border-bottom: 1px solid #eee;">';
-                                            html += '<strong>' + item.title + '</strong>';
-                                            html += ' <small style="color: #666;">(' + item.type + ')</small>';
-                                            html += '</div>';
+                                            var resultDiv = document.createElement('div');
+                                            resultDiv.className = 'kstb-search-result-item';
+                                            resultDiv.setAttribute('data-id', item.id);
+                                            resultDiv.setAttribute('data-title', item.title);
+                                            resultDiv.setAttribute('data-type', item.type);
+                                            resultDiv.style.padding = '8px 10px';
+                                            resultDiv.style.cursor = 'pointer';
+                                            resultDiv.style.borderBottom = '1px solid #eee';
+
+                                            var strong = document.createElement('strong');
+                                            strong.textContent = item.title;
+                                            resultDiv.appendChild(strong);
+
+                                            if (item.type) {
+                                                resultDiv.appendChild(document.createTextNode(' '));
+                                                var typeSmall = document.createElement('small');
+                                                typeSmall.style.color = '#666';
+                                                typeSmall.textContent = '(' + item.type + ')';
+                                                resultDiv.appendChild(typeSmall);
+                                            }
+
+                                            resultsBox.appendChild(resultDiv);
                                         });
-                                        resultsBox.innerHTML = html;
 
                                         // クリックイベントを追加
                                         resultsBox.querySelectorAll('.kstb-search-result-item').forEach(function(item) {
@@ -764,11 +823,23 @@ class KSTB_Parent_Selector {
                                             });
                                         });
                                     } else {
-                                        resultsBox.innerHTML = '<div style="padding: 10px; color: #666;">該当するページが見つかりません</div>';
+                                        // v1.0.25 LOW-5: 静的メッセージも textContent で構築
+                                        resultsBox.textContent = '';
+                                        var noResultDiv = document.createElement('div');
+                                        noResultDiv.style.padding = '10px';
+                                        noResultDiv.style.color = '#666';
+                                        noResultDiv.textContent = '該当するページが見つかりません';
+                                        resultsBox.appendChild(noResultDiv);
                                     }
                                 })
                                 .catch(function() {
-                                    resultsBox.innerHTML = '<div style="padding: 10px; color: #b32d2e;">検索エラーが発生しました</div>';
+                                    // v1.0.25 LOW-5: 静的メッセージも textContent で構築
+                                    resultsBox.textContent = '';
+                                    var errorDiv = document.createElement('div');
+                                    errorDiv.style.padding = '10px';
+                                    errorDiv.style.color = '#b32d2e';
+                                    errorDiv.textContent = '検索エラーが発生しました';
+                                    resultsBox.appendChild(errorDiv);
                                 });
                             }, 300);
                         });
