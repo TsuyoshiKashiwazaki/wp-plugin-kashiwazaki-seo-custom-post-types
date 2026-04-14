@@ -1371,28 +1371,21 @@ class KSTB_Parent_Selector {
                 $post_type_obj = get_post_type_object($post_type->slug);
 
                 if ($post_type_obj && $post_type_obj->rewrite) {
+                    // v1.0.25 C3 修正: parent_directory 設定時は registrar 側で
+                    // $rewrite['slug'] = build_full_path() (例: "company/member") に
+                    // 既に設定されているため、$slug にもう一度 parent_dir を前置すると
+                    // "company/company/member" のように二重化していた。
+                    // ここでは $slug をそのまま完全パスとして扱う。
                     $slug = isset($post_type_obj->rewrite['slug']) ? $post_type_obj->rewrite['slug'] : $post_type->slug;
-                    $parent_dir = !empty($post_type->parent_directory) ? trim($post_type->parent_directory, '/') : '';
 
                     // アーカイブページが有効な場合はアーカイブルールを追加
                     if ((bool) $post_type->has_archive) {
-                        if ($parent_dir) {
-                            // パターン0: /{parent_dir}/{post_type_slug}/ (アーカイブページ with parent)
-                            add_rewrite_rule(
-                                '^' . preg_quote($parent_dir, '/') . '/' . preg_quote($slug, '/') . '/?$',
-                                'index.php?post_type=' . $post_type->slug . '&kstb_archive=1',
-                                'top'
-                            );
-                        } else {
-                            // パターン0: /{post_type_slug}/ (アーカイブページ)
-                            add_rewrite_rule(
-                                '^' . preg_quote($slug, '/') . '/?$',
-                                'index.php?post_type=' . $post_type->slug . '&kstb_archive=1',
-                                'top'
-                            );
-                        }
-                        
-            // error_log("KSTB Enhanced: Added archive rule for {$post_type->slug} with slug '{$slug}'" . ($parent_dir ? " under parent '{$parent_dir}'" : ''));
+                        // $slug は registrar によって既にフルパス (parent 含む) になっているのでそのまま使用
+                        add_rewrite_rule(
+                            '^' . preg_quote($slug, '/') . '/?$',
+                            'index.php?post_type=' . $post_type->slug . '&kstb_archive=1',
+                            'top'
+                        );
                     }
 
                     // 複数パターンのリライトルールを追加

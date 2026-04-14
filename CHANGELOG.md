@@ -5,6 +5,31 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.26] - 2026-04-14
+
+### Fixed
+- **HIGH-6** (security): 「記事移動」タブの記事一覧表示で AJAX 応答の `post.title` / `post.author` を生 HTML 連結していた Stored XSS を修正
+  - `assets/admin.js` の `displayPosts()` を全面書き直し、`document.createElement` / jQuery `$('<tr/>').append(...)` / `.text()` ベースの DOM 構築に置換
+  - 寄稿者権限以上のユーザーが投稿タイトルにスクリプトを埋め込んだ場合、管理者が当該タブを開いた瞬間に発火する admin 環境での権限昇格リスクを排除
+- **HIGH-7** (security): メニューカテゴリー一覧で `category.name` / `pt.label` / `category.icon` を生 HTML 連結していた Stored XSS を修正
+  - `assets/admin.js` の `renderCategoriesList()` を全面書き直し、`category.name` と `pt.label` は `.text()` 経由で挿入、`category.icon` (dashicons class 名) は正規表現 `^dashicons-[a-z0-9-]+$` でホワイトリスト検証
+  - カテゴリー名を介した admin → admin の Stored XSS 経路を排除
+- **MEDIUM-10**: 親ディレクトリ + `url_slug !== slug` の組み合わせでカスタム rewrite ルールが二重生成される問題を修正
+  - `class-post-type-registrar.php:564-587` で `build_full_path()` の戻り値 (例: `company/company-news`) にさらに `$url_slug` を結合していたため、生成ルールが `^company/company-news/company-news/...` のように二重化していた
+  - `$full_path` をそのまま `^{$full_path}/...` に使用する形に変更し、`preg_quote()` も併せて適用
+- **MEDIUM-11**: hierarchical CPT の強化 rewrite ルールでアーカイブ URL が二重化する問題を修正
+  - `class-parent-selector.php:1370-1392` の `add_enhanced_rewrite_rules()` で、registrar が既に `$rewrite['slug']` をフルパスに設定しているにもかかわらず追加で `$parent_dir` を前置していたため、アーカイブルールが `^company/company/member/?$` のように二重化していた
+  - `$slug` をフルパスとしてそのまま使用する形に変更
+- **LOW-6**: `KSTB_Database::insert_post_type()` と `update_post_type()` の間で `rest_base` カラムの保存値が不一致だった問題を修正
+  - insert 側は url_slug、update 側は内部 slug を保存していたため、編集前後で REST API 露出値が変わる可能性があった
+  - `KSTB_Post_Type_Registrar` は内部 slug を `rest_base` として使うため、insert / update 両方を内部 slug に統一
+- **LOW-7**: `wp_ajax_kstb_force_reregister_all` AJAX エンドポイントを削除
+  - `register_post_types()` の既存チェック (`post_type_exists` ガード) によって既存 CPT に対して no-op になっており、JS / templates から一切呼び出されていないデッドコードだった
+  - 同等の機能は `wp_ajax_kstb_force_register_all` (`KSTB_Post_Type_Force_Register::force_register_all()` 経由) が正しく実装しているため重複を解消
+
+### 監査プロセス
+- 本リリースは v1.0.25 リリース後にコード全体を対象として実施した「バグ + セキュリティ統合監査」の三者協議 (Claude / Codex / Gemini gemini-3.1-pro-preview) で検出された 6 件 + リリース成果物の最終三者協議で検出された 1 件 (コメント内バージョン表記の整合) を修正したもの。Round 4 で全 AI が PASS / commit_ok=true で合意した状態でコミット。
+
 ## [1.0.25] - 2026-04-14
 
 ### Fixed
@@ -433,6 +458,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.26]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.25...v1.0.26
 [1.0.25]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.24...v1.0.25
 [1.0.24]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.23...v1.0.24
 [1.0.23]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.22...v1.0.23

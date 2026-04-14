@@ -23,7 +23,7 @@ class KSTB_Ajax_Handler {
         add_action('wp_ajax_kstb_flush_rewrite_rules', array($this, 'flush_rewrite_rules'));
         add_action('wp_ajax_kstb_reregister_post_type', array($this, 'reregister_post_type'));
         add_action('wp_ajax_kstb_force_register_all', array($this, 'force_register_all'));
-        add_action('wp_ajax_kstb_force_reregister_all', array($this, 'force_reregister_all'));
+        // v1.0.25 C5: kstb_force_reregister_all は no-op だったため削除 (force_register_all で十分)
         add_action('wp_ajax_kstb_get_posts_by_type', array($this, 'get_posts_by_type'));
         add_action('wp_ajax_kstb_get_taxonomies_by_type', array($this, 'get_taxonomies_by_type'));
         add_action('wp_ajax_kstb_move_posts', array($this, 'move_posts'));
@@ -480,26 +480,11 @@ class KSTB_Ajax_Handler {
         wp_send_json_success(array('message' => __('すべてのカスタム投稿タイプを再登録しました。', 'kashiwazaki-seo-type-builder')));
     }
 
-    public function force_reregister_all() {
-        if (!check_ajax_referer('kstb_ajax_nonce', 'nonce', false)) {
-            wp_send_json_error(__('セキュリティチェックに失敗しました', 'kashiwazaki-seo-type-builder'));
-            return;
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_send_json_error(__('権限がありません', 'kashiwazaki-seo-type-builder'));
-            return;
-        }
-
-        // 静的変数をリセットするためにリフレクションを使用
-        $reflector = new ReflectionMethod('KSTB_Post_Type_Registrar', 'register_post_types');
-        $static_vars = $reflector->getStaticVariables();
-
-        // 強制的に再登録
-        KSTB_Post_Type_Registrar::get_instance()->register_post_types();
-
-        wp_send_json_success(__('カスタム投稿タイプを強制再登録しました', 'kashiwazaki-seo-type-builder'));
-    }
+    // v1.0.25 C5 削除: force_reregister_all() は KSTB_Post_Type_Registrar::register_post_types()
+    // の内部チェック (post_type_exists ガード) によって既存 CPT に対して no-op になっていた。
+    // 同等の機能は force_register_all() (KSTB_Post_Type_Force_Register 経由) が正しく実装
+    // しており、旧 force_reregister_all は JS / templates から一切呼び出されていなかったため
+    // デッドコードとして削除した。AJAX action 登録 (wp_ajax_kstb_force_reregister_all) も同時に削除。
 
     /**
      * 投稿タイプの記事一覧を取得（Ajax）

@@ -639,22 +639,25 @@
                 };
                 var statusLabel = statusLabels[post.status] || post.status;
 
-                var row = '<tr>' +
-                    '<th scope="row" class="check-column">' +
-                    '<input type="checkbox" class="kstb-post-checkbox" value="' + post.ID + '">' +
-                    '</th>' +
-                    '<td><strong>' + post.title + '</strong></td>';
+                // v1.0.25: Stored XSS 対策。すべての値を .text() / .val() 経由で挿入し、
+                // raw HTML 連結を避ける (寄稿者がタイトルにスクリプトを埋め込んだ場合の発火を防止)
+                var $row = $('<tr/>');
 
-                // 投稿タイプ列を追加（「すべて」の場合のみ）
+                var $checkCell = $('<th scope="row" class="check-column"/>');
+                $('<input type="checkbox" class="kstb-post-checkbox"/>').val(String(post.ID)).appendTo($checkCell);
+                $row.append($checkCell);
+
+                $row.append($('<td/>').append($('<strong/>').text(String(post.title || ''))));
+
                 if (showPostType) {
-                    row += '<td>' + (post.post_type || '') + '</td>';
+                    $row.append($('<td/>').text(String(post.post_type || '')));
                 }
 
-                row += '<td>' + statusLabel + '</td>' +
-                    '<td>' + post.date + '</td>' +
-                    '<td>' + post.author + '</td>' +
-                    '</tr>';
-                $tbody.append(row);
+                $row.append($('<td/>').text(String(statusLabel || '')));
+                $row.append($('<td/>').text(String(post.date || '')));
+                $row.append($('<td/>').text(String(post.author || '')));
+
+                $tbody.append($row);
             });
         },
 
@@ -888,32 +891,57 @@
         $list.empty();
 
         if (categories.length === 0) {
-            $list.append('<tr><td colspan="4">カテゴリーがありません</td></tr>');
+            $list.append($('<tr/>').append($('<td colspan="4"/>').text('カテゴリーがありません')));
             return;
         }
 
+        // v1.0.25: Stored XSS 対策。category.name / pt.label / icon を生 HTML 連結せず
+        // jQuery DOM API (.text() / .attr() / .addClass()) で安全に構築する
+        var ALLOWED_ICON_RE = /^dashicons-[a-z0-9-]+$/i;
+
         $.each(categories, function(i, category) {
-            var icon = category.icon || 'dashicons-category';
-            var postTypesHtml = category.post_types.map(function(pt) {
-                return '<span style="display: inline-block; padding: 2px 8px; margin: 2px; background: #f0f0f0; border-radius: 3px;">' +
-                       pt.label + '</span>';
-            }).join(' ');
+            var rawIcon = String(category.icon || 'dashicons-category');
+            var icon = ALLOWED_ICON_RE.test(rawIcon) ? rawIcon : 'dashicons-category';
+            var name = String(category.name || '');
 
-            var row = '<tr>' +
-                '<td style="text-align: center;">' +
-                '<span class="dashicons ' + icon + '" style="font-size: 20px; width: 20px; height: 20px; cursor: pointer;" ' +
-                'class="kstb-change-icon-btn" data-category="' + category.name + '" title="アイコンを変更"></span>' +
-                '</td>' +
-                '<td><strong>' + category.name + '</strong></td>' +
-                '<td>' + postTypesHtml + '</td>' +
-                '<td>' +
-                '<button type="button" class="button kstb-change-icon-btn" data-category="' + category.name + '">アイコン変更</button> ' +
-                '<button type="button" class="button kstb-rename-category-btn" data-category="' + category.name + '">名前変更</button> ' +
-                '<button type="button" class="button kstb-delete-category-btn" data-category="' + category.name + '">削除</button>' +
-                '</td>' +
-                '</tr>';
+            var $row = $('<tr/>');
 
-            $list.append(row);
+            // Icon cell
+            var $iconCell = $('<td/>').css('text-align', 'center');
+            var $icon = $('<span/>')
+                .addClass('dashicons')
+                .addClass(icon)
+                .addClass('kstb-change-icon-btn')
+                .css({'font-size': '20px', 'width': '20px', 'height': '20px', 'cursor': 'pointer'})
+                .attr('data-category', name)
+                .attr('title', 'アイコンを変更');
+            $iconCell.append($icon);
+            $row.append($iconCell);
+
+            // Name cell
+            $row.append($('<td/>').append($('<strong/>').text(name)));
+
+            // Post types cell
+            var $ptCell = $('<td/>');
+            $.each(category.post_types || [], function(j, pt) {
+                $('<span/>')
+                    .css({display: 'inline-block', padding: '2px 8px', margin: '2px', background: '#f0f0f0', 'border-radius': '3px'})
+                    .text(String(pt && pt.label || ''))
+                    .appendTo($ptCell);
+                $ptCell.append(' ');
+            });
+            $row.append($ptCell);
+
+            // Actions cell
+            var $actCell = $('<td/>');
+            $('<button type="button" class="button kstb-change-icon-btn"/>').attr('data-category', name).text('アイコン変更').appendTo($actCell);
+            $actCell.append(' ');
+            $('<button type="button" class="button kstb-rename-category-btn"/>').attr('data-category', name).text('名前変更').appendTo($actCell);
+            $actCell.append(' ');
+            $('<button type="button" class="button kstb-delete-category-btn"/>').attr('data-category', name).text('削除').appendTo($actCell);
+            $row.append($actCell);
+
+            $list.append($row);
         });
     };
 
