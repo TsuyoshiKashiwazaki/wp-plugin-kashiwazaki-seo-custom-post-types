@@ -562,24 +562,28 @@ class KSTB_Post_Type_Registrar {
             //   解決できなくなる回帰リスクがあった。
             // 親ディレクトリがある場合はそれも含める
             if (!empty($post_type->parent_directory)) {
+                // v1.0.25 C2 修正: build_full_path() は既に当該 CPT の url_slug を含む完全な
+                // パス (例: "company/company-news") を返すため、さらに $url_slug を結合すると
+                // 二重化 ("company/company-news/company-news/...") になっていた問題を修正。
+                // 正規表現特殊文字対策として preg_quote() でエスケープする。
                 $full_path = $this->build_full_path($post_type->slug);
-                $prefix = !empty($full_path) ? $full_path . '/' : '';
+                $full_path_quoted = preg_quote($full_path, '/');
 
                 // 長いURLスラッグを短い内部名にマップ（個別投稿）
                 add_rewrite_rule(
-                    '^' . $prefix . $url_slug . '/([^/]+)/?$',
+                    '^' . $full_path_quoted . '/([^/]+)/?$',
                     'index.php?post_type=' . $internal_slug . '&name=$matches[1]',
                     'top'
                 );
                 // アーカイブページ
                 add_rewrite_rule(
-                    '^' . $prefix . $url_slug . '/?$',
+                    '^' . $full_path_quoted . '/?$',
                     'index.php?post_type=' . $internal_slug,
                     'top'
                 );
                 // ページネーション
                 add_rewrite_rule(
-                    '^' . $prefix . $url_slug . '/page/?([0-9]{1,})/?$',
+                    '^' . $full_path_quoted . '/page/?([0-9]{1,})/?$',
                     'index.php?post_type=' . $internal_slug . '&paged=$matches[1]',
                     'top'
                 );

@@ -460,7 +460,8 @@ class KSTB_Database {
         $data = wp_parse_args($data, $defaults);
 
         // url_slugが設定されていない場合はslugを使用
-        $url_slug = !empty($data['url_slug']) ? sanitize_key($data['url_slug']) : $data['slug'];
+        $slug = sanitize_key($data['slug']);
+        $url_slug = !empty($data['url_slug']) ? sanitize_key($data['url_slug']) : $slug;
 
         $result = $wpdb->insert(
             $table_name,
@@ -490,7 +491,10 @@ class KSTB_Database {
                 'menu_display_mode' => !empty($data['menu_display_mode']) ? sanitize_text_field($data['menu_display_mode']) : 'category',
                 'supports' => json_encode($data['supports']),
                 'show_in_rest' => (int) $data['show_in_rest'],
-                'rest_base' => $url_slug,
+                // v1.0.25 C4 修正: insert と update で rest_base が不一致だった問題を修正。
+                // KSTB_Post_Type_Registrar は rest_base に内部 slug を使うため、DB も
+                // 内部 slug で統一する (旧実装は insert で url_slug、update で内部 slug を保存していた)。
+                'rest_base' => $slug,
                 'taxonomies' => !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null
             )
         );
@@ -590,7 +594,8 @@ class KSTB_Database {
             $update_data['show_in_rest'] = (int) $data['show_in_rest'];
         }
         if (isset($data['rest_base'])) {
-            $update_data['rest_base'] = $data['slug'];
+            // v1.0.25 C4: insert と同様、内部 slug で統一して保存する
+            $update_data['rest_base'] = isset($data['slug']) ? sanitize_key($data['slug']) : sanitize_key($data['rest_base']);
         }
         if (isset($data['taxonomies'])) {
             $update_data['taxonomies'] = !empty($data['taxonomies']) ? json_encode($data['taxonomies']) : null;

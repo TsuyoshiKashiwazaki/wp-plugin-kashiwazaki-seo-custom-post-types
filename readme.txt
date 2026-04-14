@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.25
+Stable tag: 1.0.26
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,15 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.26 =
+* Fix (Security): 「記事移動」タブで AJAX 応答の post.title / post.author を生 HTML 連結していた Stored XSS を修正（jQuery DOM API ベースに置換）
+* Fix (Security): メニューカテゴリー一覧で category.name / pt.label / category.icon を生 HTML 連結していた Stored XSS を修正（テキスト挿入とアイコン名のホワイトリスト検証）
+* Fix: 親ディレクトリ + url_slug !== slug の組み合わせでカスタム rewrite ルールが二重生成される問題を修正（build_full_path の戻り値に url_slug を再付与していた）
+* Fix: hierarchical CPT の強化 rewrite ルールでアーカイブ URL が二重化する問題を修正（registrar 側で既にフルパス化されている rewrite['slug'] にさらに parent_dir を前置していた）
+* Fix: insert と update で rest_base カラムの保存値が不一致だった問題を修正（内部 slug に統一）
+* Fix: 未使用かつ no-op だった AJAX エンドポイント wp_ajax_kstb_force_reregister_all を削除（同等機能は wp_ajax_kstb_force_register_all が正しく実装している）
+* Audit: v1.0.25 リリース後の実装全体を対象に「バグ + セキュリティ統合監査」を Claude / Codex / Gemini gemini-3.1-pro-preview の三者協議で実施。Round 4 で全 AI が PASS / commit_ok=true で合意
 
 = 1.0.25 =
 * Fix: public/publicly_queryable/show_ui/show_in_menu/query_var/show_in_rest の設定が無視されていた問題を修正（登録時に DB 値を反映）
