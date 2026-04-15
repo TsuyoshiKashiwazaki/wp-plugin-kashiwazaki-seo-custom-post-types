@@ -5,6 +5,31 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.29] - 2026-04-15
+
+### Removed
+- **MEDIUM-6**: `KSTB_Parent_Selector::init()` 内でデッドコードになっていた 4 メソッドと関連 add_action 3 行を削除
+  - 削除した add_action: `muplugins_loaded` / `plugins_loaded` / `setup_theme` への 3 箇所の早期フック登録
+  - 削除したメソッド: `early_redirect_prevention()` / `super_early_hooks()` / `theme_level_hooks()` / `prevent_header_redirects()`
+  - 理由: `KSTB_Parent_Selector::init()` は `KashiwazakiSeoTypeBuilder::init()` (init priority 5) から呼ばれるため、`muplugins_loaded` / `plugins_loaded` / `setup_theme` フックは既に発火済みで、登録しても実行機会がなかった (100% 到達不能なデッドコード)
+  - 同等のリダイレクトブロッカーは `init()` 内の `add_filter('redirect_canonical', array($this, 'absolute_canonical_blocker'), 1, 2)` / `add_filter('wp_redirect', array($this, 'absolute_redirect_blocker'), 1, 2)` で既に機能しており、削除しても挙動変化なし
+
+### Changed
+- **LOW-2 (scoped)**: raw `$_GET` / `$_POST` を読んでいた 16 箇所の read sites に対応 (wp_unslash() 呼び出し追加は 7 箇所、class-admin.php 側はローカル変数に集約したため read site 数と呼び出し数が一致しない)
+  - 対象ファイル: `kashiwazaki-seo-custom-post-types.php` の `check_and_fix_missing_post_types()`、`includes/class-admin.php` の `show_admin_notices()` / `handle_admin_actions()`、`includes/class-parent-selector.php` の save_post nonce 検証部
+  - 対象 read sites: (1) `$_GET[...]` equality 比較 7 箇所、(2) `$_POST['kstb_action']` equality 比較 4 箇所、(3) `wp_verify_nonce($_POST[...])` 5 箇所 (合計 16 箇所)
+  - 適用パターン: key/action/query flag 等の文字列比較には `wp_unslash()` + `sanitize_key()` を、nonce 値は `wp_unslash()` のみを適用 (nonce は英数ハイフン以外を持たないため sanitize_key 不要かつ互換性上の副作用回避)
+  - ページ slug / query flag / nonce / action 文字列は管理画面経由で `'`, `"`, `\` を含む値を持つ経路がないため実害はほぼないが、WordPress Coding Standards 準拠と一貫性のため統一
+
+### 付随変更
+- `.gitignore` に `.fix.md` (内部監査ドキュメント) と `.playwright-mcp/` (Playwright MCP ランタイム成果物) を追加。どちらもリポジトリには含めない方針を明文化
+
+### 監査プロセス
+- **第 1 回三者協議** (topic: v1028-residual-triage-20260415、Round 4 で PASS × 3): `.fix.md` の残課題 7 項目を実コードと照合して KEEP/DROP を再判定。MEDIUM-3 / MEDIUM-4 / LOW-5 は既に v1.0.25 で解決済みと確認し DROP。HIGH-4 / MEDIUM-6 / MEDIUM-7 / LOW-2 を KEEP
+- **第 2 回三者協議** (topic: v1029-fix-risk-20260415、Round 3 で PASS × 3): 残存 4 項目の fix を行った場合の実サイト影響評価を実施。MEDIUM-6 と LOW-2 は `functional_risk=NONE` / `side_effect_on_other_plugins=NONE` で三者合意し、本リリースに同梱することが承認された
+- MEDIUM-7 / HIGH-4 は functional_risk=MEDIUM〜HIGH で、実装前後に runtime verification を含む別の三者協議が必須となったため、本リリースでは対応しない
+- Claude (自分) / Codex (gpt-5.4 high) / Gemini (gemini-3.1-pro-preview) の三者がそれぞれ独立 verdict を出すことを v2.8.3 プロトコルで義務化した上で、最終合意
+
 ## [1.0.28] - 2026-04-15
 
 ### Changed
@@ -485,6 +510,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.29]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.28...v1.0.29
 [1.0.28]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.27...v1.0.28
 [1.0.27]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.26...v1.0.27
 [1.0.26]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.25...v1.0.26

@@ -56,8 +56,6 @@ class KSTB_Parent_Selector {
         // 親ディレクトリが設定されている場合は古いURLを404にする
         add_action('template_redirect', array($this, 'block_old_urls'), 1);
 
-                        // 最も早い段階でWordPressを完全制御
-        add_action('muplugins_loaded', array($this, 'early_redirect_prevention'), 1);
         add_filter('do_parse_request', array($this, 'intercept_wordpress_parsing'), 1, 3);
         add_action('parse_request', array($this, 'handle_custom_hierarchy_parsing'), 1);
 
@@ -66,9 +64,10 @@ class KSTB_Parent_Selector {
         add_filter('wp_redirect', array($this, 'absolute_redirect_blocker'), 1, 2);
         add_action('wp_head', array($this, 'set_hierarchy_canonical'), 1);
 
-        // さらに早い段階でのフック
-        add_action('plugins_loaded', array($this, 'super_early_hooks'), 1);
-        add_action('setup_theme', array($this, 'theme_level_hooks'), 1);
+        // v1.0.29 MEDIUM-6: muplugins_loaded / plugins_loaded / setup_theme への add_action は
+        // KSTB_Parent_Selector::init() が init priority 5 から呼ばれる時点で既に発火済みのため
+        // デッドコードだった。同じ redirect blocker は上の absolute_canonical_blocker /
+        // absolute_redirect_blocker の add_filter で登録済み。削除。
 
         // 即座に実行する強制フック
         $this->immediate_redirect_block();
@@ -371,9 +370,9 @@ class KSTB_Parent_Selector {
         }
         $processing[$post_id] = true;
 
-        // ナンス確認
+        // ナンス確認 (v1.0.29 LOW-2: wp_unslash 経由で読む)
         if (!isset($_POST['kstb_parent_selector_nonce']) ||
-            !wp_verify_nonce($_POST['kstb_parent_selector_nonce'], 'kstb_parent_selector_nonce')) {
+            !wp_verify_nonce(wp_unslash($_POST['kstb_parent_selector_nonce']), 'kstb_parent_selector_nonce')) {
             unset($processing[$post_id]);
             return;
         }
@@ -3018,27 +3017,10 @@ class KSTB_Parent_Selector {
             }
         }
 
-    /**
-     * 最も早い段階でのリダイレクト防止
-     */
-    public function early_redirect_prevention() {
-        // 全てのリダイレクト機能を無効化
-        add_filter('redirect_canonical', '__return_false', 1);
-        add_filter('wp_redirect', '__return_false', 1);
-
-            // error_log("KSTB EARLY: Early redirect prevention activated");
-    }
-
-    /**
-     * プラグイン読み込み後の超早期フック
-     */
-    public function super_early_hooks() {
-        // 最も強力なリダイレクト防止
-        add_filter('wp_redirect', array($this, 'absolute_redirect_blocker'), 1, 2);
-        add_filter('redirect_canonical', array($this, 'absolute_canonical_blocker'), 1, 2);
-
-            // error_log("KSTB SUPER EARLY: Super early hooks activated");
-    }
+    // v1.0.29 MEDIUM-6: early_redirect_prevention() / super_early_hooks() は
+    // muplugins_loaded / plugins_loaded フックから呼ばれる設計だったが、
+    // KSTB_Parent_Selector::init() が init priority 5 から呼ばれるため
+    // これらのフックは既に発火済みで到達しないデッドコードだった。削除。
 
     /**
      * 絶対的なリダイレクトブロッカー
@@ -3067,34 +3049,8 @@ class KSTB_Parent_Selector {
         return $redirect_url;
     }
 
-    /**
-     * テーマレベルでのフック
-     */
-    public function theme_level_hooks() {
-        // テーマの関数より早く実行
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-
-        if ($this->is_hierarchy_url($request_uri)) {
-            // ヘッダーレベルでリダイレクトを防ぐ
-            add_action('send_headers', array($this, 'prevent_header_redirects'), 1);
-            // error_log("KSTB THEME: Theme level hooks activated for hierarchy URL");
-        }
-    }
-
-    /**
-     * HTTPヘッダーレベルでリダイレクトを防ぐ
-     */
-    public function prevent_header_redirects() {
-        // Location ヘッダーを削除
-        if (function_exists('header_remove')) {
-            header_remove('Location');
-        }
-
-        // ステータスを200に強制
-        http_response_code(200);
-
-            // error_log("KSTB HEADERS: Prevented header-level redirects");
-    }
+    // v1.0.29 MEDIUM-6: theme_level_hooks() / prevent_header_redirects() も setup_theme
+    // 経由で呼ばれる設計だったが同様に到達しないデッドコードだった。削除。
 
     /**
      * 即座に実行するリダイレクトブロック

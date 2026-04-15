@@ -41,10 +41,14 @@ CLAUDE.md
 指示書/
 
 # Audit notes (not committed to repo)
+.fix.md
 .fix-*.md
 3ai-prompt.md
 .明日やること.txt
 NIKKI.TXT
+
+# Playwright MCP runtime artifacts
+.playwright-mcp/
 
 # WSL/Windows metadata
 *Zone.Identifier*
