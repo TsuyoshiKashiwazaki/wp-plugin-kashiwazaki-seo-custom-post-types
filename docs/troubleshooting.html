@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.27</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.28</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -334,7 +334,7 @@
 <tr><td>外部サービスと通信しますか？</td><td>いいえ。外部 HTTP 通信、Cron ジョブ、メール送信のいずれも行いません。完全にサーバー内で完結します。</td></tr>
 <tr><td>フロントエンドに JSON-LD 等を出力しますか？</td><td>いいえ。JSON-LD（<code>BreadcrumbList</code>、<code>Article</code> など）や meta タグの出力は行いません。構造化データはテーマや SEO プラグイン側で対応してください。ただし階層 URL を持つ CPT のページでは、正規 URL（canonical）への link 要素を <code>wp_head</code> に補助的に出力する実装があります。</td></tr>
 <tr><td>他の SEO プラグインと併用できますか？</td><td>はい。Yoast SEO、Rank Math、SEO SIMPLE PACK 等と併用できます。本プラグインはカスタム投稿タイプの管理と URL 構造を担当し、SEO プラグインはメタタグや構造化データを担当する、という役割分担が可能です。</td></tr>
-<tr><td>マルチサイトに対応していますか？</td><td>各サイトごとに有効化して設定する必要があります。ネットワーク全体の統一設定機能は現時点で提供していません。</td></tr>
+<tr><td>マルチサイトに対応していますか？</td><td>各サブサイトごとに個別有効化する使い方のみをサポートしています。v1.0.28 以降、<strong>ネットワーク一括有効化 (Network Activate) は明示的にブロック</strong>されており、ネットワーク管理画面から有効化しようとすると <code>deactivate_plugins()</code> + <code>wp_die()</code> でエラーメッセージが表示されます。理由: 本プラグインはカスタムテーブル (<code>{prefix}kstb_post_types</code> 等) をサイトごとに作成しますが、現行実装は <code>switch_to_blog()</code> ループでサブサイトを巡回しないため、ネットワーク一括有効化するとメインサイトにしかテーブルが作成されず他のサブサイトで動作しなくなるためです。Multisite 環境で本プラグインを使う場合は、<strong>各サブサイトの管理画面にアクセスして「プラグイン」画面から個別に有効化</strong> してください。ネットワーク全体の統一設定機能は現時点で提供していません。</td></tr>
 <tr><td>プラグインを削除するとデータはどうなりますか？</td><td>プラグインを無効化しても、カスタムテーブル（<code>{prefix}kstb_post_types</code>、<code>{prefix}kstb_menu_categories</code>）と投稿データ自体は保持されます。完全にアンインストールしてもデフォルトではテーブルは削除されません。必要であれば phpMyAdmin などで手動削除してください。</td></tr>
 <tr><td>投稿タイプの内部スラッグを変更できますか？</td><td>編集フォームに内部スラッグの専用入力欄はありません。ただし、url_slug（公開 URL スラッグ）を編集すると hidden の内部スラッグが連動して再生成（最大 20 文字に切り詰め）され、保存時に DB の <code>slug</code> カラムも更新されます。内部スラッグを保持したい場合は url_slug を変更しないでください。投稿タイプ自体を別名に変えたい場合は、新しい名前の CPT を作成して記事移行機能で記事を移動するのが安全です。</td></tr>
 <tr><td>ブロックエディタ（Gutenberg）に対応していますか？</td><td>はい。すべてのカスタム投稿タイプはデフォルトで REST API に対応し、ブロックエディタが使用できます。REST API 対応は <code>show_in_rest</code> の DB 値に従って決定されます（現行バージョンの管理フォームは常に ON で作成）。</td></tr>
@@ -409,7 +409,7 @@
 <span></span>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.27</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.28</p></footer>
 
 </main>
 

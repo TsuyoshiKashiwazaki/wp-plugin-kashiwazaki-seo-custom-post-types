@@ -5,6 +5,19 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.28] - 2026-04-15
+
+### Changed
+- **C6-B**: Multisite Network Activate (ネットワーク一括有効化) を明示的にブロックする仕様に変更
+  - `kashiwazaki-seo-custom-post-types.php` の `activate()` メソッドが `$network_wide` 引数を受け取るようになり、`is_multisite() && $network_wide` を検出した場合は `deactivate_plugins()` でプラグインを無効化した上で `wp_die()` による日本語エラーメッセージと Back リンクを表示するようにした
+  - 理由: 本プラグインはカスタムテーブル (`{prefix}kstb_post_types` / `{prefix}kstb_menu_categories`) をサイトごとに作成するが、現行実装は `switch_to_blog()` ループでサブサイトを巡回しないため、ネットワーク一括有効化するとメインサイトにしかテーブルが作成されず他サブサイトで動作しなくなるため
+  - 正しい使い方: Multisite 環境で本プラグインを使う場合は、各サブサイトの管理画面にアクセスし「プラグイン」画面から個別に有効化すること
+  - `docs/troubleshooting.html` の「マルチサイトに対応していますか？」FAQ を上記仕様に合わせて更新
+
+### 監査プロセス
+- v1.0.26 三者協議後の残件 triage で Codex が real_bug / Gemini が false_positive と判定不一致だった C6 (multisite 互換性) について、仕様判断として「non-network-wide 前提 + 明示的ブロック」を採用 (本格 multisite 対応は v1.1.0 以降のマイルストーン)
+- Round 1 で Claude (自分) / Codex (gpt-5.4 high) / Gemini (gemini-3.1-pro-preview) の三者がそれぞれ独立 verdict を出すことを v2.8.3 プロトコルで義務化した上で、最終合意
+
 ## [1.0.27] - 2026-04-15
 
 ### Fixed
@@ -472,6 +485,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.28]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.27...v1.0.28
 [1.0.27]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.26...v1.0.27
 [1.0.26]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.25...v1.0.26
 [1.0.25]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.24...v1.0.25
