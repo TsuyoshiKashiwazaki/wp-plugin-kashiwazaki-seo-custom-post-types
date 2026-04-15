@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.26
+Stable tag: 1.0.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,10 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.27 =
+* Fix: CPT 削除時に独自 add_rewrite_rule() 由来のカスタムルールが残存する問題を修正 (v1.0.25 NEW-1 の残課題を前倒し対処)。KSTB_Post_Type_Registrar::get_all_custom_rewrite_patterns() を新設し、delete_post_type AJAX で flush 前に $wp_rewrite->extra_rules_top から該当パターンを明示的に unset する
+* Audit: Claude / Codex / Gemini (gemini-2.5-pro, 3.1-pro-preview は capacity 枯渇で fallback) の三者協議で PASS 合意済み
 
 = 1.0.26 =
 * Fix (Security): 「記事移動」タブで AJAX 応答の post.title / post.author を生 HTML 連結していた Stored XSS を修正（jQuery DOM API ベースに置換）

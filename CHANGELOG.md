@@ -5,6 +5,20 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.27] - 2026-04-15
+
+### Fixed
+- **A1**: CPT 削除時に独自 `add_rewrite_rule()` 由来のカスタムルールが残存する問題を修正 (v1.0.25 NEW-1 で予告していた v1.1.0 対応項目の先行対処)
+  - `class-post-type-registrar.php` に public static メソッド `get_all_custom_rewrite_patterns($post_type)` を新設し、指定 CPT に紐づく全カスタム rewrite パターンを配列で返すようにした
+  - カバー範囲: (1) `register_single_post_type()` が `url_slug !== slug` のときに追加する個別投稿 / アーカイブ / ページネーションルール (parent_directory あり/なし両方)、(2) `KSTB_Parent_Selector::add_enhanced_rewrite_rules()` が hierarchical CPT に追加する強化アーカイブルール・パターン1・パターン2
+  - `class-ajax-handler.php` の `delete_post_type()` AJAX ハンドラで、DB 削除前にパターンを capture し、`unregister_post_type()` 後 / `flush_rewrite_rules()` 前に `$wp_rewrite->extra_rules_top` から該当パターンを明示的に unset するよう改修
+  - これにより、v1.0.25 NEW-1 の対象外だった独自カスタムルール経由のゴーストルート残存が解消される。削除した CPT のスラッグに同名固定ページ等を後から作った際の意図しないルーティング再発を防ぐ
+
+### 監査プロセス
+- v1.0.26 三者協議後の残件 triage (2026-04-14 実施) で Claude / Codex / Gemini の三者が real_bug 認定した A1 項目を早期対処したもの
+- Round 1: Claude (自分) の実コード独立検証 / Codex (gpt-5.4 high) / Gemini (gemini-2.5-pro, gemini-3.1-pro-preview は capacity 枯渇で fallback) の三者がそれぞれ独立に PASS / commit_ok=true / 0 findings を出し合意成立
+- 監査プロセス中に `/home/tsuyoshi/.local/bin/ai-watchdog.sh` (stall 検知 + hard timeout 付きの汎用 AI CLI ラッパー) を新設し、silent hang によるレビュー停滞を防ぐ手順を確立
+
 ## [1.0.26] - 2026-04-14
 
 ### Fixed
@@ -458,6 +472,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.27]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.26...v1.0.27
 [1.0.26]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.25...v1.0.26
 [1.0.25]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.24...v1.0.25
 [1.0.24]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.23...v1.0.24
