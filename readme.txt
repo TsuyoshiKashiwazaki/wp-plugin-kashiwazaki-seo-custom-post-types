@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.28
+Stable tag: 1.0.29
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,11 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.29 =
+* Cleanup: KSTB_Parent_Selector::init() 内でデッドコードになっていた early_redirect_prevention() / super_early_hooks() / theme_level_hooks() / prevent_header_redirects() の 4 メソッドと add_action('muplugins_loaded'/'plugins_loaded'/'setup_theme', ...) 3 行を削除。KSTB_Parent_Selector::init() は init priority 5 から呼ばれるため、これらの早期フックは発火済みで到達不可。同等のリダイレクトブロッカーは absolute_canonical_blocker / absolute_redirect_blocker の add_filter 登録で既に機能している
+* Hardening (WPCS): raw $_GET / $_POST を参照していた 16 箇所の read sites を対象に wp_unslash() を適用 (key/action/query flag 比較には sanitize_key() も併用、nonce 値は wp_unslash() のみ)。対象は check_and_fix_missing_post_types() / show_admin_notices() / handle_admin_actions() / KSTB_Parent_Selector::save_post nonce 検証部。実害はほぼないが WordPress Coding Standards 準拠と一貫性のため統一
+* Audit: Claude / Codex / Gemini (gemini-3.1-pro-preview) の三者協議で (1) 残課題 7 項目の KEEP/DROP 再判定 (3 件 DROP, 4 件 KEEP) と (2) 修正を行った場合の実サイト影響評価を実施。MEDIUM-6 / LOW-2 は functional_risk=NONE で合意し、本リリースに含める
 
 = 1.0.28 =
 * Change: Multisite のネットワーク一括有効化 (Network Activate) を明示的にブロック。activate() メソッドで $network_wide を検出した場合、deactivate_plugins() + wp_die() で日本語エラーメッセージを表示する。本プラグインはカスタムテーブルをサイトごとに作成するが switch_to_blog ループ非対応のため、各サブサイトで個別に有効化する必要がある

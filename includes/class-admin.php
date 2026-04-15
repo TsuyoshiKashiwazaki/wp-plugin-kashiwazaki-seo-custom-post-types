@@ -248,12 +248,17 @@ class KSTB_Admin {
     }
 
     public function show_admin_notices() {
-        if (isset($_GET['page']) && $_GET['page'] === 'kashiwazaki-seo-type-builder') {
-            if (isset($_GET['flush_rewrite']) && $_GET['flush_rewrite'] === 'success') {
+        // v1.0.29 LOW-2: raw $_GET を wp_unslash() + sanitize_key() 経由で比較
+        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        if ($page === 'kashiwazaki-seo-type-builder') {
+            $flush_rewrite = isset($_GET['flush_rewrite']) ? sanitize_key(wp_unslash($_GET['flush_rewrite'])) : '';
+            $kstb_message = isset($_GET['kstb_message']) ? sanitize_key(wp_unslash($_GET['kstb_message'])) : '';
+
+            if ($flush_rewrite === 'success') {
                 echo '<div class="notice notice-success is-dismissible"><p>' . __('パーマリンクを更新しました。カスタム投稿タイプがメニューに表示されない場合は、ブラウザをリロードしてください。', 'kashiwazaki-seo-type-builder') . '</p></div>';
             }
 
-            if (isset($_GET['kstb_message']) && $_GET['kstb_message'] === 'table_created') {
+            if ($kstb_message === 'table_created') {
                 echo '<div class="notice notice-success is-dismissible"><p>' . __('データベーステーブルを作成しました。', 'kashiwazaki-seo-type-builder') . '</p></div>';
             }
 
@@ -267,23 +272,27 @@ class KSTB_Admin {
 
 
 
-            if (isset($_GET['kstb_message']) && $_GET['kstb_message'] === 'orphaned_menus_removed') {
+            if ($kstb_message === 'orphaned_menus_removed') {
                 echo '<div class="notice notice-success is-dismissible"><p>' . __('不要なメニューを削除しました。ページをリロードしてください。', 'kashiwazaki-seo-type-builder') . '</p></div>';
             }
 
-            if (isset($_GET['kstb_message']) && $_GET['kstb_message'] === 'menu_cache_cleared') {
+            if ($kstb_message === 'menu_cache_cleared') {
                 echo '<div class="notice notice-success is-dismissible"><p>' . __('メニューキャッシュをクリアしました。ブラウザをリロードしてください。', 'kashiwazaki-seo-type-builder') . '</p></div>';
             }
 
-            if (isset($_GET['kstb_message']) && $_GET['kstb_message'] === 'permalinks_flushed') {
+            if ($kstb_message === 'permalinks_flushed') {
                 echo '<div class="notice notice-success is-dismissible"><p>' . __('パーマリンクを更新しました。', 'kashiwazaki-seo-type-builder') . '</p></div>';
             }
         }
     }
 
     public function handle_admin_actions() {
-        if (isset($_POST['kstb_action']) && $_POST['kstb_action'] === 'create_table') {
-            if (!isset($_POST['kstb_nonce']) || !wp_verify_nonce($_POST['kstb_nonce'], 'kstb_create_table')) {
+        // v1.0.29 LOW-2: raw $_POST を wp_unslash() 経由で読む
+        $action = isset($_POST['kstb_action']) ? sanitize_key(wp_unslash($_POST['kstb_action'])) : '';
+        $nonce = isset($_POST['kstb_nonce']) ? wp_unslash($_POST['kstb_nonce']) : '';
+
+        if ($action === 'create_table') {
+            if (!$nonce || !wp_verify_nonce($nonce, 'kstb_create_table')) {
                 return;
             }
 
@@ -305,8 +314,8 @@ class KSTB_Admin {
 
 
 
-        if (isset($_POST['kstb_action']) && $_POST['kstb_action'] === 'remove_orphaned_menus') {
-            if (!isset($_POST['kstb_nonce']) || !wp_verify_nonce($_POST['kstb_nonce'], 'kstb_remove_orphaned_menus')) {
+        if ($action === 'remove_orphaned_menus') {
+            if (!$nonce || !wp_verify_nonce($nonce, 'kstb_remove_orphaned_menus')) {
                 return;
             }
 
@@ -336,8 +345,8 @@ class KSTB_Admin {
             exit;
         }
 
-        if (isset($_POST['kstb_action']) && $_POST['kstb_action'] === 'clear_menu_cache') {
-            if (!isset($_POST['kstb_nonce']) || !wp_verify_nonce($_POST['kstb_nonce'], 'kstb_clear_menu_cache')) {
+        if ($action === 'clear_menu_cache') {
+            if (!$nonce || !wp_verify_nonce($nonce, 'kstb_clear_menu_cache')) {
                 return;
             }
 
@@ -379,8 +388,8 @@ class KSTB_Admin {
             exit;
         }
 
-        if (isset($_POST['kstb_action']) && $_POST['kstb_action'] === 'flush_permalinks') {
-            if (!isset($_POST['kstb_nonce']) || !wp_verify_nonce($_POST['kstb_nonce'], 'kstb_flush_permalinks')) {
+        if ($action === 'flush_permalinks') {
+            if (!$nonce || !wp_verify_nonce($nonce, 'kstb_flush_permalinks')) {
                 return;
             }
 
