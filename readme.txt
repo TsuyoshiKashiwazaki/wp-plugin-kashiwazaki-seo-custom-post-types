@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.29
+Stable tag: 1.0.30
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,11 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.30 =
+* Cleanup (MEDIUM-7): includes/class-parent-selector.php から階層 URL 経路で重複登録されていた `__return_false` リダイレクトブロッカー 6 行と未使用 dead code 2 件 (wp_redirect_emergency_override グローバル関数、KSTB_EMERGENCY_NO_REDIRECT 定数) を削除。階層 URL の canonical/wp_redirect ブロックは init() 内の absolute_canonical_blocker / absolute_redirect_blocker (priority 1, per-call で is_hierarchy_url() チェック) に一元化。force_remove_redirect_headers() は Location ヘッダー直書きへの safety net として保持
+* Side effect: 旧短縮 URL (非階層 CPT パス) の 301 redirect が正しく動作するようになり、Redirection / SEO 系プラグインの wp_redirect 呼び出しが非階層 URL で抑止されなくなった
+* Audit: 設計 → 差分 → 実装 + runtime 検証の 3 段階レビューを完了。階層 CPT 10 URL + 非階層 6 URL の実環境 curl テストで全て期待通りの結果を確認
 
 = 1.0.29 =
 * Cleanup: KSTB_Parent_Selector::init() 内でデッドコードになっていた early_redirect_prevention() / super_early_hooks() / theme_level_hooks() / prevent_header_redirects() の 4 メソッドと add_action('muplugins_loaded'/'plugins_loaded'/'setup_theme', ...) 3 行を削除。KSTB_Parent_Selector::init() は init priority 5 から呼ばれるため、これらの早期フックは発火済みで到達不可。同等のリダイレクトブロッカーは absolute_canonical_blocker / absolute_redirect_blocker の add_filter 登録で既に機能している
