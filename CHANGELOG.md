@@ -5,6 +5,28 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.30] - 2026-04-15
+
+### Removed
+- **MEDIUM-7**: `includes/class-parent-selector.php` から階層 URL 経路で重複登録されていた `__return_false` 包括ブロッカーと未使用 dead code を削除
+  - 削除した `add_filter('redirect_canonical'/'wp_redirect', '__return_false', ...)` 6 行:
+    - `intercept_wordpress_parsing()` post branch 内 (元 line 2525-2526, priority 999)
+    - `intercept_wordpress_parsing()` archive branch 内 (元 line 2567-2568, priority 999)
+    - `emergency_redirect_prevention()` 内 (元 line 3110-3111, priority 1)
+  - 削除した dead code:
+    - `wp_redirect_emergency_override()` グローバル関数定義 (元 line 3114-3118) — 定義のみで repo-wide 呼び出し 0 件
+    - `KSTB_EMERGENCY_NO_REDIRECT` 定数 define (元 line 3124) — 定義のみで参照 0 件
+  - 理由: 階層 URL の canonical/wp_redirect ブロックは `init()` 内 line 63-64 の `absolute_canonical_blocker` / `absolute_redirect_blocker` (priority 1) で per-call に `is_hierarchy_url()` チェックしており、`__return_false` の包括登録は機能重複だった。包括登録は階層 URL を判定した branch 内にあるとはいえ、削除しても absolute_*_blocker が同じ URL を守り続けるため階層 CPT 24 件の正常表示には影響しない
+- `emergency_redirect_prevention()` 本体は `is_hierarchy_url()` チェック + `force_remove_redirect_headers()` の `wp_loaded` hook 登録のみに整理。`force_remove_redirect_headers()` は他プラグインが `header('Location: ...')` を直接書いた場合の safety net として保持
+
+### Fixed (副作用の改善)
+- 旧短縮 URL (非階層 CPT パス、例: `/dentist-seo/`) が canonical URL (例: `/initiatives/dentist-seo/`) へ 301 redirect するように復活。v1.0.29 以前は包括 `__return_false` が wp_redirect を無条件で止めていたため、この redirect も抑止されていた
+- Redirection / Site Kit / custom-404 等の wp_redirect/redirect_canonical を使用するプラグインが、階層 URL 以外で意図通り動作するようになった
+
+### 監査プロセス
+- 設計協議 → 差分レビュー → 実装 + runtime 検証レビューの 3 段階で評価。案 A (最小変更) / 案 B (dead code 除去) / 案 C (emergency_redirect_prevention ごと削除) の 3 案から案 B を採用 (リスクと保守性のバランス)
+- Runtime verification: 階層 CPT 10 URL 全て 200/Location なし、非階層 `/dentist-seo/` → 301 復活、PHP fatal 0 件を実環境で確認。他の redirect 系プラグインがアクティブな状態で 20+ 件の共存を検証
+
 ## [1.0.29] - 2026-04-15
 
 ### Removed
@@ -510,6 +532,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.30]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.29...v1.0.30
 [1.0.29]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.28...v1.0.29
 [1.0.28]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.27...v1.0.28
 [1.0.27]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.26...v1.0.27

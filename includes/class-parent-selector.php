@@ -2521,9 +2521,10 @@ class KSTB_Parent_Selector {
                             'kstb_parent_slug' => $parent_slug
                         );
 
-                        // さらに強力なリダイレクト防止
-                        add_filter('redirect_canonical', '__return_false', 999);
-                        add_filter('wp_redirect', '__return_false', 999);
+                        // v1.0.30 MEDIUM-7: 包括的 __return_false ブロッカーを削除。
+                        // 階層 URL の canonical/redirect ブロックは init() 内の
+                        // absolute_canonical_blocker / absolute_redirect_blocker
+                        // (priority 1, is_hierarchy_url() 経由) で既に機能している。
 
                         // HTMLコメント出力は無効化
                         // add_action('wp_head', function() use ($found_post) {
@@ -2563,9 +2564,9 @@ class KSTB_Parent_Selector {
                             'kstb_archive_mode' => true
                         );
 
-                        // リダイレクト防止
-                        add_filter('redirect_canonical', '__return_false', 999);
-                        add_filter('wp_redirect', '__return_false', 999);
+                        // v1.0.30 MEDIUM-7: 包括的 __return_false ブロッカーを削除。
+                        // 階層アーカイブ URL の canonical/redirect ブロックは
+                        // absolute_canonical_blocker / absolute_redirect_blocker で機能中。
 
                         // シンプルなアーカイブモード設定
                         $GLOBALS['kstb_archive_post_type_slug'] = $post_type_slug;
@@ -3106,28 +3107,14 @@ class KSTB_Parent_Selector {
 
         // 階層URLパターンをチェック
         if ($this->is_hierarchy_url($request_uri)) {
-            // 即座にすべてのリダイレクト関数を無効化
-            add_filter('redirect_canonical', '__return_false', 1);
-            add_filter('wp_redirect', '__return_false', 1);
-
-            // WordPressのコア関数をオーバーライド
-            if (!function_exists('wp_redirect_emergency_override')) {
-                function wp_redirect_emergency_override($location, $status = 302, $x_redirect_by = 'WordPress') {
-            // error_log("KSTB EMERGENCY: Blocked redirect attempt: {$location}");
-                    return false;
-                }
-
-                // グローバル関数を置き換え
-                $GLOBALS['wp_redirect_original'] = 'wp_redirect';
-
-                // リダイレクト無効化フラグを設定
-                define('KSTB_EMERGENCY_NO_REDIRECT', true);
-            }
-
-            // HTTPヘッダー送信を制御
+            // v1.0.30 MEDIUM-7: 包括的 __return_false ブロッカーと未使用 dead code
+            // (wp_redirect_emergency_override グローバル関数 + KSTB_EMERGENCY_NO_REDIRECT 定数)
+            // を削除。canonical/redirect ブロックは init() 内の
+            // absolute_canonical_blocker / absolute_redirect_blocker (priority 1, per-call
+            // で is_hierarchy_url() チェック) で重複登録されており機能的に同等。
+            // force_remove_redirect_headers() は他プラグインの Location ヘッダー直書きに
+            // 対する safety net として保持する。
             add_action('wp_loaded', array($this, 'force_remove_redirect_headers'), 1);
-
-            // error_log("KSTB EMERGENCY: Emergency redirect prevention activated for: {$request_uri}");
         }
     }
 
