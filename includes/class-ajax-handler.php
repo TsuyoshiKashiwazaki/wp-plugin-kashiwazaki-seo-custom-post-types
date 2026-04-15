@@ -323,15 +323,34 @@ class KSTB_Ajax_Handler {
 
         $slug = $post_type_data->slug;
 
+        // v1.0.27 A1: 独自 add_rewrite_rule() 由来のカスタムルールのパターンを
+        // DB 削除前に capture しておく (build_full_path_static が DB を参照するため)
+        $custom_patterns_to_remove = KSTB_Post_Type_Registrar::get_all_custom_rewrite_patterns($post_type_data);
+
         $result = KSTB_Database::delete_post_type($id);
 
         if ($result !== false) {
             // v1.0.25 NEW-1: ゴーストルール対策 — flush 前に CPT を unregister し、
             // permastruct / query var / taxonomy 関連のクリーンアップを行う
             // （これがないと削除した CPT のルールが rewrite_rules オプションに書き戻される）
-            // 注意: 独自 add_rewrite_rule() 由来のカスタムルールはこれだけでは消えない（v1.1.0 で対応予定）
             if ($slug && post_type_exists($slug)) {
                 unregister_post_type($slug);
+            }
+
+            // v1.0.27 A1: 独自 add_rewrite_rule() 由来のカスタムルールを
+            // $wp_rewrite->extra_rules_top から明示的に unset する。
+            // unregister_post_type() は permastruct 由来の rule しか消さないため、
+            // 本プラグインが register_single_post_type() / add_enhanced_rewrite_rules()
+            // で追加したカスタムルールはここで手動で消さないと flush 後も残存する。
+            if (!empty($custom_patterns_to_remove)) {
+                global $wp_rewrite;
+                if (isset($wp_rewrite) && is_object($wp_rewrite) && isset($wp_rewrite->extra_rules_top) && is_array($wp_rewrite->extra_rules_top)) {
+                    foreach ($custom_patterns_to_remove as $pattern) {
+                        if (isset($wp_rewrite->extra_rules_top[$pattern])) {
+                            unset($wp_rewrite->extra_rules_top[$pattern]);
+                        }
+                    }
+                }
             }
 
             // v1.0.25 MEDIUM-5: flush は AJAX 層で 1 回だけ実施する

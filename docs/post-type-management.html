@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.26</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.27</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -209,7 +209,7 @@
 
 <div class="callout callout-note">
 <p class="callout-title">補足</p>
-<p>v1.0.26 時点の管理フォームではラベルの個別上書き UI は提供していません。自動生成されたラベルをそのまま使う運用を前提としています。プラグインのコード上は <code>labels</code> を JSON として DB に保存しており、将来的な個別編集機能の拡張余地は残されています。</p>
+<p>v1.0.27 時点の管理フォームではラベルの個別上書き UI は提供していません。自動生成されたラベルをそのまま使う運用を前提としています。プラグインのコード上は <code>labels</code> を JSON として DB に保存しており、将来的な個別編集機能の拡張余地は残されています。</p>
 </div>
 
 <hr>
@@ -536,7 +536,7 @@
 </thead>
 <tbody>
 <tr><td>編集</td><td>-</td><td>フォームを編集モードで開く。内部名 (slug) には直接の入力欄がないが、公開 URL スラッグ (url_slug) を変更すると hidden の内部名も自動再生成されて保存時に DB の <code>slug</code> カラムも更新されるため、「内部名を保持したい場合は url_slug を変更しない」点に注意。詳細は <a href="troubleshooting.html">トラブルシューティング</a>の FAQ 参照</td></tr>
-<tr><td>削除</td><td><code>wp_ajax_kstb_delete_post_type</code></td><td>投稿タイプの定義を削除。投稿データ自体は DB に残る。v1.0.25 からは削除時に <code>unregister_post_type()</code> を呼んでから <code>flush_rewrite_rules()</code> するため、通常のパーマリンクルートのゴーストは残らない（ただし独自 <code>add_rewrite_rule()</code> 由来のカスタムルールは現行バージョンでは残り得る、v1.1.0 で対応予定）</td></tr>
+<tr><td>削除</td><td><code>wp_ajax_kstb_delete_post_type</code></td><td>投稿タイプの定義を削除。投稿データ自体は DB に残る。v1.0.25 からは削除時に <code>unregister_post_type()</code> を呼んでから <code>flush_rewrite_rules()</code> するため、通常のパーマリンクルート由来のゴーストルートは残らない。さらに v1.0.27 からは、独自 <code>add_rewrite_rule()</code> で追加されたカスタムルール (階層 URL 個別投稿 / アーカイブ / ページネーション / 強化 rewrite ルール) についても、DB 削除前に <code>KSTB_Post_Type_Registrar::get_all_custom_rewrite_patterns()</code> で対象パターンを列挙し、flush 前に <code>$wp_rewrite->extra_rules_top</code> から明示的に unset することで残存しないようにした</td></tr>
 <tr><td>再登録</td><td><code>wp_ajax_kstb_reregister_post_type</code></td><td>WordPress への登録を強制的に再実行。設定変更後に URL やメニューが反映されない場合に使用</td></tr>
 </tbody>
 </table>
@@ -575,14 +575,14 @@
 <li>フロントエンド SPA フレームワーク（React/Vue 等）との連携</li>
 </ul>
 
-<p>REST API 対応の可否は DB カラム <code>show_in_rest</code> の値に従います。現行バージョン（v1.0.26）の管理フォームは作成時に ON 固定ですが、必要に応じて直接 DB 値を編集することで切り替えできます。</p>
+<p>REST API 対応の可否は DB カラム <code>show_in_rest</code> の値に従います。現行バージョン（v1.0.27）の管理フォームは作成時に ON 固定ですが、必要に応じて直接 DB 値を編集することで切り替えできます。</p>
 
 <nav class="page-nav">
 <a href="setup.html" class="prev">&laquo; インストール・初期設定</a>
 <a href="hierarchical-urls.html" class="next">階層URL設計 &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.26</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.27</p></footer>
 
 </main>
 

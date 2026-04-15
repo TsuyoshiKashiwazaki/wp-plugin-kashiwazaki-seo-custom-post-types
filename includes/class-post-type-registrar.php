@@ -440,6 +440,73 @@ class KSTB_Post_Type_Registrar {
         return $parent . '/' . $effective_slug;
     }
 
+    /**
+     * 指定した投稿タイプに紐づく「本プラグインが独自に add_rewrite_rule() で追加する」
+     * カスタム rewrite ルールのパターン文字列を全て返す。
+     *
+     * v1.0.27 A1: CPT 削除時のゴーストルール残存対策のために導入。
+     * CPT の DB データがまだ存在している状態で呼び出すこと (build_full_path_static が DB を参照するため)。
+     *
+     * @param object $post_type KSTB_Database::get_post_type_by_* が返す行オブジェクト
+     *                         (slug, url_slug, parent_directory, hierarchical, has_archive を参照)
+     * @return array add_rewrite_rule() の第 1 引数 (pattern 文字列) の配列。重複排除済み。
+     */
+    public static function get_all_custom_rewrite_patterns($post_type) {
+        if (!$post_type || empty($post_type->slug)) {
+            return array();
+        }
+        $patterns = array();
+
+        // ------------------------------------------------------------------
+        // (1) KSTB_Post_Type_Registrar::register_single_post_type() が
+        //     url_slug !== slug のときに追加するカスタムルール
+        // ------------------------------------------------------------------
+        if (!empty($post_type->url_slug) && $post_type->url_slug !== $post_type->slug) {
+            $url_slug = $post_type->url_slug;
+
+            if (!empty($post_type->parent_directory)) {
+                $full_path = self::build_full_path_static($post_type->slug);
+                $full_path_quoted = preg_quote($full_path, '/');
+
+                $patterns[] = '^' . $full_path_quoted . '/([^/]+)/?$';
+                $patterns[] = '^' . $full_path_quoted . '/?$';
+                $patterns[] = '^' . $full_path_quoted . '/page/?([0-9]{1,})/?$';
+            } else {
+                $patterns[] = '^' . $url_slug . '/([^/]+)/?$';
+                $patterns[] = '^' . $url_slug . '/?$';
+                $patterns[] = '^' . $url_slug . '/page/?([0-9]{1,})/?$';
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // (2) KSTB_Parent_Selector::add_enhanced_rewrite_rules() が
+        //     hierarchical CPT に対して追加する強化ルール
+        // ------------------------------------------------------------------
+        if ((bool) $post_type->hierarchical) {
+            // registrar は parent_directory 有りのとき $rewrite['slug'] に build_full_path を
+            // 設定するので、enhanced ルールの $slug もフルパスになる。
+            if (!empty($post_type->parent_directory)) {
+                $enhanced_slug = self::build_full_path_static($post_type->slug);
+            } else {
+                $enhanced_slug = $post_type->slug;
+            }
+            $enhanced_slug_quoted = preg_quote($enhanced_slug, '/');
+
+            // アーカイブルール (has_archive=ON のときのみ追加される)
+            if ((bool) $post_type->has_archive) {
+                $patterns[] = '^' . $enhanced_slug_quoted . '/?$';
+            }
+
+            // パターン1: /{parent}/{slug}/{post}/
+            $patterns[] = '^([^/]+)/' . $enhanced_slug_quoted . '/([^/]+)/?$';
+
+            // パターン2: /{parent}/{slug}/{post} (末尾スラッシュなし)
+            $patterns[] = '^([^/]+)/' . $enhanced_slug_quoted . '/([^/]+)$';
+        }
+
+        return array_values(array_unique($patterns));
+    }
+
             public function register_post_types() {
         $post_types = KSTB_Database::get_all_post_types();
 
