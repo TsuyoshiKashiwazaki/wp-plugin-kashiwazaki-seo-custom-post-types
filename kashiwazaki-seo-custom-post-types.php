@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.27
+ * Version: 1.0.28
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.27');
+define('KSTB_VERSION', '1.0.28');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -134,7 +134,22 @@ class KashiwazakiSeoTypeBuilder {
         }
     }
 
-    public function activate() {
+    public function activate($network_wide = false) {
+        // v1.0.28 C6-B: Multisite Network Activate 非対応。
+        // 本プラグインはカスタムテーブル ({prefix}kstb_*) をサイトごとに作成するが、
+        // 現行実装は switch_to_blog ループでサブサイトを巡回しないため、
+        // ネットワーク一括有効化するとメインサイトにしかテーブルが作成されず
+        // サブサイトで動作しなくなる。明示的にブロックして管理者に通知する。
+        if (is_multisite() && $network_wide) {
+            deactivate_plugins(plugin_basename(__FILE__));
+            unset($_GET['activate']);
+            wp_die(
+                esc_html__('Kashiwazaki SEO Custom Post Types はマルチサイトのネットワーク一括有効化 (Network Activate) に対応していません。各サブサイトの管理画面にアクセスし、「プラグイン」画面から個別に有効化してください。', 'kashiwazaki-seo-type-builder'),
+                esc_html__('ネットワーク有効化はサポートされていません', 'kashiwazaki-seo-type-builder'),
+                array('back_link' => true)
+            );
+        }
+
         try {
             KSTB_Database::create_tables();
         } catch (Exception $e) {
