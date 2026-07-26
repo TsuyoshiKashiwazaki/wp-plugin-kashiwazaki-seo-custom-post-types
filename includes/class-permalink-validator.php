@@ -105,7 +105,7 @@ class KSTB_Permalink_Validator {
         global $wp_query;
 
         // 現在のリクエストパスを取得
-        $current_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $current_path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
         $current_path = rtrim($current_path, '/') . '/';
 
         // クエリ文字列でのアクセス（?p=ID や ?post_type=xxx&p=ID）を正規URLに301リダイレクト
@@ -197,7 +197,7 @@ class KSTB_Permalink_Validator {
                 // カスタム投稿タイプの場合、正しいパーマリンクかチェック
                 if ($is_custom_post_type) {
                     $correct_permalink = get_permalink($check_post->ID);
-                    $correct_path = parse_url($correct_permalink, PHP_URL_PATH);
+                    $correct_path = parse_url($correct_permalink ?: '', PHP_URL_PATH) ?: '';
                     $correct_path = rtrim($correct_path, '/') . '/';
 
                     // パスが一致しない場合は404

@@ -53,22 +53,63 @@
                 newMenuItem.className = 'wp-has-submenu wp-not-current-submenu menu-top ' + menuClass + ' kstb-custom-post-type';
 
                 const menuIcon = postType.menu_icon || 'dashicons-admin-post';
-                const dashiconClass = menuIcon.startsWith('dashicons-') ? menuIcon : 'dashicons-admin-post';
+                // 前方一致では `dashicons-x" onmouseover="...` を通してしまうため、
+                // dashicon として許される文字種に完全一致するものだけを採用する
+                const dashiconClass = /^dashicons-[a-z0-9-]+$/.test(menuIcon) ? menuIcon : 'dashicons-admin-post';
 
                 const menuName = postType.menu_name || postType.label;
 
-                newMenuItem.innerHTML = `
-                    <a href="${adminUrl}edit.php?post_type=${postType.slug}" class="wp-has-submenu wp-not-current-submenu menu-top ${menuClass}" aria-haspopup="true">
-                        <div class="wp-menu-arrow"><div></div></div>
-                        <div class="wp-menu-image dashicons-before ${dashiconClass}" aria-hidden="true"><br></div>
-                        <div class="wp-menu-name">${menuName}</div>
-                    </a>
-                    <ul class="wp-submenu wp-submenu-wrap">
-                        <li class="wp-submenu-head" aria-hidden="true">${menuName}</li>
-                        <li class="wp-first-item"><a href="${adminUrl}edit.php?post_type=${postType.slug}" class="wp-first-item">すべての${postType.label}</a></li>
-                        <li><a href="${adminUrl}post-new.php?post_type=${postType.slug}">新規追加</a></li>
-                    </ul>
-                `;
+                // innerHTML への文字列展開はやめ、DOM API で構築する
+                // (属性値・テキストとも値の設定を DOM 側に任せ、注入経路を断つ)
+                const listUrl = adminUrl + 'edit.php?post_type=' + encodeURIComponent(postType.slug);
+                const newUrl = adminUrl + 'post-new.php?post_type=' + encodeURIComponent(postType.slug);
+
+                const el = (tag, className) => {
+                    const n = document.createElement(tag);
+                    if (className) { n.className = className; }
+                    return n;
+                };
+
+                const topLink = el('a', 'wp-has-submenu wp-not-current-submenu menu-top ' + menuClass);
+                topLink.setAttribute('href', listUrl);
+                topLink.setAttribute('aria-haspopup', 'true');
+
+                const arrow = el('div', 'wp-menu-arrow');
+                arrow.appendChild(el('div'));
+                topLink.appendChild(arrow);
+
+                const image = el('div', 'wp-menu-image dashicons-before ' + dashiconClass);
+                image.setAttribute('aria-hidden', 'true');
+                image.appendChild(el('br'));
+                topLink.appendChild(image);
+
+                const nameBox = el('div', 'wp-menu-name');
+                nameBox.textContent = menuName;
+                topLink.appendChild(nameBox);
+
+                const submenu = el('ul', 'wp-submenu wp-submenu-wrap');
+
+                const head = el('li', 'wp-submenu-head');
+                head.setAttribute('aria-hidden', 'true');
+                head.textContent = menuName;
+                submenu.appendChild(head);
+
+                const firstItem = el('li', 'wp-first-item');
+                const firstLink = el('a', 'wp-first-item');
+                firstLink.setAttribute('href', listUrl);
+                firstLink.textContent = 'すべての' + postType.label;
+                firstItem.appendChild(firstLink);
+                submenu.appendChild(firstItem);
+
+                const addItem = el('li');
+                const addLink = el('a');
+                addLink.setAttribute('href', newUrl);
+                addLink.textContent = '新規追加';
+                addItem.appendChild(addLink);
+                submenu.appendChild(addItem);
+
+                newMenuItem.appendChild(topLink);
+                newMenuItem.appendChild(submenu);
 
                 // メニュー位置に基づいて挿入場所を決定
                 const menuPosition = parseInt(postType.menu_position) || 25;

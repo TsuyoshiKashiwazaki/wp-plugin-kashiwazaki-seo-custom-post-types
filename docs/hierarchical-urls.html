@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.30</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.31</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -135,6 +135,7 @@
 <h3>親ページの検索（AJAX インクリメンタル）</h3>
 
 <p>親ページ選択メタボックス内の検索欄に 2 文字以上を入力すると、AJAX で固定ページや投稿が即座に検索され、候補が表示されます。タイトルでフィルタリング可能です。</p>
+<p><strong>編集中の投稿は候補に表示されません。</strong>自分自身を親に指定すると循環参照になるため、検索結果から自動的に除外されます。v1.0.31 でこの除外処理が正しく動作するようになりました（それ以前は除外が機能せず、自分自身が候補に混ざる場合がありました）。</p>
 
 <div class="callout callout-note">
 <p class="callout-title">v1.0.25 の改善</p>
@@ -266,7 +267,7 @@
 <a href="menu-and-category.html" class="next">メニュー・カテゴリー &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.30</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.31</p></footer>
 
 </main>
 

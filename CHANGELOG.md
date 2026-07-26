@@ -5,6 +5,28 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.31] - 2026-07-26
+
+### Security
+- **管理画面 JS の保存型 XSS を修正**: 記事移動タブのタクソノミー選択で、`optgroup` / `option` を文字列連結で生成していたため属性文脈での脱出が可能だった。ターム名は `assign_terms` 権限 (寄稿者以上) で作成できるため、低権限ユーザーが管理者のセッションで任意スクリプトを実行できる状態だった。DOM API (`attr()` / `text()`) による生成へ全面置換
+- **カテゴリー追加時の option 生成**を同様に DOM API へ置換
+- **`showNotice()`** を `.html()` から `$('<div/>').text()` + `empty().append()` へ変更
+- **`admin-global.js` の `innerHTML` テンプレートリテラルを全廃**し、`createElement` + `textContent` + `setAttribute` で構築。URL 生成に `encodeURIComponent` を適用
+- **`menu_icon` の検証を厳格化**: 前方一致 `startsWith('dashicons-')` から完全一致 `/^dashicons-[a-z0-9-]+$/` へ変更。`sanitize_text_field()` は引用符を除去しないため、前方一致では `dashicons-x" onmouseover=...` が通過して class 属性から脱出できた
+- **アイコンプレビュー**の生成を `addClass()` ベースへ変更
+
+### Fixed
+- **PHP 8.1 非推奨警告を解消**: `parse_url(..., PHP_URL_PATH)` はパス部を持たない URI で `NULL`、不正な URI で `false` を返す。これを `trim()` / `rtrim()` へ渡すと PHP 8.1 で deprecated、PHP 9.0 で TypeError になる。対象の呼び出しを `?: ''` に統一し `NULL` / `false` / `''` を一律で空文字へ正規化
+- **裸の `$_SERVER['REQUEST_URI']` 参照にガードを追加**: `class-archive-controller.php` の 8 箇所、`class-parent-selector.php` の 1 箇所に `?? ''` を追加
+- **`KSTB_Parent_Selector::enqueue_admin_scripts()` の `global $post` 宣言漏れを修正**: `$post` が常に未定義となり `postId` が 0 固定だったため、親ページ候補から自分自身を除外する `exclude_id` が機能していなかった。併せて `$post instanceof WP_Post` ガードを追加
+- **翻訳が機能しない記述を修正**: `class-ajax-handler.php` の `__('文字列' . $var, domain)` を `sprintf(__('... %s'), $var)` へ変更
+
+### Added
+- **`class-post-type-registrar.php` に直接アクセス防止ガードを追加**: `if (!defined('ABSPATH')) exit;` の記述が全 PHP ファイルで揃った
+
+### Removed
+- **到達不能コード 47 行を削除**: `class-archive-controller.php` の `template_control()` は無条件 `return;` 以降が実行されない状態だった。呼び出し先メソッドはいずれも到達可能側から使用されているため孤立しない
+
 ## [1.0.30] - 2026-04-15
 
 ### Removed
@@ -532,6 +554,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.31]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.30...v1.0.31
 [1.0.30]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.29...v1.0.30
 [1.0.29]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.28...v1.0.29
 [1.0.28]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.27...v1.0.28

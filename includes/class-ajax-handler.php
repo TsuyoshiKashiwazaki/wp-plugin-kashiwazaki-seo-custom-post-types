@@ -730,7 +730,7 @@ class KSTB_Ajax_Handler {
         // 既存のカテゴリーをチェック
         $existing = KSTB_Database::get_category($category_name);
         if ($existing) {
-            wp_send_json_error(__('このカテゴリー名は既に存在します: ' . $category_name, 'kashiwazaki-seo-type-builder'));
+            wp_send_json_error(sprintf(__('このカテゴリー名は既に存在します: %s', 'kashiwazaki-seo-type-builder'), $category_name));
             return;
         }
 

@@ -158,8 +158,8 @@ class KSTB_Archive_Controller {
         // post_countが1で有効な$postがある場合、単一投稿として扱う
         if ($wp_query->post_count === 1 && isset($post) && $post && $this->is_post_accessible($post)) {
             // 現在のURLと投稿のパーマリンクを比較して確認
-            $uri = $_SERVER['REQUEST_URI'];
-            $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $uri = parse_url($uri, PHP_URL_PATH) ?: '';
             $uri = trim($uri, '/');
 
             // このプラグインで管理しているカスタム投稿タイプかチェック
@@ -431,8 +431,8 @@ class KSTB_Archive_Controller {
             return $query_vars;
         }
 
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -593,8 +593,8 @@ class KSTB_Archive_Controller {
             return;
         }
 
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -898,8 +898,8 @@ class KSTB_Archive_Controller {
         $current_post = $wp_query->posts[0];
 
         // 現在のURLを取得
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -1004,8 +1004,8 @@ class KSTB_Archive_Controller {
         // post_countが1で有効な投稿がある場合、is_singularを再設定し正しいテンプレートを返す
         if ($wp_query->post_count === 1 && isset($post) && $post && $this->is_post_accessible($post)) {
             // 現在のURLを取得
-            $uri = $_SERVER['REQUEST_URI'];
-            $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $uri = parse_url($uri, PHP_URL_PATH) ?: '';
             $uri = trim($uri, '/');
 
             if (empty($uri)) {
@@ -1110,8 +1110,8 @@ class KSTB_Archive_Controller {
         }
 
         // 現在のURLを取得
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -1335,8 +1335,8 @@ class KSTB_Archive_Controller {
         }
 
         // 現在のURLを取得
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {
@@ -1448,53 +1448,6 @@ class KSTB_Archive_Controller {
 
         // 既存の処理は削除（上記で処理されるため）
         return;
-
-        global $wp_query;
-
-        // カスタム投稿タイプのアーカイブかチェック
-        if (!empty($wp_query->query_vars['post_type'])) {
-            $post_type = $wp_query->query_vars['post_type'];
-
-            if (is_array($post_type)) {
-                $post_type = reset($post_type);
-            }
-
-            $post_type_data = KSTB_Database::get_post_type_by_slug($post_type);
-
-            if ($post_type_data && !$post_type_data->has_archive) {
-                // 「表示しない」の場合は常に404
-                if (isset($post_type_data->archive_display_type) && $post_type_data->archive_display_type === 'none') {
-                    $this->display_404();
-                    exit;
-                }
-
-                // 「指定なし」以外の場合のみ固定ページを探す
-                if (!isset($post_type_data->archive_display_type) || $post_type_data->archive_display_type !== 'default') {
-                    // 現在のURLパスを取得
-                    $uri = $_SERVER['REQUEST_URI'];
-                    $uri = parse_url($uri, PHP_URL_PATH);
-                    $uri = trim($uri, '/');
-
-                    // フルパスで固定ページを探す
-                    $page = get_page_by_path($uri);
-                    if ($page && $this->is_post_accessible($page)) {
-                        $this->display_page($page);
-                        exit;
-                    }
-
-                    // スラッグだけでも検索
-                    $page = get_page_by_path($post_type);
-                    if ($page && $this->is_post_accessible($page)) {
-                        $this->display_page($page);
-                        exit;
-                    }
-
-                    // 404を表示
-                    $this->display_404();
-                    exit;
-                }
-            }
-        }
     }
 
     /**
@@ -1502,8 +1455,8 @@ class KSTB_Archive_Controller {
      */
     private function handle_no_archive($slug) {
         // まず現在のURLパスを取得
-        $uri = $_SERVER['REQUEST_URI'];
-        $uri = parse_url($uri, PHP_URL_PATH) ?? '';
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         // 階層URLの場合はフルパスで検索

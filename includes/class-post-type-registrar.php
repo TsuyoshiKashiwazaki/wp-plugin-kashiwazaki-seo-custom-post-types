@@ -1,4 +1,7 @@
 <?php
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 
 class KSTB_Post_Type_Registrar {
@@ -1024,7 +1027,7 @@ class KSTB_Post_Type_Registrar {
 
         // クエリ変数に投稿タイプスラッグがない場合、URIから直接解析
         $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
-        $uri = parse_url($uri, PHP_URL_PATH);
+        $uri = parse_url($uri, PHP_URL_PATH) ?: '';
         $uri = trim($uri, '/');
 
         if (empty($uri)) {

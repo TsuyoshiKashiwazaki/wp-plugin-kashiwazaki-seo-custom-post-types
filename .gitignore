@@ -2,6 +2,9 @@
 gh_*/
 *.tar.gz
 *.zip
+*.deb
+*.rpm
+*.7z
 
 # Dependencies
 node_modules/

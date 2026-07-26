@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.30
+Stable tag: 1.0.31
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,16 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.31 =
+* Security: 管理画面 JS の保存型 XSS を修正。記事移動タブのタクソノミー選択で optgroup / option を文字列連結で生成していたため属性文脈での脱出が可能だった。ターム名は assign_terms 権限 (寄稿者以上) で作成できるため、低権限ユーザーが管理者のセッションで任意スクリプトを実行できる状態だった。DOM API (attr() / text()) による生成へ全面置換
+* Security: admin-global.js の innerHTML テンプレートリテラルを全廃し createElement + textContent + setAttribute で構築。menu_icon の検証を前方一致から完全一致 /^dashicons-[a-z0-9-]+$/ へ厳格化 (sanitize_text_field は引用符を除去しないため前方一致では class 属性から脱出できた)
+* Security: showNotice() とカテゴリー追加時の option 生成も DOM API へ置換
+* Fixed: PHP 8.1 非推奨警告を解消。parse_url(..., PHP_URL_PATH) はパス部を持たない URI で NULL、不正な URI で false を返すため、対象の呼び出しを ?: '' に統一して空文字へ正規化。裸の $_SERVER['REQUEST_URI'] 参照 9 箇所にも ?? '' を追加
+* Fixed: KSTB_Parent_Selector::enqueue_admin_scripts() の global $post 宣言漏れを修正。$post が常に未定義で postId が 0 固定となり、親ページ候補から自分自身を除外する exclude_id が機能していなかった
+* Fixed: class-ajax-handler.php の __('文字列' . $var, domain) を sprintf(__('... %s'), $var) へ変更 (翻訳が機能しない記述)
+* Added: class-post-type-registrar.php に直接アクセス防止ガード (ABSPATH) を追加。全 PHP ファイルで揃った
+* Removed: class-archive-controller.php の template_control() で無条件 return 以降にあった到達不能コード 47 行を削除
 
 = 1.0.30 =
 * Cleanup (MEDIUM-7): includes/class-parent-selector.php から階層 URL 経路で重複登録されていた `__return_false` リダイレクトブロッカー 6 行と未使用 dead code 2 件 (wp_redirect_emergency_override グローバル関数、KSTB_EMERGENCY_NO_REDIRECT 定数) を削除。階層 URL の canonical/wp_redirect ブロックは init() 内の absolute_canonical_blocker / absolute_redirect_blocker (priority 1, per-call で is_hierarchy_url() チェック) に一元化。force_remove_redirect_headers() は Location ヘッダー直書きへの safety net として保持

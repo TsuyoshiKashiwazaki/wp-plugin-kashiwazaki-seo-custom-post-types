@@ -57,7 +57,7 @@
                 var $preview = $('.kstb-icon-preview');
 
                 if (icon) {
-                    $preview.html('<span class="dashicons ' + icon + '"></span>');
+                    $preview.empty().append($('<span/>').addClass('dashicons').addClass(icon));
                 } else {
                     $preview.html('');
                 }
@@ -430,8 +430,10 @@
 
 
         showNotice: function (message, type) {
-            var $notice = $('<div class="kstb-notice kstb-notice-' + type + '">' + message + '</div>');
-            $('#kstb-notice-area').html($notice);
+            var $notice = $('<div/>')
+                .addClass('kstb-notice kstb-notice-' + type)
+                .text(message === null || message === undefined ? '' : message);
+            $('#kstb-notice-area').empty().append($notice);
 
             $notice.hide().fadeIn();
 
@@ -524,16 +526,23 @@
                             });
 
                             // optgroupで表示
+                            // 文字列連結はせず attr() / text() で組み立てる
+                            // (属性値は文字列エスケープでは守れないため。DOM API に値の設定を任せる)
+                            $categorySelect.empty().append(
+                                $('<option/>').attr('value', '').text('カテゴリを選択してください')
+                            );
                             $.each(grouped, function (taxLabel, items) {
-                                options += '<optgroup label="' + taxLabel + '">';
+                                var $group = $('<optgroup/>').attr('label', taxLabel);
                                 $.each(items, function (i, item) {
-                                    options += '<option value="' + item.taxonomy + '|' + item.term_id + '">' +
-                                        item.term_name + ' (' + item.count + ')</option>';
+                                    $('<option/>')
+                                        .attr('value', item.taxonomy + '|' + parseInt(item.term_id, 10))
+                                        .text(item.term_name + ' (' + parseInt(item.count, 10) + ')')
+                                        .appendTo($group);
                                 });
-                                options += '</optgroup>';
+                                $group.appendTo($categorySelect);
                             });
 
-                            $categorySelect.html(options).prop('disabled', false);
+                            $categorySelect.prop('disabled', false);
                         }
                     } else {
                         $categorySelect.html('<option value="">読み込みに失敗しました</option>').prop('disabled', true);
@@ -1011,7 +1020,9 @@
 
                     // ドロップダウンにも追加
                     $('.kstb-menu-mode-select optgroup[label="カテゴリー"]').each(function() {
-                        $(this).append('<option value="category:' + categoryName + '">' + categoryName + '</option>');
+                        $(this).append(
+                            $('<option/>').attr('value', 'category:' + categoryName).text(categoryName)
+                        );
                     });
 
                     // ページをリロード
