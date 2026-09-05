@@ -95,9 +95,27 @@ class KSTB_Archive_Controller {
         return false;
     }
 
-    public function init() {
-        // リライトルールをフィルタリング（最後に実行して並び替え）
+    /**
+     * リライトルールのフィルタだけを登録する。
+     *
+     * 表示制御フック (init) はフロントエンドでのみ必要だが、このフィルタは
+     * flush_rewrite_rules() が走る全ての文脈 (管理画面の AJAX / パーマリンク設定保存 /
+     * プラグイン有効化 / WP-CLI) で登録されていないと、文脈ごとに別々の rewrite_rules が
+     * 永続化されてしまう。そのため init() から分離し、is_admin() に関係なく登録する。
+     */
+    public function init_rewrite_filter() {
+        static $registered = false;
+        if ($registered) {
+            return;
+        }
+        $registered = true;
+
         add_filter('rewrite_rules_array', array($this, 'filter_rewrite_rules'), 99999);
+    }
+
+    public function init() {
+        // リライトルールのフィルタは文脈非依存で登録する
+        $this->init_rewrite_filter();
 
         // requestフィルターでリクエストを事前処理
         add_filter('request', array($this, 'filter_request'), 5);
@@ -389,31 +407,16 @@ class KSTB_Archive_Controller {
             }
         }
 
-        // リライトルールを並び替え：より specific なルールを先に
-        uksort($rules, function($a, $b) {
-            // 1. 固定文字列の部分をカウント（正規表現パターン以外）
-            $fixed_a = preg_replace('/[.+?*\[\]\(\)\{\}\^\$\\\\]/', '', $a);
-            $fixed_b = preg_replace('/[.+?*\[\]\(\)\{\}\^\$\\\\]/', '', $b);
-            $fixed_len_a = strlen($fixed_a);
-            $fixed_len_b = strlen($fixed_b);
-
-            if ($fixed_len_a !== $fixed_len_b) {
-                // 固定文字列が長い（より specific）方を先に
-                return $fixed_len_b - $fixed_len_a;
-            }
-
-            // 2. スラッシュの数で比較
-            $count_a = substr_count($a, '/');
-            $count_b = substr_count($b, '/');
-
-            if ($count_a !== $count_b) {
-                // スラッシュが多い方を先に
-                return $count_b - $count_a;
-            }
-
-            // 3. 全体の文字列の長さで比較
-            return strlen($b) - strlen($a);
-        });
+        // v1.0.31 まではここで uksort() によりリライトルール配列全体を
+        // 「固定文字数 → スラッシュ数 → 全体長」で並べ替えていたが、これは
+        // WordPress コアが保証する評価順序 (extra_rules_top → ... → post_rewrite) を
+        // 破壊し、REST API (^wp-json/)・サイト内検索 (search/(.+))・oEmbed ((.+?)/embed)
+        // といったコア側ルールが投稿ルールの後ろへ沈んで 404 になる不具合を起こしていた。
+        //
+        // 本プラグインが優先させたい CPT 用ルールは register_single_post_type() が既に
+        // add_rewrite_rule($regex, $query, 'top') で登録しており、コアが extra_rules_top を
+        // 先頭に結合するため、配列全体を並べ替える必要はない。よって並べ替えは行わず、
+        // コアと他プラグインが生成した順序をそのまま維持する。
 
         return $rules;
     }

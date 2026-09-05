@@ -55,3 +55,9 @@ NIKKI.TXT
 
 # WSL/Windows metadata
 *Zone.Identifier*
+
+# 開発ツール設定・ルート直下の画像・依存ディレクトリ
+.codex
+/*.png
+/*.jpg
+/vendor/

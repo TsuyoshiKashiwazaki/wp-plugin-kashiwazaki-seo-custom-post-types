@@ -16,6 +16,50 @@ class KSTB_Ajax_Handler {
 
     private function __construct() {}
 
+    /**
+     * URL スラッグとして使用を禁止する予約語の一覧を返す。
+     *
+     * 固定リストではなく WordPress の現行設定 (REST プレフィックス / feed_base /
+     * author_base / search_base / pagination_base / comments_base) から組み立てる。
+     * サイト側でこれらを変更している場合にも追随させるため。
+     *
+     * @return string[] 小文字の予約語配列
+     */
+    private static function get_reserved_url_slugs() {
+        global $wp_rewrite;
+
+        $reserved = array(
+            'wp-admin',
+            'wp-content',
+            'wp-includes',
+            'wp-json',
+            'wp-sitemap',
+            'robots',
+            'favicon',
+            'index',
+            'embed',
+            'trackback',
+            'attachment',
+        );
+
+        if (function_exists('rest_get_url_prefix')) {
+            $reserved[] = rest_get_url_prefix();
+        }
+
+        if ($wp_rewrite instanceof WP_Rewrite) {
+            foreach (array('feed_base', 'author_base', 'search_base', 'pagination_base', 'comments_base') as $prop) {
+                if (!empty($wp_rewrite->$prop)) {
+                    $reserved[] = $wp_rewrite->$prop;
+                }
+            }
+        } else {
+            // $wp_rewrite が未初期化の文脈でも最低限の既定値は塞ぐ
+            $reserved = array_merge($reserved, array('feed', 'author', 'search', 'page', 'comments'));
+        }
+
+        return array_values(array_unique(array_map('strtolower', $reserved)));
+    }
+
     public function init() {
         add_action('wp_ajax_kstb_save_post_type', array($this, 'save_post_type'));
         add_action('wp_ajax_kstb_delete_post_type', array($this, 'delete_post_type'));
@@ -71,6 +115,22 @@ class KSTB_Ajax_Handler {
 
         if (!preg_match('/^[a-z0-9_-]+$/', $url_slug)) {
             wp_send_json_error(__('URLスラッグは半角英数字、ハイフン、アンダースコアのみ使用できます', 'kashiwazaki-seo-type-builder'));
+            return;
+        }
+
+        // v1.0.32: URL スラッグの予約語チェック。
+        // url_slug は register_single_post_type() で add_rewrite_rule($regex, $query, 'top')
+        // のパターンに直接使われるため、コアが使う URL 先頭セグメントと衝突させると
+        // REST API やフィード等をプラグイン側のルールが横取りしてしまう。
+        // ($reserved_post_types / $reserved_internal_names は内部名 $slug 用で url_slug には効かない)
+        if (in_array($url_slug, self::get_reserved_url_slugs(), true)) {
+            wp_send_json_error(
+                sprintf(
+                    /* translators: %s: 入力された URL スラッグ */
+                    __('URLスラッグ「%s」はWordPressが予約しているため使用できません。別の名前を指定してください。', 'kashiwazaki-seo-type-builder'),
+                    $url_slug
+                )
+            );
             return;
         }
 
@@ -594,7 +654,13 @@ class KSTB_Ajax_Handler {
             return;
         }
 
-        $post_ids = isset($_POST['post_ids']) ? array_map('intval', $_POST['post_ids']) : array();
+        // v1.0.32: 配列であることを検証してから array_map() に渡す。
+        // スカラーが送られると PHP 8 では array_map() が TypeError を投げ、
+        // admin-ajax.php が JSON ではなく HTTP 500 を返してしまう。
+        // (同ファイルの supports / taxonomies / assignments は既に is_array 検証済み)
+        $post_ids = (isset($_POST['post_ids']) && is_array($_POST['post_ids']))
+            ? array_map('intval', wp_unslash($_POST['post_ids']))
+            : array();
         $from_type = isset($_POST['from_type']) ? sanitize_key(wp_unslash($_POST['from_type'])) : '';
         $to_type = isset($_POST['to_type']) ? sanitize_key(wp_unslash($_POST['to_type'])) : '';
 

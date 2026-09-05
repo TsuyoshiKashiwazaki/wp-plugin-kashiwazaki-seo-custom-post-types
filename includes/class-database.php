@@ -277,6 +277,35 @@ class KSTB_Database {
     /**
      * データベースを最新バージョンに更新
      */
+    /**
+     * DB スキーマの版数を記録するオプション名。
+     * 値が KSTB_VERSION と一致していればマイグレーションは完了済みとみなす。
+     */
+    const DB_VERSION_OPTION = 'kstb_db_version';
+
+    /**
+     * スキーマが最新かどうかを確認し、必要なときだけ update_database() を実行する。
+     *
+     * v1.0.31 までは init(priority 5) から毎リクエスト無条件に update_database() を
+     * 呼んでおり、SHOW COLUMNS / SHOW TABLES / SELECT + 再帰 prepare で実測 15 クエリが
+     * 全ページビューに乗っていた（DDL を含む）。版数が一致する通常リクエストでは
+     * autoload 済みオプションの読み出しだけで済ませる。
+     *
+     * @param bool $force true なら版数に関係なく実行する（有効化時など）
+     * @return void
+     */
+    public static function maybe_update_database($force = false) {
+        $installed = get_option(self::DB_VERSION_OPTION);
+
+        if (!$force && $installed === KSTB_VERSION) {
+            return;
+        }
+
+        self::update_database();
+
+        update_option(self::DB_VERSION_OPTION, KSTB_VERSION);
+    }
+
     public static function update_database() {
         global $wpdb;
 

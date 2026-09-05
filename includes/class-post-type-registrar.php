@@ -719,7 +719,10 @@ class KSTB_Post_Type_Registrar {
             'can_export' => true,
             'delete_with_user' => false,
             'exclude_from_search' => false,
-            'map_meta_cap' => true
+            'map_meta_cap' => true,
+            // v1.0.32: 本プラグインが登録した投稿タイプであることを示すマーカー。
+            // 孤立メニュー掃除で他プラグインの CPT を巻き添えにしないための識別子。
+            'kstb_managed' => true
         );
 
         register_post_type($post_type->slug, $args);

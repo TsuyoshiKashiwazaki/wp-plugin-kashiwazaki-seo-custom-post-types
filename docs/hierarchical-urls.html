@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.31</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.32</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -69,7 +69,7 @@
 </thead>
 <tbody>
 <tr><td>内部スラッグ <code>slug</code></td><td>WordPress のシステム内部識別子。<code>register_post_type()</code> の第1引数。<code>$wp_post_types</code> グローバルのキー。データベース上の <code>post_type</code> フィールドの値。</td><td>半角英数字、最大 20 文字（WordPress コアの制限）</td></tr>
-<tr><td>公開 URL スラッグ <code>url_slug</code></td><td>実際のフロントエンド URL に表示される文字列。SEO キーワードを含む長い文字列を使える。</td><td>半角英数字・ハイフン・アンダースコア、最大 64 文字（本プラグイン独自の拡張）</td></tr>
+<tr><td>公開 URL スラッグ <code>url_slug</code></td><td>実際のフロントエンド URL に表示される文字列。SEO キーワードを含む長い文字列を使える。</td><td>半角英数字・ハイフン・アンダースコア、最大 64 文字（本プラグイン独自の拡張）。<code>wp-json</code>・<code>feed</code>・<code>search</code>・<code>page</code> など WordPress が URL の先頭セグメントとして予約している語は使用できません（v1.0.32 以降）</td></tr>
 </tbody>
 </table>
 
@@ -267,7 +267,7 @@
 <a href="menu-and-category.html" class="next">メニュー・カテゴリー &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.31</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.32</p></footer>
 
 </main>
 

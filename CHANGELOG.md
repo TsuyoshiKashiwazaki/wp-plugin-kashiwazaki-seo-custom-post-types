@@ -5,6 +5,25 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.32] - 2026-09-05
+
+### Security
+- **非公開・下書き投稿の露出経路を遮断**: 階層 URL の解決で `get_page_by_path()` の結果を状態検査なしにメインクエリへ投入していたため、下書き・非公開の投稿がスラッグを知る第三者から閲覧できる経路があった。閲覧可能性を検査するヘルパーに 14 箇所すべてを置換し、`attachment` への誤解決も除外
+- **デバッグ表示の反射型 XSS を修正**: `?kstb_debug=1` で表示する管理者向けデバッグパネルが `REQUEST_URI` をクエリ文字列ごと未エスケープで出力していた。パス部分のみを抽出し `esc_html()` で出力
+- **購読者への投稿タイプ定義の露出を遮断**: 全管理画面で無条件に読み込んでいた JS/CSS と投稿タイプ定義の埋め込みを `edit_posts` 権限を持つ利用者に限定
+- **公開 URL スラッグの予約語チェックを追加**: `wp-json` / `feed` / `search` / `page` など WordPress が URL 先頭セグメントとして使う語を `url_slug` に設定できないようにした。設定すると REST API やフィードをプラグインのリライトルールが横取りしてしまうため。予約語は REST プレフィックスと `$wp_rewrite` の各 base から動的に生成
+
+### Fixed
+- **REST API・サイト内検索・oEmbed が 404 になる不具合を修正**: リライトルール配列全体を独自基準で並べ替えていたため、WordPress コアの `^wp-json/` `search/` `embed/` ルールが投稿ルールの後ろへ沈み、`/wp-json/wp/v2/...` や `/search/キーワード/` が投稿として解釈されて 404 になっていた（ブロックエディタの保存も「返答が正しい JSON レスポンスではありません」で失敗）。並べ替えを撤去し、コアが生成した順序をそのまま維持する。本プラグインの CPT ルールは `add_rewrite_rule(..., 'top')` で既に最優先登録されているため影響なし
+- **管理画面と WP-CLI でリライトルールの永続化結果が食い違う不具合を修正**: `rewrite_rules_array` フィルタが `is_admin()` でない文脈でしか登録されておらず、管理画面からの flush と CLI/フロントからの flush で別々の結果が保存されていた。フィルタ登録を文脈非依存に変更
+- **記事移動 AJAX が HTTP 500 になる不具合を修正**: `post_ids` がスカラーで送られると PHP 8 の `array_map()` が TypeError を投げていた。`is_array()` 検証を追加
+- **孤立メニュー掃除が他プラグインの投稿タイプまで登録解除する不具合を修正**: 自プラグイン DB に無い非ビルトイン投稿タイプを一律 unset し、直後の `flush_rewrite_rules()` で他プラグインのリライトルールが永続化オプションから欠落していた。登録時に付与するマーカーで自プラグインの投稿タイプのみを対象にした
+- **発火しないフック登録を削除**: `init` 優先度 5 の実行中に優先度 1 で登録していたため一度も実行されなかった `add_enhanced_rewrite_rules` / `override_redirect_functions` の登録と、どこからも呼ばれない `add_custom_rewrite_rules()` を削除
+
+### Changed
+- **DB スキーマ移行を版数ゲート化**: 毎リクエスト無条件に実行していた `SHOW COLUMNS` / `SHOW TABLES` / `ALTER TABLE` 等（15 クエリ）を、`kstb_db_version` オプションが現行版と一致する場合はスキップするようにした。有効化時は強制実行
+- **階層 URL 上のリダイレクト抑止を「301 かつ GET」に限定**: `wp_redirect` を一律に無効化していたため、フォーム送信後の遷移やログイン後遷移まで止まっていた。正規化系（`redirect_canonical` / 旧スラッグ転送）のみを抑止する
+
 ## [1.0.31] - 2026-07-26
 
 ### Security
@@ -554,6 +573,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.32]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.31...v1.0.32
 [1.0.31]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.30...v1.0.31
 [1.0.30]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.29...v1.0.30
 [1.0.29]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.28...v1.0.29

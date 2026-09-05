@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.31</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.32</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -147,7 +147,7 @@
 <tr><th style="width:35%;">決めておくべき項目</th><th>内容</th></tr>
 </thead>
 <tbody>
-<tr><td>公開 URL スラッグ（url_slug）</td><td>実際の URL に表示される文字列。ユーザーが入力する唯一のスラッグ項目。最大 64 文字。SEO を意識した長めのキーワードも使用可能（例: <code>seo-latest-news</code>、<code>product-catalog-2026</code>）。</td></tr>
+<tr><td>公開 URL スラッグ（url_slug）</td><td>実際の URL に表示される文字列。ユーザーが入力する唯一のスラッグ項目。最大 64 文字。SEO を意識した長めのキーワードも使用可能（例: <code>seo-latest-news</code>、<code>product-catalog-2026</code>）。<code>wp-json</code>・<code>feed</code>・<code>search</code>・<code>page</code> など WordPress が URL の先頭セグメントとして予約している語は使用できません（v1.0.32 以降）。</td></tr>
 <tr><td>投稿タイプの内部名（slug）</td><td>ユーザーが直接入力する項目ではありません。管理フォームの hidden フィールドとして、入力された <code>url_slug</code> から自動生成されます（最大 20 文字に切り詰め）。<code>register_post_type()</code> に渡される WP 内部識別子として使われます。したがって決めておく必要があるのは <strong>url_slug だけ</strong> です。</td></tr>
 <tr><td>ラベル</td><td>管理画面で表示される日本語名。「ニュース」「商品」「スタッフ」など。このラベルから 25 種以上の関連ラベルが自動生成されます。</td></tr>
 <tr><td>親ディレクトリ（任意）</td><td>階層 URL を構築する場合、親となる固定ページや他の CPT のスラッグ。例: <code>blog</code> を指定すると <code>/blog/{url_slug}/{post_slug}/</code> の形式になる。</td></tr>
@@ -170,7 +170,7 @@
 <a href="post-type-management.html" class="next">投稿タイプ管理 &raquo;</a>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.31</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.32</p></footer>
 
 </main>
 

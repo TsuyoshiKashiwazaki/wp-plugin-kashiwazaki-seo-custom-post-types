@@ -16,6 +16,20 @@ class KSTB_Admin {
 
     private function __construct() {}
 
+    /**
+     * 指定スラッグの投稿タイプが本プラグインの登録によるものかを判定する。
+     *
+     * register_single_post_type() が付与する kstb_managed マーカーを見る。
+     * 他プラグインが登録した投稿タイプにはこのマーカーが無いため false を返す。
+     *
+     * @param string $slug 投稿タイプスラッグ
+     * @return bool
+     */
+    private static function is_kstb_managed_post_type($slug) {
+        $obj = get_post_type_object($slug);
+        return ($obj instanceof WP_Post_Type) && !empty($obj->kstb_managed);
+    }
+
     public function init() {
         add_action('admin_menu', array($this, 'add_menu_page'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_scripts'));
@@ -199,6 +213,15 @@ class KSTB_Admin {
 
         public function enqueue_global_scripts() {
 
+        // v1.0.32: 権限ガードを追加。
+        // この処理は全管理画面で無条件に実行され、KSTB_Database::get_all_post_types() の
+        // DB クエリを走らせたうえで wp_localize_script() によりカスタム投稿タイプ定義を
+        // ページに埋め込んでいた。そのため投稿を編集できない購読者が profile.php を
+        // 開くだけでも情報が渡っていた。CPT メニューを見る資格のある利用者に限定する。
+        if (!current_user_can('edit_posts')) {
+            return;
+        }
+
         // カスタム投稿タイプメニューの表示に必要なスクリプトとスタイルを全管理画面で読み込む
         // ファイルのタイムスタンプを使用してキャッシュを強制クリア
         $css_global_file = KSTB_PLUGIN_PATH . 'assets/admin-global.css';
@@ -331,13 +354,21 @@ class KSTB_Admin {
             }
 
             // データベースにないカスタム投稿タイプがWordPressに登録されている場合は削除
+            // v1.0.32: 対象を本プラグインが登録した投稿タイプだけに限定する。
+            // 以前は非ビルトイン CPT を全件走査し、自プラグイン DB に無いものを一律
+            // unset していたため、WooCommerce の product など他プラグインの CPT まで
+            // 現在のリクエストから登録解除していた。
             $registered_post_types = get_post_types(array('_builtin' => false), 'names');
             foreach ($registered_post_types as $registered_slug) {
-                if (!in_array($registered_slug, $db_slugs)) {
-                    global $wp_post_types;
-                    if (isset($wp_post_types[$registered_slug])) {
-                        unset($wp_post_types[$registered_slug]);
-                    }
+                if (in_array($registered_slug, $db_slugs, true)) {
+                    continue;
+                }
+                if (!self::is_kstb_managed_post_type($registered_slug)) {
+                    continue;
+                }
+                global $wp_post_types;
+                if (isset($wp_post_types[$registered_slug])) {
+                    unset($wp_post_types[$registered_slug]);
                 }
             }
 
@@ -364,12 +395,20 @@ class KSTB_Admin {
                 $db_slugs[] = $pt->slug;
             }
 
+            // v1.0.32: 対象を本プラグインが登録した投稿タイプだけに限定する。
+            // この直後に flush_rewrite_rules() を実行するため、他プラグインの CPT を
+            // unset したまま再生成すると、そのリライトルールが rewrite_rules
+            // オプションから欠落した状態で永続化されてしまう（恒久的な影響）。
             $registered_post_types = get_post_types(array('_builtin' => false), 'names');
             foreach ($registered_post_types as $registered_slug) {
-                if (!in_array($registered_slug, $db_slugs)) {
-                    if (isset($wp_post_types[$registered_slug])) {
-                        unset($wp_post_types[$registered_slug]);
-                    }
+                if (in_array($registered_slug, $db_slugs, true)) {
+                    continue;
+                }
+                if (!self::is_kstb_managed_post_type($registered_slug)) {
+                    continue;
+                }
+                if (isset($wp_post_types[$registered_slug])) {
+                    unset($wp_post_types[$registered_slug]);
                 }
             }
 

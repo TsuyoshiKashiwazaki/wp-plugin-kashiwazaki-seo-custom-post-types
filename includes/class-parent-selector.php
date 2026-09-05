@@ -50,8 +50,11 @@ class KSTB_Parent_Selector {
         add_filter('post_link', array($this, 'custom_post_link'), 10, 2);
         add_filter('post_type_link', array($this, 'custom_post_link'), 10, 2);
 
-        // リライトルールを最優先で登録
-        add_action('init', array($this, 'add_enhanced_rewrite_rules'), 1);
+        // v1.0.32: add_enhanced_rewrite_rules() への add_action('init', ..., 1) を削除。
+        // init priority 5 の実行中に priority 1 を登録しても発火しないデッドフックで、
+        // 実際 get_option('rewrite_rules') 全走査で kstb_parent_slug を含むルールは 0 件だった。
+        // 当該メソッドは flush_on_permalink_save() から直接呼ばれる経路のみが生きているため、
+        // メソッド本体は残す（実行時の挙動は本削除で変化しない）。
         
         // 親ディレクトリが設定されている場合は古いURLを404にする
         add_action('template_redirect', array($this, 'block_old_urls'), 1);
@@ -78,8 +81,13 @@ class KSTB_Parent_Selector {
         // 最終的な防御ライン：テンプレートリダイレクトを無効化
         add_action('template_redirect', array($this, 'final_redirect_defense'), 1);
 
-        // リダイレクト関数そのものをオーバーライド
-        add_action('init', array($this, 'override_redirect_functions'), 1);
+        // v1.0.32: override_redirect_functions() への add_action('init', ..., 1) を削除。
+        // KSTB_Parent_Selector::init() 自体が init priority 5 の実行中に呼ばれるため、
+        // priority 1 のコールバックを後から登録しても WP_Hook が現在優先度より小さい
+        // 優先度を除外し、二度と実行されないデッドフックだった (v1.0.29 MEDIUM-6 と同種)。
+        // 加えて当該メソッドは実行文を持たない no-op で、実際のリダイレクト抑止は
+        // absolute_canonical_blocker / absolute_redirect_blocker が担っている。
+        // よって登録とメソッド本体をあわせて削除する。
 
         // デバッグ情報の出力を無効化
         // add_action('wp_footer', array($this, 'output_debug_comments'), 999);
@@ -498,8 +506,16 @@ class KSTB_Parent_Selector {
             return;
         }
 
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        $path_parts = explode('/', trim($request_uri, '/'));
+        // v1.0.32: REQUEST_URI はクエリ文字列を含んだまま渡ってくるため、
+        // parse_url() でパス部分だけを取り出してからエスケープして出力する。
+        // 以前は ?kstb_debug=1&x=<payload> のような URL で $path_parts に任意文字列が入り、
+        // 管理者の画面上で反射する状態だった（管理者に細工 URL を踏ませる反射型 XSS）。
+        $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? '');
+        $request_path = parse_url($request_uri, PHP_URL_PATH);
+        if (!is_string($request_path)) {
+            $request_path = '';
+        }
+        $path_parts = explode('/', trim($request_path, '/'));
 
         if (count($path_parts) >= 3) {
             $parent_slug = $path_parts[0];
@@ -510,9 +526,9 @@ class KSTB_Parent_Selector {
             echo '<div style="position: fixed; top: 50px; right: 20px; background: #fff; border: 2px solid #f00; padding: 10px; z-index: 9999; font-size: 12px; max-width: 300px;">';
             echo '<h4>KSTB デバッグ情報</h4>';
             echo '<strong>URL解析:</strong><br>';
-            echo "親スラッグ: {$parent_slug}<br>";
-            echo "投稿タイプ: {$post_type_slug}<br>";
-            echo "投稿スラッグ: {$post_slug}<br><br>";
+            echo '親スラッグ: ' . esc_html($parent_slug) . '<br>';
+            echo '投稿タイプ: ' . esc_html($post_type_slug) . '<br>';
+            echo '投稿スラッグ: ' . esc_html($post_slug) . '<br><br>';
 
             // 投稿タイプの確認
             $is_custom = $this->is_custom_post_type_slug($post_type_slug);
@@ -522,16 +538,16 @@ class KSTB_Parent_Selector {
 
             if ($is_custom) {
                 // 投稿の存在確認
-                $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                 echo '<strong>投稿確認:</strong><br>';
                 if ($found_post) {
-                    echo "✅ 投稿が見つかりました (ID: {$found_post->ID})<br>";
+                    echo '✅ 投稿が見つかりました (ID: ' . esc_html((string) $found_post->ID) . ')<br>';
 
                     // 親ページの確認
                     $parent = self::get_parent_page($found_post->ID);
                     echo '<strong>親ページ確認:</strong><br>';
                     if ($parent) {
-                        echo "✅ 親ページ: {$parent->post_title} (slug: {$parent->post_name})<br>";
+                        echo '✅ 親ページ: ' . esc_html($parent->post_title) . ' (slug: ' . esc_html($parent->post_name) . ')<br>';
                         if ($parent->post_name === $parent_slug) {
                             echo "✅ 親スラッグが一致<br>";
                         } else {
@@ -1189,6 +1205,49 @@ class KSTB_Parent_Selector {
     }
 
     /**
+     * パスから投稿を解決し、現在のユーザーが閲覧してよいものだけを返す。
+     *
+     * get_page_by_path() は post_status を絞らないため、そのまま使うと下書き・非公開の
+     * 投稿まで取得できてしまう。本クラスは取得した投稿を $wp_query->posts や
+     * $GLOBALS['post'] に直接投入し status_header(200) を立てる箇所があるため、
+     * WordPress 本来の可視性判定を経由せず露出する経路になり得る。取得段階で塞ぐ。
+     *
+     * あわせて $post_type を配列で渡すことで、コアが暗黙に付与する 'attachment' を
+     * 検索対象から外し、添付ファイルへの誤解決も防ぐ。
+     *
+     * @param string       $path      スラッグまたはパス
+     * @param string|array $post_type 投稿タイプ
+     * @return WP_Post|null 閲覧可能な投稿。該当なし・閲覧不可なら null
+     */
+    private static function get_viewable_post_by_path($path, $post_type = 'page') {
+        if ($path === null || $path === '') {
+            return null;
+        }
+
+        $types = is_array($post_type) ? $post_type : array($post_type);
+        $post  = get_page_by_path($path, OBJECT, $types);
+
+        if (!($post instanceof WP_Post)) {
+            return null;
+        }
+
+        // 公開済みは常に閲覧可能
+        if ($post->post_status === 'publish') {
+            return $post;
+        }
+
+        // 下書き・非公開・予約は編集権限を持つログインユーザーのみ
+        if (is_user_logged_in()
+            && current_user_can('edit_post', $post->ID)
+            && in_array($post->post_status, array('draft', 'pending', 'private', 'future'), true)
+        ) {
+            return $post;
+        }
+
+        return null;
+    }
+
+    /**
      * 指定した投稿の親ページを取得
      */
     public static function get_parent_page($post_id) {
@@ -1441,7 +1500,7 @@ class KSTB_Parent_Selector {
 
             if ($this->is_custom_post_type_slug($post_type_slug)) {
                 // 投稿と親ページの関係を確認
-                $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                 if ($found_post) {
                     $parent = self::get_parent_page($found_post->ID);
                     if ($parent && $parent->post_name === $parent_slug) {
@@ -1470,7 +1529,7 @@ class KSTB_Parent_Selector {
 
             if ($this->is_custom_post_type_slug($post_type_slug)) {
                 // 投稿を直接検索
-                $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
 
                 if ($found_post) {
                     $parent = self::get_parent_page($found_post->ID);
@@ -1531,7 +1590,7 @@ class KSTB_Parent_Selector {
             $post_slug = $path_parts[2];
 
             if ($this->is_custom_post_type_slug($post_type_slug)) {
-                $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
 
                 if ($found_post) {
                     $parent = self::get_parent_page($found_post->ID);
@@ -1561,48 +1620,8 @@ class KSTB_Parent_Selector {
         }
     }
 
-        /**
-     * カスタムリライトルールを追加
-     */
-    public function add_custom_rewrite_rules() {
-        // 階層化されたカスタム投稿タイプ用のリライトルールを追加
-        $custom_post_types = $this->get_post_types();
-
-        foreach ($custom_post_types as $post_type) {
-            if (post_type_exists($post_type->slug) && (bool) $post_type->hierarchical) {
-                $post_type_obj = get_post_type_object($post_type->slug);
-
-                if ($post_type_obj && $post_type_obj->rewrite) {
-                    $slug = isset($post_type_obj->rewrite['slug']) ? $post_type_obj->rewrite['slug'] : $post_type->slug;
-
-                    // より汎用的なパターンで親ページがある場合のURL構造をサポート
-                    // 例: /{parent_slug}/{post_type_slug}/{post_slug}/
-                    add_rewrite_rule(
-                        '([^/]+)/' . preg_quote($slug, '/') . '/([^/]+)/?$',
-                        'index.php?post_type=' . $post_type->slug . '&name=$matches[2]&kstb_parent_slug=$matches[1]',
-                        'top'
-                    );
-
-                    // さらに深い階層にも対応
-                    // 例: /{category_slug}/{parent_slug}/{post_type_slug}/{post_slug}/
-                    add_rewrite_rule(
-                        '([^/]+)/([^/]+)/' . preg_quote($slug, '/') . '/([^/]+)/?$',
-                        'index.php?post_type=' . $post_type->slug . '&name=$matches[3]&kstb_parent_path=$matches[1]/$matches[2]',
-                        'top'
-                    );
-                }
-            }
-        }
-
-        // リライトルールが追加されたことを記録
-        $this->rewrite_rules_added = true;
-
-        // パーマリンクを自動フラッシュ（設定変更時のみ）
-        if (!get_option('kstb_rewrite_rules_flushed_v2')) {
-            flush_rewrite_rules();
-            update_option('kstb_rewrite_rules_flushed_v2', true);
-        }
-    }
+        // v1.0.32: add_custom_rewrite_rules() を削除。全ファイル grep で登録・呼び出しとも
+    // ゼロの完全なデッドコードだった（add_enhanced_rewrite_rules() と重複する内容）。
 
         /**
      * WPリダイレクトを制御
@@ -1624,7 +1643,7 @@ class KSTB_Parent_Selector {
 
                 if ($this->is_custom_post_type_slug($post_type_slug)) {
                     // 投稿と親ページの関係を確認
-                    $post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                    $post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                     if ($post) {
                         $parent = self::get_parent_page($post->ID);
                         if ($parent && $parent->post_name === $parent_slug) {
@@ -1688,7 +1707,7 @@ class KSTB_Parent_Selector {
         }
 
         // 投稿を検索
-        $post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+        $post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
         if (!$post) {
             return;
         }
@@ -1772,7 +1791,7 @@ class KSTB_Parent_Selector {
                 $post_name = $query_vars['name'];
 
                 // 投稿を検索
-                $post = get_page_by_path($post_name, OBJECT, $post_type);
+                $post = self::get_viewable_post_by_path($post_name, $post_type);
 
                 if ($post) {
                     // 親ページをチェック
@@ -2158,7 +2177,7 @@ class KSTB_Parent_Selector {
             // カスタム投稿タイプかどうか確認
             if ($this->is_custom_post_type_slug($post_type_slug)) {
                 // 投稿が存在するか確認
-                $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                 if ($found_post) {
                     // 親ページ関係を確認
                     $parent = self::get_parent_page($found_post->ID);
@@ -2287,7 +2306,7 @@ class KSTB_Parent_Selector {
                 if (isset($path_parts[$post_type_index + 1])) {
                     // 個別投稿の可能性
                     $post_slug = $path_parts[$post_type_index + 1];
-                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type->slug);
+                    $found_post = self::get_viewable_post_by_path($post_slug, $post_type->slug);
                     if ($found_post) {
                         return true;
                     }
@@ -2361,7 +2380,7 @@ class KSTB_Parent_Selector {
 
                 if ($is_custom_type) {
                     // 投稿存在確認
-                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                    $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                     echo "<!-- 投稿発見: " . ($found_post ? 'YES (ID: ' . $found_post->ID . ')' : 'NO') . " -->\n";
 
                     if ($found_post) {
@@ -2505,7 +2524,7 @@ class KSTB_Parent_Selector {
 
                 if ($post_slug) {
                     // 個別投稿の処理
-                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                    $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                 if ($found_post) {
                     // error_log("KSTB DEBUG: Found post: {$found_post->post_title} (ID: {$found_post->ID})");
 
@@ -2552,7 +2571,7 @@ class KSTB_Parent_Selector {
                     // error_log("KSTB DEBUG: Processing archive page for post type: {$post_type_slug}");
 
                     // 親ページが存在するかチェック
-                    $parent_page = get_page_by_path($parent_slug);
+                    $parent_page = self::get_viewable_post_by_path($parent_slug, 'page');
                     if ($parent_page) {
                         // error_log("KSTB DEBUG: Found parent page: {$parent_page->post_title}");
 
@@ -2866,7 +2885,7 @@ class KSTB_Parent_Selector {
                 $post_slug = isset($path_parts[$post_type_index + 1]) ? $path_parts[$post_type_index + 1] : null;
                     if ($post_slug) {
                         // 個別投稿の処理
-                        $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                        $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                         if ($found_post) {
                             // URLパスとカスタム投稿タイプの設定が一致していれば有効
                             // （すでにidentify_custom_post_type_from_pathで検証済み）
@@ -3027,11 +3046,26 @@ class KSTB_Parent_Selector {
      * 絶対的なリダイレクトブロッカー
      */
     public function absolute_redirect_blocker($location, $status) {
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $request_uri = wp_unslash($_SERVER['REQUEST_URI'] ?? '');
 
-        // 階層URLの場合は絶対にリダイレクトしない
-        if ($this->is_hierarchy_url($request_uri)) {
-            // error_log("KSTB ABSOLUTE BLOCK: Blocked redirect from {$request_uri} to {$location}");
+        if (!$this->is_hierarchy_url($request_uri)) {
+            return $location;
+        }
+
+        // v1.0.32: 階層 URL 上で wp_redirect を一律 false にするのをやめ、
+        // 抑止対象を「正規化目的の 301 GET」に限定する。
+        //
+        // wp_redirect フィルタは wp_safe_redirect() を含む全リダイレクトの共通経路であり、
+        // 以前は階層 URL 上でフォーム送信後の遷移・ログイン後遷移・他プラグインの
+        // 正当なリダイレクトまで無効化していた。
+        //
+        // 本来抑止したいのはコアの正規化系 (redirect_canonical / wp_old_slug_redirect) で、
+        // これらは 301 かつ GET で発行される。フォーム系や明示的な遷移は 302 が既定のため
+        // この条件で分離できる。canonical 自体は absolute_canonical_blocker が
+        // redirect_canonical フィルタ側で個別に抑止している。
+        $method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper(sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD']))) : 'GET';
+
+        if ((int) $status === 301 && $method === 'GET') {
             return false;
         }
 
@@ -3154,7 +3188,7 @@ class KSTB_Parent_Selector {
                 $post_slug = $path_parts[2];
 
                 if ($this->is_custom_post_type_slug($post_type_slug)) {
-                    $found_post = get_page_by_path($post_slug, OBJECT, $post_type_slug);
+                    $found_post = self::get_viewable_post_by_path($post_slug, $post_type_slug);
                     if ($found_post) {
                         $parent = self::get_parent_page($found_post->ID);
                         if ($parent && $parent->post_name === $parent_slug) {
@@ -3200,12 +3234,6 @@ class KSTB_Parent_Selector {
     /**
      * WordPressのリダイレクト関数を完全にオーバーライド
      */
-    public function override_redirect_functions() {
-        // このメソッドは特に何もしない（フック登録のみに留める）
-        // 実際のリダイレクト防止は他のフィルターで行う
-            // error_log("KSTB: Override redirect functions initialized");
-    }
-
     /**
      * パーマリンク設定ページでの保存フックを設定
      */

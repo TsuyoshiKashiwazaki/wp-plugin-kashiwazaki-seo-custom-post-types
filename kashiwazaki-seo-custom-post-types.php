@@ -3,7 +3,7 @@
  * Plugin Name: Kashiwazaki SEO Custom Post Types
  * Plugin URI: https://www.tsuyoshikashiwazaki.jp
  * Description: カスタム投稿タイプを簡単に作成・管理するWordPressプラグイン
- * Version: 1.0.31
+ * Version: 1.0.32
  * Author: 柏崎剛 (Tsuyoshi Kashiwazaki)
  * Author URI: https://www.tsuyoshikashiwazaki.jp/profile/
  * Text Domain: kashiwazaki-seo-type-builder
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 
-define('KSTB_VERSION', '1.0.31');
+define('KSTB_VERSION', '1.0.32');
 define('KSTB_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('KSTB_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('KSTB_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -70,8 +70,8 @@ class KashiwazakiSeoTypeBuilder {
         }
         $initialized = true;
 
-        // データベースの更新チェック
-        KSTB_Database::update_database();
+        // データベースの更新チェック（版数が一致していればスキップ）
+        KSTB_Database::maybe_update_database();
 
         // カスタム投稿タイプの登録
         $registrar = KSTB_Post_Type_Registrar::get_instance();
@@ -87,6 +87,12 @@ class KashiwazakiSeoTypeBuilder {
 
         // 階層的CPTの旧スラッグ保存（管理画面・REST API・WP-CLI全てで動作）
         KSTB_Old_Slug_Tracker::get_instance()->init();
+
+        // リライトルールのフィルタは文脈非依存で登録する。
+        // flush_rewrite_rules() は管理画面 (AJAX / パーマリンク設定保存 / 有効化) からも
+        // WP-CLI やフロントからも呼ばれるため、is_admin() で登録を分岐すると
+        // 文脈ごとに別々の rewrite_rules が永続化されてしまう。
+        KSTB_Archive_Controller::get_instance()->init_rewrite_filter();
 
         // アーカイブページの表示制御（最優先で実行）
         if (!is_admin()) {
@@ -152,6 +158,9 @@ class KashiwazakiSeoTypeBuilder {
 
         try {
             KSTB_Database::create_tables();
+            // v1.0.32: 有効化時はスキーマ移行を強制実行し、版数オプションを確定させる。
+            // これにより通常リクエスト側の maybe_update_database() は以後スキップできる。
+            KSTB_Database::maybe_update_database(true);
         } catch (Exception $e) {
             throw $e;
         }

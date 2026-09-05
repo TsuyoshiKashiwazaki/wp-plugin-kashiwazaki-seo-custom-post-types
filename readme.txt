@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.31
+Stable tag: 1.0.32
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,19 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.32 =
+* Security: 階層 URL の解決で下書き・非公開の投稿が第三者から閲覧できる経路を遮断。get_page_by_path() の結果を状態検査なしにメインクエリへ投入していた 14 箇所を、閲覧可能性を検査するヘルパーへ置換。attachment への誤解決も除外
+* Security: ?kstb_debug=1 の管理者向けデバッグ表示で REQUEST_URI をクエリ文字列ごと未エスケープ出力していた反射型 XSS を修正。パス部分のみ抽出し esc_html() で出力
+* Security: 全管理画面で無条件に読み込んでいた JS/CSS と投稿タイプ定義の埋め込みを edit_posts 権限保持者に限定 (購読者への露出を遮断)
+* Security: 公開 URL スラッグ (url_slug) に wp-json / feed / search / page など WordPress が URL 先頭で予約している語を設定できないようにした。設定すると REST API やフィードをプラグインのルールが横取りするため
+* Fixed: REST API・サイト内検索・oEmbed が 404 になる不具合を修正。リライトルール配列全体を独自基準で並べ替えていたためコアの ^wp-json/ search/ embed/ ルールが投稿ルールの後ろへ沈み、ブロックエディタの保存も「正しい JSON レスポンスではありません」で失敗していた。並べ替えを撤去しコアの順序を維持
+* Fixed: 管理画面からの flush と WP-CLI/フロントからの flush でリライトルールの永続化結果が食い違う不具合を修正。rewrite_rules_array フィルタの登録を is_admin() 非依存に変更
+* Fixed: 記事移動 AJAX で post_ids がスカラーの場合に PHP 8 で TypeError → HTTP 500 になる不具合を修正 (is_array 検証を追加)
+* Fixed: 孤立メニュー掃除が他プラグインの投稿タイプまで登録解除し、直後の flush_rewrite_rules() で他プラグインのリライトルールが永続化から欠落する不具合を修正。自プラグインが登録した投稿タイプのみを対象化
+* Fixed: 一度も発火しないフック登録 (init 優先度 5 実行中の優先度 1 登録) と、どこからも呼ばれないメソッドを削除
+* Changed: DB スキーマ移行を版数ゲート化。毎リクエスト実行していた SHOW COLUMNS / SHOW TABLES / ALTER TABLE (15 クエリ) を kstb_db_version が現行版と一致する場合はスキップ。有効化時は強制実行
+* Changed: 階層 URL 上のリダイレクト抑止を「301 かつ GET」に限定。wp_redirect の一律無効化でフォーム送信後やログイン後の遷移まで止まっていたのを、正規化系 (redirect_canonical / 旧スラッグ転送) のみ抑止するよう変更
 
 = 1.0.31 =
 * Security: 管理画面 JS の保存型 XSS を修正。記事移動タブのタクソノミー選択で optgroup / option を文字列連結で生成していたため属性文脈での脱出が可能だった。ターム名は assign_terms 権限 (寄稿者以上) で作成できるため、低権限ユーザーが管理者のセッションで任意スクリプトを実行できる状態だった。DOM API (attr() / text()) による生成へ全面置換
