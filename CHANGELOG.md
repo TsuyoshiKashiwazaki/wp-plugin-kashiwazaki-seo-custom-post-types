@@ -5,6 +5,11 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.33] - 2026-09-09
+
+### Fixed
+- **他プラグイン・テーマが登録したリライトルールを削除してしまう回帰を修正**: `rewrite_rules_array` フィルタで、アーカイブを無効にした投稿タイプの URL 配下にある `/?$`・`/feed`・`/page` に前方一致するルールを一律に削除していた。WordPress コアはアーカイブ無効の投稿タイプにこれらのルールを生成せず、本プラグインが `register_single_post_type()` で登録する独自ルールは先頭に `^` を持つため前方一致の対象にならない。そのため実際に削除されていたのは、テーマや他プラグインが同じパス配下へ `add_rewrite_rule()` で登録したルールだけだった（例: テーマ独自のページネーション `/seo-note/blog/page-2/` が flush のたびに 404 になる）。1.0.32 でこのフィルタを管理画面からの flush でも動作させたことで顕在化した。自プラグイン由来のルールへの効果はゼロのため、削除処理そのものを撤去
+
 ## [1.0.32] - 2026-09-05
 
 ### Security
@@ -573,6 +578,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.33]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.32...v1.0.33
 [1.0.32]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.31...v1.0.32
 [1.0.31]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.30...v1.0.31
 [1.0.30]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.29...v1.0.30

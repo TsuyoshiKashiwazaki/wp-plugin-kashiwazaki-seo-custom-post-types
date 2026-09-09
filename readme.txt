@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.32
+Stable tag: 1.0.33
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,9 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.33 =
+* Fixed: アーカイブ無効の投稿タイプの URL 配下にあるリライトルール (/?$・/feed・/page 前方一致) を一律削除していたため、テーマや他プラグインが同じパス配下に登録したルール (独自ページネーション等) が flush のたびに消えて 404 になっていた回帰を修正。WordPress コアも本プラグイン自身もこの削除の対象になるルールを生成しておらず、削除されていたのは他コンポーネントのルールのみだったため、削除処理そのものを撤去 (1.0.32 で管理画面からの flush にもフィルタを適用したことで顕在化)
 
 = 1.0.32 =
 * Security: 階層 URL の解決で下書き・非公開の投稿が第三者から閲覧できる経路を遮断。get_page_by_path() の結果を状態検査なしにメインクエリへ投入していた 14 箇所を、閲覧可能性を検査するヘルパーへ置換。attachment への誤解決も除外

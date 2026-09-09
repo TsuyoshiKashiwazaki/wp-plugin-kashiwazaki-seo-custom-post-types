@@ -381,21 +381,16 @@ class KSTB_Archive_Controller {
             // フルパスを再帰的に構築
             $pattern = $this->build_full_path_for_post_type($post_type);
 
-            if (!$post_type->has_archive) {
-                // アーカイブが無効の場合、アーカイブ関連のリライトルールを削除
-                $pattern = preg_quote($pattern, '/');
-                foreach ($rules as $rule => $query) {
-                    if (preg_match('/^' . $pattern . '\/?\$/', $rule)) {
-                        unset($rules[$rule]);
-                    }
-                    if (preg_match('/^' . $pattern . '\/feed/', $rule)) {
-                        unset($rules[$rule]);
-                    }
-                    if (preg_match('/^' . $pattern . '\/page/', $rule)) {
-                        unset($rules[$rule]);
-                    }
-                }
-            } else {
+            // v1.0.32 までは has_archive=false の投稿タイプについて、ここで
+            // 「{path}/?$」「{path}/feed」「{path}/page」に前方一致する全ルールを unset していた。
+            // しかし WordPress コアは has_archive=false の投稿タイプにアーカイブ / feed /
+            // ページネーションのルールをそもそも生成せず、本プラグインが register_single_post_type()
+            // で登録する独自ルールは先頭に「^」を持つため前方一致の対象にならない。
+            // 結果としてこの unset が実際に消していたのは、テーマや他プラグインが同じパス配下に
+            // add_rewrite_rule() で登録したルール (例: テーマ独自ページネーション「{path}/page-2/」)
+            // だけで、flush のたびに他コンポーネントの URL を 404 にしていた。
+            // 自プラグイン由来のルールへの効果はゼロのため、削除処理を撤去し何もしない。
+            if ($post_type->has_archive) {
                 // アーカイブが有効な場合、ページネーション用のルールを追加/保持
                 $pattern_escaped = preg_quote($pattern, '/');
 
