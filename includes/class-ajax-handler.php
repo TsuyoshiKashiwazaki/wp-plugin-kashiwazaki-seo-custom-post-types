@@ -399,9 +399,12 @@ class KSTB_Ajax_Handler {
 
             // v1.0.27 A1: 独自 add_rewrite_rule() 由来のカスタムルールを
             // $wp_rewrite->extra_rules_top から明示的に unset する。
-            // unregister_post_type() は permastruct 由来の rule しか消さないため、
-            // 本プラグインが register_single_post_type() / add_enhanced_rewrite_rules()
-            // で追加したカスタムルールはここで手動で消さないと flush 後も残存する。
+            // v1.0.34 訂正: 旧コメントは「unregister_post_type() は permastruct 由来の rule しか
+            // 消さない」としていたが事実と異なる。WP_Post_Type::remove_rewrite_rules() は
+            // permastruct に加えて、extra_rules_top から「クエリ文字列に
+            // index.php?post_type={slug} を含むルール」も削除する。ただし本プラグインの
+            // カスタムルールにはクエリがこの形式でないもの (index.php?{query_var}=... 等) があり、
+            // それらは unregister_post_type() では消えないため、ここで手動 unset が必要になる。
             if (!empty($custom_patterns_to_remove)) {
                 global $wp_rewrite;
                 if (isset($wp_rewrite) && is_object($wp_rewrite) && isset($wp_rewrite->extra_rules_top) && is_array($wp_rewrite->extra_rules_top)) {
@@ -473,20 +476,20 @@ class KSTB_Ajax_Handler {
      * @param string $slug
      */
     private function force_reregister_post_type($slug) {
-        // 既存の登録があれば unregister（permastruct / query var / hooks 等を正規にクリーンアップ）
-        if (post_type_exists($slug)) {
-            unregister_post_type($slug);
-        }
-
         // データベースから最新の設定を取得
         $post_type = KSTB_Database::get_post_type_by_slug($slug);
         if (!$post_type) {
+            // 設定が取得できない場合は登録の解除のみ（従来動作を維持）
+            if (post_type_exists($slug)) {
+                unregister_post_type($slug);
+            }
             return;
         }
 
-        // 通常登録ロジックに統合 ($force=true で post_type_exists ガードをスキップ)
-        $registrar = KSTB_Post_Type_Registrar::get_instance();
-        $registrar->register_single_post_type($post_type, true);
+        // v1.0.34: unregister_post_type() はテーマ・他プラグインが add_rewrite_rule() で
+        // 登録したルールまで extra_rules_top から削除してしまうため、退避・復元を実装した
+        // KSTB_Post_Type_Force_Register::force_register() に統合する。
+        KSTB_Post_Type_Force_Register::force_register($post_type);
     }
     
     public function flush_rewrite_rules() {

@@ -11,7 +11,7 @@
 <button class="hamburger-btn" aria-label="Menu" aria-expanded="false">&#9776;</button>
 
 <nav class="sidebar">
-<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.33</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
+<div class="sidebar-header"><h2 style="color:#fff;">Custom Post Types</h2><span class="version">v1.0.34</span><img src="images/main-visual.png" alt="" style="width:100%;border-radius:4px;margin-top:8px;"></div>
 <ul>
 <li><a href="index.html">概要</a></li>
 <li><a href="setup.html">インストール・初期設定</a></li>
@@ -298,6 +298,40 @@
 <p>301 リダイレクトを担うのは <code>KSTB_Permalink_Validator</code> です。リダイレクトが効かないように見える場合、リライトルールが古い可能性があるため <strong>設定 &gt; パーマリンク設定</strong> を一度開いて保存し直してください。</p>
 </div>
 
+<h2>投稿タイプを保存すると、テーマのページネーションが 404 になる</h2>
+
+<h3>症状</h3>
+<p>投稿タイプ管理画面で投稿タイプを保存（または「強制再登録」）したあと、テーマが独自に用意しているページネーション URL（例: <code>/seo-note/blog/page-2/</code>）が 404 になる。アーカイブの 1 ページ目や個別記事は正常に表示される。</p>
+
+<h3>原因と解決策</h3>
+
+<p><strong>v1.0.34 で修正済みです。</strong>プラグインを v1.0.34 以降に更新してください。</p>
+
+<p>WordPress コアの <code>unregister_post_type()</code> は <code>WP_Post_Type::remove_rewrite_rules()</code> を通じて、リライトルールの配列から「クエリ文字列に <code>index.php?post_type={スラッグ}</code> を含むルール」を<strong>登録元を問わずすべて削除</strong>します。本プラグインは投稿タイプの保存時に「解除 → 再登録 → リライトルールの再生成」を行うため、テーマや他プラグインが登録していたその投稿タイプ向けのルールも巻き込まれて消えていました。それらは <code>init</code> の早い段階で登録済みのため、同じリクエストの中で登録し直される機会がなく、欠けたまま保存されていたのが原因です。</p>
+
+<p>v1.0.34 では解除の直前に該当ルールを退避し、再登録後に復元します。また、旧バージョンで既に欠落した状態が保存されている場合に備えて、更新後の最初のフロントページ表示時に 1 度だけリライトルールを再生成して自動的に回復させます。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">補足</p>
+<p>復元されるのは投稿タイプの<strong>現在の</strong> URL パス配下のルールだけです。「公開 URL スラッグ」や「親ディレクトリ」を変更した保存では旧パスのルールは復元されないため、変更前の URL が生き残ってしまうことはありません。</p>
+</div>
+
+<h2>下書きのプレビューが 404 になる</h2>
+
+<h3>症状</h3>
+<p>親ディレクトリを設定した投稿タイプ（例: <code>/seo-note/blog/</code>）で、下書きや承認待ちの記事の「プレビュー」ボタンを押すと 404 ページが表示される。公開済みの記事は正常に表示される。</p>
+
+<h3>原因と解決策</h3>
+
+<p><strong>v1.0.34 で修正済みです。</strong>プラグインを v1.0.34 以降に更新してください。</p>
+
+<p>未公開の記事は WordPress の仕様上パーマリンクを持たないため、プレビュー URL は <code>/?post_type=blog&amp;p=123&amp;preview=true</code> という形式になり、パス部分が空になります。v1.0.33 以前は旧 URL のブロック処理が「個別記事のリクエストパスは階層フルパス（<code>seo-note/blog</code>）で始まること」を要求していたため、パスが空のプレビューは必ず不一致となり 404 に落ちていました。v1.0.34 でログイン済みのプレビューリクエストをこの処理の対象外にしています。</p>
+
+<div class="callout callout-note">
+<p class="callout-title">補足</p>
+<p>公開済みの記事に対する旧 URL のブロック（親ディレクトリを付ける前の URL を 404 にする SEO 上の処理）は、v1.0.34 でも従来どおり動作します。プレビューは編集権限を持つログイン済みユーザーしか到達しないため、除外しても公開 URL の正規化には影響しません。</p>
+</div>
+
 <h2>publicly_queryable / show_ui / query_var を OFF にした場合の影響</h2>
 
 <h3>症状</h3>
@@ -409,7 +443,7 @@
 <span></span>
 </nav>
 
-<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.33</p></footer>
+<footer class="manual-footer"><p>作者: <a href="https://www.tsuyoshikashiwazaki.jp/profile/" target="_blank" rel="noopener">柏崎剛（Tsuyoshi Kashiwazaki）</a></p><p>プラグイン: Kashiwazaki SEO Custom Post Types v1.0.34</p></footer>
 
 </main>
 

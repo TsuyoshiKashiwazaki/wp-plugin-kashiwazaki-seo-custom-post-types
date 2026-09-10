@@ -96,6 +96,10 @@ class KSTB_Parent_Selector {
         // 階層URL修正後のリライトルールフラッシュ
         add_action('init', array($this, 'maybe_flush_rewrite_rules_for_hierarchy'), 999);
 
+        // v1.0.34: 旧バージョンで欠落したリライトルールの一度きりの再生成。
+        // init ではなく wp_loaded に繋ぐ（全 init コールバック完了後に発火させるため）。
+        add_action('wp_loaded', array($this, 'maybe_rebuild_rewrite_rules'), PHP_INT_MAX);
+
         // パーマリンク設定保存時の自動フラッシュ
         add_action('load-options-permalink.php', array($this, 'hook_permalink_save'));
 
@@ -1980,7 +1984,12 @@ class KSTB_Parent_Selector {
      * また、親ディレクトリが削除された投稿タイプの古い親ディレクトリ付きURLもブロック
      */
     public function block_old_urls() {
-        if (is_admin()) {
+        // 下書き・承認待ちの投稿は WordPress の仕様上パーマリンクを持たないため、
+        // プレビュー URL が /?post_type=xxx&p=ID&preview=true 形式（パスが空）になる。
+        // この状態で階層パスとの前方一致を要求すると必ず不一致となり 404 になってしまう。
+        // 旧 URL のブロックは公開 URL を正規化する SEO 目的の処理であり、
+        // 編集権限を持つログイン済みユーザーしか到達しないプレビューには適用しない。
+        if (is_admin() || (is_preview() && is_user_logged_in())) {
             return;
         }
 
@@ -2158,6 +2167,40 @@ class KSTB_Parent_Selector {
             update_option('kstb_hierarchy_rules_flushed_v4', true);
             // error_log('KSTB: Flushed rewrite rules for unified hierarchy URL support');
         }
+    }
+
+    /**
+     * 旧バージョンで欠落したリライトルールを一度だけ再生成する
+     *
+     * v1.0.34 追加。v1.0.33 以前は投稿タイプの再登録時に WordPress コアの
+     * unregister_post_type() が extra_rules_top からテーマ・他プラグイン由来のルールまで
+     * 削除し、その直後の flush でルールが欠けた状態のまま永続化されることがあった
+     * (KSTB_Post_Type_Force_Register::force_register() のコメント参照)。
+     * 既存サイトの rewrite_rules オプションには既に欠落した状態が保存されている可能性があるため、
+     * 修正後のコードで 1 度だけ再生成して回復させる。
+     *
+     * 発火タイミングと対象の限定:
+     *   - init ではなく wp_loaded に繋ぐ。テーマや他プラグインは init 優先度 10 前後で
+     *     add_rewrite_rule() を呼ぶため、全 init コールバックの完了後でなければ
+     *     それらのルールを取りこぼした状態で保存してしまう。
+     *   - 管理画面 / AJAX / REST / CRON は、フロント限定で登録されるルールを
+     *     取りこぼす可能性があるため対象外とし、通常のフロントリクエストでのみ実行する。
+     */
+    public function maybe_rebuild_rewrite_rules() {
+        if (get_option('kstb_rules_rebuilt_v1034', false)) {
+            return;
+        }
+
+        if (is_admin()
+            || (function_exists('wp_doing_ajax') && wp_doing_ajax())
+            || (function_exists('wp_doing_cron') && wp_doing_cron())
+            || (defined('REST_REQUEST') && REST_REQUEST)
+            || (defined('XMLRPC_REQUEST') && XMLRPC_REQUEST)) {
+            return;
+        }
+
+        flush_rewrite_rules();
+        update_option('kstb_rules_rebuilt_v1034', true);
     }
 
     /**

@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.33
+Stable tag: 1.0.34
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,11 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.34 =
+* Fixed: 親ディレクトリを設定した投稿タイプで、下書き・承認待ちの記事のプレビューが 404 になる不具合を修正。未公開の記事は WordPress の仕様上パーマリンクを持たず、プレビュー URL が /?post_type=xxx&p=ID&preview=true 形式（パスが空）になるため、旧 URL ブロック処理が階層パスとの前方一致を要求して必ず 404 にしていた。ログイン済みのプレビューリクエストを当該処理の対象外にした（公開記事の旧 URL ブロックは従来どおり動作する）
+* Fixed: 投稿タイプの再登録でテーマ・他プラグインのリライトルールが失われる不具合を修正。WordPress コアの unregister_post_type() は extra_rules_top から「クエリに index.php?post_type={slug} を含むルール」を登録元を問わず全削除するため、投稿タイプを保存するたびにテーマ独自のページネーション (例 /seo-note/blog/page-2/) が 404 になっていた。unregister の直前に退避し再登録後に復元する (復元対象は現在のフルパス配下に限定し、URL パス変更時のゴーストルールは作らない)
+* Fixed: 旧バージョンで欠落したリライトルールを一度だけ自動で再生成する処理を追加。テーマ・他プラグインの登録を取りこぼさないよう wp_loaded で発火させ、管理画面・AJAX・REST・CRON は対象外
 
 = 1.0.33 =
 * Fixed: アーカイブ無効の投稿タイプの URL 配下にあるリライトルール (/?$・/feed・/page 前方一致) を一律削除していたため、テーマや他プラグインが同じパス配下に登録したルール (独自ページネーション等) が flush のたびに消えて 404 になっていた回帰を修正。WordPress コアも本プラグイン自身もこの削除の対象になるルールを生成しておらず、削除されていたのは他コンポーネントのルールのみだったため、削除処理そのものを撤去 (1.0.32 で管理画面からの flush にもフィルタを適用したことで顕在化)

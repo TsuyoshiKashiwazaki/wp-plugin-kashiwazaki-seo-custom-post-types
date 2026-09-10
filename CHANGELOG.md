@@ -5,6 +5,13 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.34] - 2026-09-10
+
+### Fixed
+- **下書き・承認待ちの記事のプレビューが 404 になる不具合を修正**: 親ディレクトリを設定した投稿タイプ（例: `/seo-note/blog/`）で未公開記事をプレビューすると 404 になっていた。未公開の記事は WordPress の仕様上パーマリンクを持たないため、プレビュー URL は `/?post_type=blog&p=123&preview=true` 形式となりパス部分が空になる。`KSTB_Parent_Selector::block_old_urls()` は個別記事のリクエストパスが階層フルパス（`seo-note/blog`）で始まることを要求して不一致なら 404 にしていたため、空パスのプレビューは必ず 404 に落ちていた。同種の処理を行う `KSTB_Permalink_Validator::validate_permalink()` にはプレビュー除外があったが、本処理には無かった（初版からの不具合）。旧 URL のブロックは公開 URL を正規化する SEO 目的の処理であり、編集権限を持つログイン済みユーザーしか到達しないプレビューに適用する意味が無いため、ログイン済みのプレビューリクエストを対象外にした。公開記事に対する旧 URL のブロックは従来どおり動作する
+- **投稿タイプの再登録でテーマ・他プラグインのリライトルールが失われる不具合を修正**: WordPress コアの `unregister_post_type()` は `WP_Post_Type::remove_rewrite_rules()` を通じて、`$wp_rewrite->extra_rules_top` から「クエリ文字列に `index.php?post_type={slug}` を含むルール」を**登録元を問わず全て削除する**。これは本プラグイン由来のルールだけでなく、テーマや他プラグインが `add_rewrite_rule()` で登録したルールも巻き込む。それらは `init` 優先度 10 前後で登録済みであり、同一リクエスト内で再登録される機会が無いため、投稿タイプの保存・強制再登録の直後に `flush_rewrite_rules()` を実行すると、他コンポーネントのルールが欠けた状態で永続化されていた（例: テーマ独自のページネーション `/seo-note/blog/page-2/` が、その投稿タイプを管理画面で保存するたびに 404 になる）。`KSTB_Post_Type_Force_Register::force_register()` で `unregister_post_type()` の直前に該当ルールを退避し、再登録後に「再登録で復活しなかったもの」だけを復元するようにした。復元対象は投稿タイプの現在のフルパス配下に限定しているため、`url_slug` / `parent_directory` を変更した保存では旧パスのルールは復元されず、ゴーストルール（旧 URL が生き続ける）にはならない。`KSTB_Ajax_Handler::force_reregister_post_type()` も同じ実装経路へ統合した
+- **旧バージョンで欠落したリライトルールを一度だけ自動で再生成**: 上記の不具合により、既存サイトでは `rewrite_rules` オプションにルールが欠けた状態が既に保存されている可能性があるため、修正後のコードで 1 度だけ再生成して回復させる処理を追加した。テーマや他プラグインの `add_rewrite_rule()`（`init` 優先度 10 前後）を取りこぼさないよう `init` ではなく `wp_loaded` で発火させ、フロント限定で登録されるルールを取りこぼさないよう管理画面・AJAX・REST・CRON リクエストは対象外にしている
+
 ## [1.0.33] - 2026-09-09
 
 ### Fixed
@@ -578,6 +585,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.34]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.33...v1.0.34
 [1.0.33]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.32...v1.0.33
 [1.0.32]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.31...v1.0.32
 [1.0.31]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.30...v1.0.31
