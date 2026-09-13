@@ -86,11 +86,29 @@ class KSTB_Post_Mover {
                 continue;
             }
 
+            // v1.0.35: 公開日・更新日を移動前の値のまま引き継ぐ
+            // (wp_update_post は更新扱いで post_modified を現在時刻にし、日付未確定の下書きは post_date も現在時刻にするため)
+            // 保存時に実行されるフック内で同じ記事が再保存されても日付が変わらないよう、wp_update_post の完了まで有効にする
+            $preserve_dates = function ($data, $postarr) use ($post) {
+                if (!empty($postarr['ID']) && (int) $postarr['ID'] === (int) $post->ID) {
+                    $data['post_date'] = $post->post_date;
+                    $data['post_date_gmt'] = $post->post_date_gmt;
+                    $data['post_modified'] = $post->post_modified;
+                    $data['post_modified_gmt'] = $post->post_modified_gmt;
+                }
+                return $data;
+            };
+            add_filter('wp_insert_post_data', $preserve_dates, PHP_INT_MAX, 2);
+
             // 投稿タイプを更新
-            $updated = wp_update_post(array(
-                'ID' => $post_id,
-                'post_type' => $to_type
-            ), true);
+            try {
+                $updated = wp_update_post(array(
+                    'ID' => $post_id,
+                    'post_type' => $to_type
+                ), true);
+            } finally {
+                remove_filter('wp_insert_post_data', $preserve_dates, PHP_INT_MAX);
+            }
 
             if (is_wp_error($updated)) {
                 $result['failed_count']++;

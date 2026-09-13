@@ -1095,23 +1095,7 @@ $taxonomies = get_taxonomies(array('public' => true), 'objects');
                     </div>
 
                     <div id="kstb-tab-post-mover" class="kstb-tab-content">
-                        <div class="kstb-post-mover-new-mode" style="display: none;">
-                            <div class="notice notice-info">
-                                <p>
-                                    <strong>ℹ️ 記事移動機能について</strong><br>
-                                    記事移動機能は、既存の投稿タイプを編集する際に使用できます。先にこの投稿タイプを保存してから、編集画面の「記事移動」タブをご利用ください。
-                                </p>
-                            </div>
-                        </div>
-
                         <div class="kstb-post-mover-edit-mode" style="display: none;">
-                            <div class="notice notice-warning" style="margin-bottom: 15px;">
-                                <p>
-                                    <strong>⚠️ 記事移動時の注意事項</strong><br>
-                                    記事を移動すると<strong>URLが変更</strong>されます。SEOに影響する可能性があるため、慎重に実行してください。
-                                </p>
-                            </div>
-
                             <table class="form-table">
                                 <tr>
                                     <th scope="row"><label for="kstb-mover-source-type">移動元の投稿タイプ</label></th>

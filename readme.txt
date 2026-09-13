@@ -3,7 +3,7 @@ Contributors: tsuyoshikashiwazaki
 Tags: custom post type, post type, cpt, custom content, content type
 Requires at least: 5.0
 Tested up to: 6.6
-Stable tag: 1.0.34
+Stable tag: 1.0.35
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires PHP: 7.0
@@ -72,6 +72,10 @@ https://tsuyoshikashiwazaki.jp/
 6. タクソノミー選択
 
 == Changelog ==
+
+= 1.0.35 =
+* Fixed: 記事を別の投稿タイプへ移動すると、更新日時が移動した時刻に書き換わる不具合を修正（日付が未確定の下書き・承認待ちは投稿日時も書き換わっていた）。WordPress コアの wp_insert_post() は更新時に post_modified を必ず現在時刻にするため、移動処理の wp_update_post() 呼び出し中だけ wp_insert_post_data フィルタで投稿日時・更新日時を移動前の値に戻すようにした。移動後に通常の編集をすれば更新日時は通常どおり更新される
+* Changed: 記事移動タブの案内表示（「記事移動機能について」「記事移動時の注意事項」）を削除
 
 = 1.0.34 =
 * Fixed: 親ディレクトリを設定した投稿タイプで、下書き・承認待ちの記事のプレビューが 404 になる不具合を修正。未公開の記事は WordPress の仕様上パーマリンクを持たず、プレビュー URL が /?post_type=xxx&p=ID&preview=true 形式（パスが空）になるため、旧 URL ブロック処理が階層パスとの前方一致を要求して必ず 404 にしていた。ログイン済みのプレビューリクエストを当該処理の対象外にした（公開記事の旧 URL ブロックは従来どおり動作する）

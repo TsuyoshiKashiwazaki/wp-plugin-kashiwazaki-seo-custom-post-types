@@ -448,13 +448,11 @@
         setPostMoverMode: function (mode, targetSlug, targetLabel) {
             if (mode === 'new') {
                 // 新規追加モード：記事移動機能を無効化
-                $('.kstb-post-mover-new-mode').show();
                 $('.kstb-post-mover-edit-mode').hide();
                 $('#kstb-posts-list-container').hide();
                 $('#kstb-mover-target-type').val('');
             } else if (mode === 'edit') {
                 // 編集モード：移動先を現在の投稿タイプに設定
-                $('.kstb-post-mover-new-mode').hide();
                 $('.kstb-post-mover-edit-mode').show();
                 $('#kstb-current-post-type-label').text(targetLabel);
                 $('#kstb-target-post-type-label').text(targetLabel);

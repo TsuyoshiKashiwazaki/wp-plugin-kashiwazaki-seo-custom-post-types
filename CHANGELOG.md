@@ -5,6 +5,15 @@ All notable changes to Kashiwazaki SEO Custom Post Types will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.35] - 2026-09-13
+
+### Fixed
+- **記事移動で更新日時が移動した時刻に書き換わる不具合を修正**: `KSTB_Post_Mover::move_posts()` は `wp_update_post()` で `post_type` を変更していたが、WordPress コアの `wp_insert_post()` は更新時に呼び出し側の値と無関係に `post_modified` / `post_modified_gmt` を現在時刻で上書きする。さらに `wp_update_post()` は日付が未確定（`post_date_gmt` が `0000-00-00 00:00:00`）の下書き・承認待ちについて `post_date` も現在時刻に置き換える。そのため記事を別の投稿タイプへ移動しただけで、内容を編集していないのに更新日時が移動した時刻になっていた。`wp_update_post()` の呼び出し中だけ `wp_insert_post_data` フィルタ（優先度 `PHP_INT_MAX`）で対象記事の `post_date` / `post_date_gmt` / `post_modified` / `post_modified_gmt` を移動前の値に戻し、`finally` で必ず解除するようにした。移動先でのスラッグ一意化や保存時フックは従来どおり `wp_update_post()` 経由で動作し、移動後に通常の編集をすれば更新日時は通常どおり更新される
+
+### Changed
+- **記事移動タブの案内表示を削除**: 新規作成時に表示していた「記事移動機能について」と、編集時に表示していた「記事移動時の注意事項」の案内ボックスを削除した。新規作成時の記事移動タブは何も表示しない
+- **マニュアルの記事移動の説明を更新**: 「移動時に保持される情報と変化する情報」の表に更新日時（post_modified）の行を追加し、新規作成時の案内表示の記述を削除後の表示に合わせた
+
 ## [1.0.34] - 2026-09-10
 
 ### Fixed
@@ -585,6 +594,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ajax通信による非同期処理
 - 自動リライトルールフラッシュ機能
 
+[1.0.35]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.34...v1.0.35
 [1.0.34]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.33...v1.0.34
 [1.0.33]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.32...v1.0.33
 [1.0.32]: https://github.com/TsuyoshiKashiwazaki/wp-plugin-kashiwazaki-seo-custom-post-types/compare/v1.0.31...v1.0.32
